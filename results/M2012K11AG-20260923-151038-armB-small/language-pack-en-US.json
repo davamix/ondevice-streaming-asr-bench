@@ -1,0 +1,15 @@
+{
+  "language": "en-US",
+  "installed_before": [
+    "es-ES"
+  ],
+  "installed_after": [
+    "es-ES",
+    "en-US"
+  ],
+  "pending_after": [],
+  "succeeded": true,
+  "went_pending": false,
+  "waited_ms": 15113,
+  "error": null
+}

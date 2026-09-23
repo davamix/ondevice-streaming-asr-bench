@@ -10,9 +10,11 @@ This repo is the lab notebook, not the final report. It was made public before
 any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
-**Status:** Phases 0–1 complete. Arm A measured on the SD870 in **both
-languages**, clean and noisy. Phase 2 (Arm B, Moonshine) in progress: **tiny
-measured**; small and medium not yet run. Arms C–E not started.
+**Status:** Phases 0–1 complete. Phase 2 (Arm B, Moonshine) nearly done:
+**tiny and small measured, medium piloted** (one repetition; the full run
+needs a recharge). Arm A was re-measured in Phase 2
+on a corrected harness and corpus; several Phase 1 figures were revised, and
+the revisions are marked where they occur. Arms C–E not started.
 
 ---
 
@@ -23,7 +25,7 @@ measured**; small and medium not yet run. Arms C–E not started.
 | [Why this is not obvious](#why-this-is-not-obvious) | Why live ASR is a different problem from batch ASR, and the English/Spanish asymmetry the experiment exists to price |
 | [Hardware under test](#hardware-under-test) | The phone, its SoC, and why no published number comes from an emulator |
 | [The matrix](#the-matrix) | The five arms, with current status per arm |
-| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank](#rtf_sustained-is-blank-and-slip-stands-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), and [Arm B: Moonshine](#arm-b-moonshine-streaming-english) |
+| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), and [Arm B: Moonshine](#arm-b-moonshine-streaming-english) |
 | [Metrics](#metrics) | What is measured and why RTF alone would mislead |
 | [Method](#method-paced-file-fed-streaming) | Paced file-fed streaming — the one implementation detail everything rests on |
 | [Corpus](#corpus) | How the audio was built, and the concatenation trick for scored continuous speech |
@@ -32,7 +34,7 @@ measured**; small and medium not yet run. Arms C–E not started.
 | [Model licences](#model-licences) | What each arm's weights permit, including one that blocks shipping |
 | [Repo layout](#repo-layout) | Where everything lives |
 | [A note on the test device](#a-note-on-the-test-device) | The safety policy, and why disabling thermal throttling is refused twice over |
-| [summaries/](summaries/) | One short write-up per completed phase — currently [Phase 1: Arm A](summaries/phase-1-arm-a.md) |
+| [summaries/](summaries/) | One short write-up per completed phase — currently [Phase 1: Arm A](summaries/phase-1-arm-a.md), with Phase 2's revisions marked |
 | [HANDOVER.md](HANDOVER.md) | State, commands and constraints for running the next phase in a fresh session |
 
 ### Findings index
@@ -51,14 +53,17 @@ anywhere else.
 | 7 | [Moonshine runs inference inside `addAudio()`](#moonshine-runs-inference-inside-addaudio) | Integration gotcha |
 | 8 | [Moonshine 0.1.5 has no thread-count setting](#moonshine-015-has-no-thread-count-setting) | Deviation from plan |
 | 9 | [FLEURS English is recorded 40 dB quieter than FLEURS Spanish](#fleurs-english-is-recorded-40-db-quieter-than-fleurs-spanish) | Corpus confound |
-| 10 | [The platform recognizer had Spanish installed and English missing](#the-platform-recognizer-had-spanish-installed-and-english-missing) | Android gotcha |
-| 11 | [Installing a language pack: the API works, the Settings UI does not](#installing-an-on-device-language-pack-the-api-works-the-settings-ui-does-not) | Android gotcha |
-| 12 | [The recognizer sometimes ends a session with an error *and* correct text](#the-platform-recognizer-sometimes-ends-a-session-with-an-error-and-correct-text) | Android gotcha |
-| 13 | [`adb push` into an app's own files dir can be invisible to that app](#adb-push-into-an-apps-own-external-files-dir-can-be-invisible-to-that-app) | Android gotcha |
-| 14 | [A stalled consumer will hang a paced feeder, not fail it](#a-stalled-consumer-will-hang-a-paced-feeder-not-fail-it) | Harness bug |
-| 15 | [Filtering out "bad" measurement rows can flatter what you measure](#filtering-out-bad-measurement-rows-can-flatter-the-thing-you-are-measuring) | Measurement integrity |
-| 16 | [An empty transcript is every word missed, not a row to skip](#an-empty-transcript-is-every-word-missed-not-a-row-to-skip) | Measurement integrity |
-| 17 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
+| 10 | [The platform recognizer can return only the last clause](#the-platform-recognizer-can-return-only-the-last-clause) | Android gotcha |
+| 11 | [The platform recognizer had Spanish installed and English missing](#the-platform-recognizer-had-spanish-installed-and-english-missing) | Android gotcha |
+| 12 | [Installing a language pack: the API works, the Settings UI does not](#installing-an-on-device-language-pack-the-api-works-the-settings-ui-does-not) | Android gotcha |
+| 13 | [The recognizer sometimes ends a session with an error *and* correct text](#the-platform-recognizer-sometimes-ends-a-session-with-an-error-and-correct-text) | Android gotcha |
+| 14 | [`adb push` into an app's own files dir can be invisible to that app](#adb-push-into-an-apps-own-external-files-dir-can-be-invisible-to-that-app) | Android gotcha |
+| 15 | [A stalled consumer will hang a paced feeder, not fail it](#a-stalled-consumer-will-hang-a-paced-feeder-not-fail-it) | Harness bug |
+| 16 | [Filtering out "bad" measurement rows can flatter what you measure](#filtering-out-bad-measurement-rows-can-flatter-the-thing-you-are-measuring) | Measurement integrity |
+| 17 | ["End of speech" was stamped up to one frame early](#end-of-speech-was-stamped-up-to-one-frame-early) | Measurement integrity |
+| 18 | [An empty transcript is every word missed, not a row to skip](#an-empty-transcript-is-every-word-missed-not-a-row-to-skip) | Measurement integrity |
+| 19 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
+| 20 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
 
 > **New here?** Start with the [Phase 1 summary](summaries/phase-1-arm-a.md)
 > for results without the process. Then [Findings](#findings-and-dead-ends) for
@@ -110,7 +115,7 @@ the quantity of interest.
 | # | Arm | Streaming | EN | ES | Size | Runtime | Role | Status |
 |---|---|---|---|---|---|---|---|---|
 | A | Android on-device recognizer | native | ✅ | ✅ | **0 MB** | platform | The bar to beat | ✅ **measured, both** |
-| B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | 🔨 **tiny measured** |
+| B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | 🔨 **tiny, small measured; medium piloted** |
 | C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ⬜ not started |
 | D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ⬜ not started |
 | E | Whisper small + base int8 (chunked) | no | ✅ | ✅ | 375 / 161 MB | sherpa-onnx | Known baseline / calibration | ⬜ not started |
@@ -121,195 +126,231 @@ money-saving result — which is why it is built first.
 
 ## Results
 
-Arm A (the platform on-device recognizer, 0 MB bundled), file-fed and
-wall-clock-paced on the Snapdragon 870. Repetition 0 discarded. Medians over
-all rows. Phone unplugged throughout, never above 30.7 °C.
+Every number comes from the Snapdragon 870: file-fed, paced to the wall
+clock, phone unplugged, never above 31 °C. Repetition 0 is discarded, and
+figures are medians over all remaining rows.
 
-| Lang | Source | Audio | WER | CER | `latency_final_ms` | `latency_first_partial_ms` | `partial_instability` | slip median | `peak_rss_mb` |
+**How runs are combined.** Accuracy reproduces across runs. Arm A scored an
+identical 9.69% on FLEURS English in two runs seven hours apart. So WER and CER
+are **pooled over every valid run**. Timing did not always reproduce (see
+[Reproducibility](#reproducibility)), so latency comes from the **Phase 2
+runs**: made back to back on the afternoon of 2026-09-23, both arms, with the
+corrected harness.
+
+**Final text** is measured from the actual end of the audio, clamped at zero:
+text already final when the audio ended counts as 0 ms of waiting. Phase 1
+measured it from when the feeder returned, which ran up to one frame early (see
+[finding](#end-of-speech-was-stamped-up-to-one-frame-early)).
+
+### Arm A: the platform recognizer (0 MB)
+
+| Lang | Source | Audio | WER | CER | Final text | First text | Revisions | Slip median | `peak_rss_mb` |
 |---|---|---|---|---|---|---|---|---|---|
-| es | FLEURS `es_419` | clean read | **8.27%** | 3.09% | **27** | 2010 | 6 | 4 ms | 103 |
-| en | FLEURS `en_us` | clean read, **very quiet** | **9.69%** | 4.36% | 123 | 1260 | 8 | 6 ms | 107 |
-| en | LibriSpeech `test-other` | **noisy** | **33.45%** | 26.02% | 315 | 1276 | 7 | **196 ms** | 107 |
+| es | FLEURS `es_419` | clean | **8.14%** | 2.84% | 0 ms | 2009 ms | 6 | 6 ms | 124 |
+| en | FLEURS `en_us` | clean, level-matched | **12.60%** | 8.78% | 76 ms | 1259 ms | 8 | 6 ms | 118 |
+| en | FLEURS `en_us` | clean, original (**very quiet**) | 9.69% | 4.36% | 50 ms | 1212 ms | 8 | 6 ms | 118 |
+| en | LibriSpeech `test-other` | **noisy** | **33.33%** | 25.92% | 68 ms | 1012 ms | 8 | 6 ms | 118 |
 
-Spanish: 120 rows / 1548 reference words, pooled over two independent runs.
-English: 60 rows each / 960 and 894 reference words.
+Spanish is pooled over three runs (180 rows, 2322 reference words), the two
+original English sources over two runs (120 rows each), and the level-matched
+clips come from one run (60 rows). `peak_rss_mb` is our harness only; the
+recognizer runs in Google's process.
 
-> **Correction (Phase 2).** Spanish was first published as **7.73%**. The
-> scorer skipped rows that returned no text, which removed their words from the
-> denominator instead of counting them as missed. One Spanish utterance ended
-> in `ERROR_CLIENT` before producing any text; counted properly, it moves the
-> figure to 8.27%. English is unaffected. See
-> [An empty transcript is every word missed](#an-empty-transcript-is-every-word-missed-not-a-row-to-skip).
+> **Revised in Phase 2.** Three things Phase 1 published have changed:
 >
-> **Caveat (Phase 2).** 18 of the 20 FLEURS `en_us` clips are recorded about
-> **40 dB quieter** than the Spanish and LibriSpeech clips. See
-> [FLEURS English is recorded 40 dB quieter than FLEURS Spanish](#fleurs-english-is-recorded-40-db-quieter-than-fleurs-spanish).
+> - **Spanish WER** was 7.73%. The scorer skipped a row that returned no text
+>   instead of counting its words as missed
+>   ([finding](#an-empty-transcript-is-every-word-missed-not-a-row-to-skip)).
+>   Pooled with a third run it is 8.14%.
+> - **English latency** (final 123 / 315 ms, first text 1260 / 1276 ms) came
+>   from a run whose timing did not reproduce. Its accuracy did.
+> - **English accuracy** was measured on clips ~40 dB quieter than everything
+>   else ([finding](#fleurs-english-is-recorded-40-db-quieter-than-fleurs-spanish)).
+>   Level-matched clips are now in the corpus.
 
 ### Three things worth stopping on
 
-**1. Spanish is more accurate than English.** 8.27% vs 9.69% WER on the *same
-corpus, same recognizer* — FLEURS exists precisely so this comparison is not
-confounded by domain. The language the plan expected to be hardest to serve is
-the one the free arm handles best.
+**1. Accuracy collapses on noisy audio, and that reproduces.** 33.33% WER on
+LibriSpeech `test-other` (33.45% and 33.22% in two runs), with CER at 26%.
+Roughly one word in three is wrong in conditions resembling an ordinary room.
+That failure is the case a bundled model would exist to fix.
 
-*Weaker than first stated.* It was originally claimed as "same recording
-conditions" too, and on level that is false: the English clips sit at a median
-of −63 dBFS and the Spanish at −22 dBFS. The gap is also narrower after the
-empty-row correction (8.27%, not 7.73%). The direction still stands, but the
-margin is not clean evidence of a language effect.
+**2. "Spanish is more accurate than English" is not established.** Phase 1
+reported 7.73% vs 9.69% on "the same corpus, recorded the same way". Neither
+half survived. The English clips turned out to be ~40 dB quieter, and Spanish
+was corrected to 8.14%. At matched level, English scores 12.60%, but that
+figure is dominated by one clip where the recognizer returned only the last
+clause ([finding](#the-platform-recognizer-can-return-only-the-last-clause)).
+On the other 19 clips, level-matched English scores 8.22%. So the language gap
+is either large or nil, depending on a single utterance.
 
-**2. Accuracy collapses on noisy audio.** 33.45% WER on LibriSpeech
-`test-other` is 3.5× worse than clean English, and CER goes from 4.4% to 26%.
-Clean read speech flatters this arm badly. Any judgement based only on FLEURS
-would be wrong about real-world use, which is exactly why the noisy stress case
-is in the corpus.
-
-**3. The latency profiles are opposite, by language.**
-
-| | Spanish | English |
-|---|---|---|
-| time to *first* text | 2010 ms (slow) | 1260 ms |
-| time to *finalise* after speech ends | 27 ms (instant) | 123 ms |
-
-Spanish takes two seconds to show anything and then commits instantly; English
-shows text sooner but takes ~5× longer to settle. These are different models
-with different buffering, not one recognizer with one behaviour — so "Android's
-on-device recognizer has latency X" is not a meaningful statement without
-naming the language.
+**3. Spanish is slower to show text, and that one does reproduce.** First text
+arrives at ~2.0 s in Spanish against 1.0–1.3 s in English. The Spanish figure
+landed within 11 ms across three runs (2019 / 2008 / 2009 ms). For continuous
+dictation it is paid once per session (6-minute sessions: 2607 vs 1214 ms), and
+for voice commands on every utterance. Final text is fast in both languages
+(0–76 ms after the audio ends). Clips end with different amounts of silence,
+though, so the final-text difference between languages is not a clean
+comparison.
 
 ### Reproducibility
 
-Two independent 4-rep Spanish runs, hours apart:
+Accuracy reproduces almost exactly. Timing reproduced in every run but one.
 
-| | run 1 | run 2 |
+| Arm A, English | Phase 1 run | Phase 2 run |
 |---|---|---|
-| WER | 8.79% | 7.75% |
-| WER, utterances that returned text | 7.71% | 7.75% |
-| `latency_final_ms` | 27 | 27 |
-| `latency_first_partial_ms` | 2010 | 2008 |
+| WER, FLEURS | 9.69% | 9.69% |
+| WER, LibriSpeech | 33.45% | 33.22% |
+| Slip median, LibriSpeech | **196 ms** | 6 ms |
+| Final text (old stamp), LibriSpeech | **315 ms** | 120 ms |
+| First text, LibriSpeech | 1276 ms | 1012 ms |
+| First text, FLEURS | 1260 ms | 1212 ms |
 
-The whole gap between the runs is one utterance. In run 1, `fleurs-es-short-009`
-ended in `ERROR_CLIENT` / `EPIPE` before emitting any text, on a sentence the
-other three repetitions transcribed identically. On the utterances that did
-return text, the two runs agree to 0.04 points.
+The Phase 1 English run began **one minute after the English language pack
+finished installing**. The Spanish runs before it, and every run since, show
+slip of 4–6 ms on all audio, noisy included. The likeliest explanation is the
+recognizer still settling after the install, but that is an inference, not a
+measurement. What is certain is that Phase 1's English timing, including the
+315 ms final latency on noisy audio, describes that session rather than the
+recognizer.
 
-Tighter within a run: the *same clip* across repetitions lands within about
-3 ms (2105 / 2109 / 2108 / 2109 ms), and one clip produced byte-identical text
-on all four passes. That determinism is what file-fed measurement bought (D5);
-a human repeating a sentence four times cannot produce it.
+| Arm A, Spanish | run 1 | run 2 | run 3 (Phase 2) |
+|---|---|---|---|
+| WER | 8.79% | 7.75% | 7.88% |
+| WER, utterances that returned text | 7.71% | 7.75% | 7.88% |
+| First text | 2019 ms | 2008 ms | 2009 ms |
+| Final text (old stamp) | 28 ms | 27 ms | 27 ms |
 
-### `rtf_sustained` is blank, and slip stands in for it
+Run 1's higher WER is one utterance, `fleurs-es-short-009`. It ended in
+`ERROR_CLIENT` / `EPIPE` before emitting any text, on a sentence every other
+repetition transcribed identically.
+
+Within a run, the determinism file-fed measurement was meant to buy is there.
+The same clip lands within a few milliseconds across repetitions, and most
+clips produce byte-identical text every time (D5). A human repeating a sentence
+four times cannot do that.
+
+### `rtf_sustained` is blank for Arm A, and slip does not stand in for it
 
 Recognition runs inside Google's process, so time spent in our sink is a pipe
 write and says nothing about the model. Reporting a number there would be a
 fiction (D6).
 
-Schedule slip fills the gap. It measures how far the paced feeder fell behind
-the wall clock — i.e. how long the recognizer stopped draining audio — and it
-tracks difficulty exactly as you would hope:
-
-| | slip median | % over one frame |
-|---|---|---|
-| Spanish, clean | 4 ms | 2% |
-| English, clean | 6 ms | 42% |
-| English, **noisy** | **196 ms** | **67%** |
-
-On noisy audio the recognizer stalls the input pipe for roughly 200 ms per
-clip. For an arm whose internals are invisible, that is the "not keeping up
-with real time" signal.
+Phase 1 proposed schedule slip as the stand-in, because it seemed to track
+difficulty: 4 ms on clean Spanish, 6 ms on clean English, 196 ms on noisy
+English. The Phase 2 re-run withdrew that. Slip is 6 ms on every source,
+noisy included, and the 196 ms belonged to the one disturbed session above.
+So for Arm A there is no proxy for keeping up with real time. What can be said
+is that in the Phase 2 runs it never stalled its input.
 
 ### Decision gate (PLAN.md §10, Phase 1)
 
-**Arms C and D stay in the matrix.** Arm A is genuinely good on clean Spanish
-and free, which is a real result — but 33% WER on noisy English is
-disqualifying for anything used in an ordinary room, and that is the case a
-bundled model would exist to fix.
+**Arms C and D stay in the matrix.** Arm A is free and reasonable on clean
+speech, but 33% WER on noisy English is disqualifying for anything used in an
+ordinary room, and that is the case a bundled model would exist to fix. It also
+depends on a language pack the user may not have: on this handset, English had
+to be installed before it could be measured at all.
 
-Still open before the gate can close properly:
-
-- **The first-partial numbers are an upper bound.** The harness builds a fresh
-  `SpeechRecognizer` per clip, so every utterance pays full session startup.
-  That models a voice-command app; continuous dictation would hold one open and
-  amortise it. The session bucket settles this.
-- **Nothing is known yet about sustained behaviour** — no 5–10 minute run, so
-  no thermal drift data.
-- **Arm A depends on a language pack the user may not have.** It had to be
-  installed on this handset before English could be measured at all.
+The first-text numbers are an upper bound for dictation. The harness builds a
+fresh `SpeechRecognizer` per clip, so every utterance pays full session
+startup. That models a voice-command app; continuous dictation holds one open
+and pays it once.
 
 ### Arm B: Moonshine streaming, English
 
 Moonshine v2 streaming, via `ai.moonshine:moonshine-voice:0.1.5`, weights
 loaded from disk at the pinned revision. Same corpus, same paced feeder, same
 phone as Arm A. English only, because no Spanish streaming `.ort` exists (see
-[Findings](#moonshine-has-no-deployable-spanish-streaming-model)). 4
-repetitions, repetition 0 discarded, medians over all rows. Unplugged, 29.7 →
-30.7 °C. The run cost 4 battery points for 160 clips.
+[Findings](#moonshine-has-no-deployable-spanish-streaming-model)).
 
-| Variant | Source | Audio | WER | CER | `latency_final_ms` | `latency_first_partial_ms` | `partial_instability` | `rtf_sustained` | slip median | `peak_rss_mb` | Disk |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| tiny | FLEURS `en_us` | clean, **very quiet** | **26.56%** | 19.61% | 0 | 1550 | 10 | 0.381 | 250 ms | 363 | 77.7 MB |
-| tiny | LibriSpeech `test-other` | **noisy** | **15.77%** | 7.44% | 114 | 1059 | 10 | 0.399 | 248 ms | 363 | 77.7 MB |
-| small | | | *not yet run* | | | | | | | | 224.1 MB |
-| medium | | | *not yet run* | | | | | | | | 416.0 MB |
+| Variant | Source | Audio | WER | CER | Final text | First text | Revisions | `rtf_sustained` | `peak_rss_mb` |
+|---|---|---|---|---|---|---|---|---|---|
+| tiny | FLEURS `en_us` | clean, level-matched | 11.25% | 5.76% | 0 ms | 1064 ms | 16 | 0.423 | 363–475 |
+| tiny | FLEURS `en_us` | clean, original (**very quiet**) | 30.05% | 23.05% | 0 ms | 1558 ms | 8 | 0.378 | |
+| tiny | LibriSpeech `test-other` | **noisy** | 15.77% | 7.44% | 84 ms | 1058 ms | 10 | 0.404 | |
+| small | FLEURS `en_us` | clean, level-matched | 7.71% | 3.65% | 144 ms | 1655 ms | 8 | 0.734 | 605 |
+| small | FLEURS `en_us` | clean, original (**very quiet**) | 27.29% | 23.41% | 0 ms | 1675 ms | 8 | 0.667 | |
+| small | LibriSpeech `test-other` | **noisy** | 8.72% | 3.27% | 442 ms | 1191 ms | 8 | 0.723 | |
+| medium¹ | FLEURS `en_us` | clean, level-matched | *5.94%* | *2.39%* | *474 ms* | *1259 ms* | *8* | *0.802* | *~920* |
+| medium¹ | FLEURS `en_us` | clean, original (**very quiet**) | *24.69%* | *22.16%* | *169 ms* | *1250 ms* | *7* | *0.760* | |
+| medium¹ | LibriSpeech `test-other` | **noisy** | *6.71%* | *3.06%* | *634 ms* | *1239 ms* | *8* | *0.772* | |
 
-60 rows per source; 960 and 894 reference words, the same denominators as
-Arm A. 39 of the 40 clips produced byte-identical text on all three
-counted repetitions.
+Disk: tiny 77.7 MB · small 224.1 MB · medium 416.0 MB. Tiny is pooled over
+two runs (LibriSpeech gave 15.77% in both); small is one 4-repetition run.
+¹ **Medium is a single-repetition pilot**: 20 rows per source, indicative, not
+statistical. A full run needs a recharge first (see below). `peak_rss_mb` is a
+process high-water mark that includes the harness's own heap. It bounds each
+model's footprint from above, and it is not comparable to Arm A's.
 
-**Head to head with Arm A, English:**
+**The size curve, English, against Arm A:**
 
-| | Arm A (0 MB) | Arm B tiny (78 MB) |
-|---|---|---|
-| WER, **noisy** (`test-other`) | 33.45% | **15.77%** |
-| CER, noisy | 26.02% | **7.44%** |
-| WER, clean but very quiet (FLEURS) | **9.69%** | 26.56% |
-| … same, clips that returned any text | **9.69%** | 18.97% |
-| Time to first text, noisy / FLEURS | 1276 / **1260** ms | **1059** / 1550 ms |
-| Time to final text, noisy / FLEURS | 315 / 123 ms | **114 / 0** ms |
-| Revisions per clip | **7–8** | 10 |
+| | Arm A (0 MB) | tiny (78 MB) | small (224 MB) | medium¹ (416 MB) |
+|---|---|---|---|---|
+| WER, **noisy** | 33.33% | 15.77% | 8.72% | *6.71%* |
+| WER, clean, level-matched | 12.60% | 11.25% | 7.71% | *5.94%* |
+| WER, clean, **very quiet** | **9.69%** | 30.05% | 27.29% | *24.69%* |
+| First text, noisy / clean | 1012 / 1259 ms | 1058 / 1064 ms | 1191 / 1655 ms | *1239 / 1259 ms* |
+| Final text, noisy / clean | **68 / 76 ms** | 84 / 0 ms | 442 / 144 ms | *634 / 474 ms* |
+| `rtf_sustained` (worst clip) | — | 0.40 (0.61) | 0.72 (0.94) | *0.77 (0.91)* |
+| SDK time per model pass | — | ~200 ms | ~450 ms | *~550 ms* |
+| Peak RSS | 118 MB² | 363–475 MB | 605 MB | *~920 MB* |
+| Battery per 240 clips | 3 pts | 6 pts | 10 pts | *~12 pts* |
 
-**What tiny answers:**
+² Our harness only; the recognizer's own memory is in Google's process.
 
-1. **Does Moonshine beat Arm A on noisy English? Yes, decisively.** Tiny has
-   less than half Arm A's WER on `test-other`, and under a third of its CER,
-   at 78 MB. That noisy-audio failure was the main reason to consider bundling
-   a model at all, and the smallest variant already fixes most of it.
-2. **But it is much worse on the FLEURS English clips.** Some of that is
-   silence: it returned **no text at all** on 2 of the 20 clips, on every
-   repetition. Even on the clips where it did produce text it is about 2×
-   Arm A's WER. Those clips are recorded ~40 dB quieter than everything else,
-   so this is not yet evidence that it is weak on *clean* speech. See
-   [the level confound](#fleurs-english-is-recorded-40-db-quieter-than-fleurs-spanish).
-3. **Streaming-native helps at the end of an utterance, not the start.** On
-   FLEURS the text is typically finished before the audio ends, and on
-   `test-other` it is finished 114 ms after, against Arm A's 315 ms. But the
-   first words still take 1.0–1.5 s, because the SDK only transcribes every
-   0.5 s ([finding](#moonshines-first-text-is-paced-by-its-update-interval-not-its-lookahead)).
-   The model's 80 ms lookahead is not what a user sees.
-4. **It keeps up with real time.** `rtf_sustained` is 0.38–0.40 (median per
-   clip, maximum 0.61), so tiny uses about 40% of real time on this phone.
-   This is the first arm where that is measurable, because inference runs in
-   our process.
+**What Arm B answers:**
+
+1. **Does Moonshine beat Arm A on noisy English? Yes, at every size.** Tiny
+   halves Arm A's WER, small cuts it to about a quarter (8.72% vs 33.33%), and
+   medium goes further still. Small's CER on noisy speech is 3.27% against
+   Arm A's 25.92%. That noisy-audio failure was the main reason to consider
+   bundling a model, and it is fixed.
+2. **The size curve bends at small.** Going from tiny to small nearly halves
+   WER on noisy audio (15.77% → 8.72%) and cuts it by a third on clean
+   (11.25% → 7.71%), for +146 MB. Medium buys roughly two more points on
+   each, for +192 MB more, ~300 MB more resident memory, and noticeably slower
+   final text.
+3. **Bigger models do not fall behind real time; they finalise later.**
+   `rtf_sustained` stays under 1.0 even for medium (0.77, worst clip 0.91),
+   because the SDK's update cadence absorbs longer passes. The cost goes
+   elsewhere. Each pass takes ~200 / 450 / 550 ms by size, and final text on
+   noisy audio moves from 84 to 442 to 634 ms after the speaker stops. For
+   Moonshine, the constraints that bind are latency and memory, not keeping
+   up.
+4. **Streaming-native buys no latency over Arm A at SDK defaults.** First text
+   takes 1.0–1.7 s for every arm. Moonshine's first text is paced by a 0.5 s
+   update interval, not its 80 ms lookahead
+   ([finding](#moonshines-first-text-is-paced-by-its-update-interval-not-its-lookahead)),
+   and that interval is tunable. Only tiny matches Arm A on final text; small
+   and medium are slower. An earlier version of this section credited
+   Moonshine with much faster final text (114 vs 315 ms). That comparison
+   leaned on Arm A's disturbed Phase 1 run, and it does not stand.
+5. **On very quiet audio, Arm A is robust and Moonshine is not, at any
+   size.** Every variant returns no text at all on the same quiet clips, with
+   no error, and tiny's output there does not even reproduce between runs.
+   The level-matched copies of those clips transcribe fine. A real microphone
+   with gain control usually delivers far hotter levels, so this may rarely
+   matter live. But a quiet talker or a distant phone is exactly where it
+   would, and the API gives no way to detect it.
 
 **Known limits of these numbers:**
 
+- **Medium is one repetition.** Its WER figures rest on ~300 reference words
+  per source. Treat them as the direction of the curve, not its value.
 - **`rtf_sustained` is per clip here, not over a session.** The metric is
   defined over 5–10 minutes of continuous audio (§6). No Arm B session has
-  been run, so thermal drift is untested. Tiny ran 25 minutes at ~30 °C, with
-  the mandatory breaks, which is encouraging but not the same thing.
-- **`latency_final_ms` is likely understated, for both arms.** "End of speech"
-  is stamped when the paced feeder *returns*, not when the audio ends on the
-  wall clock. When the feeder is behind schedule, these differ by the final
-  slip, and Arm B's median slip is 250 ms. Rows do not record the final slip,
-  so the size of the error cannot be recovered after the fact. Compare final
-  latency between arms only at a coarse grain until the harness stamps the
-  scheduled end.
-- **`peak_rss_mb` is not comparable across arms.** Moonshine's 363 MB is the
-  model in our process. Arm A's 107 MB is only our harness, because the
-  platform recognizer runs in Google's process.
+  been run. Medium, started straight after small, took the phone from 32.7 to
+  34.7 °C in eight minutes, the warmest of any run. That is exactly what a
+  session run would test.
 - **The thread count is not controlled for Arm B.** The harness records
   `threads: 4`, but the SDK has no such setting, so ONNX Runtime's default
   pool applies ([finding](#moonshine-015-has-no-thread-count-setting)).
+- **Louder audio makes Moonshine revise more, at least for tiny.** On the 17
+  clips where both versions produced text, tiny's revisions rose from 10 to 16
+  per clip with level matching, while the number of updates barely moved
+  (11 vs 12). So it rewrites more of what it has already shown, not just shows
+  more. Arm A's count did not change (8 and 8), and small and medium show
+  7–8 on both. Why is not known.
 
 ## Metrics
 
@@ -356,7 +397,7 @@ Built by `scripts/build_corpus.py` from pinned dataset revisions
 
 | Bucket | Content | Purpose |
 |---|---|---|
-| `short` | 20 clips × 3 sources, 3–8 s (mean 5.5–6.7 s) | latency per utterance |
+| `short` | 20 clips × 3 sources, 3–8 s (mean 5.5–6.7 s), plus a level-matched copy of the English FLEURS clips | latency per utterance |
 | `session` | 1 per language, ~6 min, 0.5–1.5 s gaps | sustained RTF, thermals |
 
 Sources are deliberately symmetric: FLEURS `en_us` and `es_419` are the same
@@ -365,8 +406,13 @@ comparison is not confounded by domain or recording conditions. LibriSpeech
 `test-other` adds the noisy-English stress case that FLEURS's clean read
 speech does not cover.
 
-Current build: 62 clips, 18.4 minutes total (en 598.8 s, es 505.1 s), all
-16 kHz mono PCM16. Session clips are disjoint from short clips, so
+Current build: 82 clips, 20.5 minutes total (en 723.3 s, es 505.1 s), all
+16 kHz mono PCM16. Twenty of them are `fleurs_en_norm`: the English FLEURS
+clips lifted by a static gain to −23 dBFS RMS, because the originals are
+recorded ~40 dB quieter than the other sources
+([finding](#fleurs-english-is-recorded-40-db-quieter-than-fleurs-spanish)).
+The build is deterministic: adding them reproduced every existing file byte
+for byte. Session clips are disjoint from short clips, so
 sustained-RTF audio is not audio the latency measurement already warmed.
 
 ## Reproducing
@@ -502,35 +548,49 @@ raises `rtf_sustained`. The trade-off is not measured yet.
 ### Moonshine returns no text, and no error, on some quiet clips
 
 On two FLEURS English clips, `fleurs-en-short-015` and `-017`, Moonshine tiny
-produced **nothing**, on all five passes, pilot included. No line started, no
-error fired, and the stream closed cleanly with an empty transcript. A third
-clip (`-018`, 6.2 s) showed its first text only at ~5.05 s, again on every
-pass.
+produced **nothing** on every pass across two runs and a pilot. No line
+started, no error fired, and the stream closed cleanly with an empty
+transcript. A third clip (`-018`, 6.2 s) showed its first text only at
+~5.05 s, again on every pass.
 
-All three are in the very quiet group: `-015` is the quietest clip in the
-corpus at −66.5 dBFS RMS. But level alone does not explain it, because 16 other
-quiet clips transcribed normally. The streaming path is gated by a voice
-activity detector (the native library carries `vad_threshold`,
-`vad_window_duration` and similar option names), and a detector that never
-fires would produce exactly this.
+**It is the level.** All three are in the very quiet group (`-015` is the
+quietest clip in the corpus, at −66.5 dBFS RMS). The level-matched copies,
+which are the same audio lifted by a static gain, transcribe on every pass,
+`-015` and `-017` included. The streaming path is gated by a voice activity
+detector (the native library carries `vad_threshold`, `vad_window_duration`
+and similar option names), and a detector that never fires on quiet speech
+would produce exactly this.
+
+**Near the threshold, it is also not reproducible.** Level is not a clean
+cut-off: 16 other quiet clips transcribed, and in the second run a third clip
+(`-000`, the *loudest* of the quiet group) went blank on every repetition,
+after transcribing in the first. WER on the quiet clips moved from 26.56% to
+33.54% between runs, while every other source reproduced exactly. Near the
+detector's edge, small timing differences decide whether a line starts at all.
 
 The part that matters for a product is the silence. An app cannot tell *"the
 user said nothing"* from *"the model did not hear them"*, because both look
 identical from the API. A real microphone with automatic gain control usually
-delivers far hotter levels than these clips, so this may never happen live.
-That is untested.
+delivers far hotter levels than these clips, so this may rarely happen live.
+But a quiet talker or a distant phone is exactly the case where it would, and
+the API gives no way to detect it.
 
 ### Moonshine runs inference inside `addAudio()`
 
 `addAudioToStream()` does not just queue audio. When an update is due, the call
-runs the model **before returning**. Time spent inside it is 38–40% of the
-audio duration (median per clip; that is what `rtf_sustained` measures here).
-The SDK reports ~200 ms per transcription pass, and the feeder falls up to
-600 ms behind schedule. That is why Arm B's schedule slip is 250 ms (median) on
-*every* source, including clean speech, where Arm A's was 4–6 ms.
+runs the model **before returning**. The time spent inside it is what
+`rtf_sustained` measures here: about 40% of the audio duration for tiny, 72%
+for small and 77% for medium. The SDK reports ~200 / 450 / 550 ms per
+transcription pass by size. So Arm B's schedule slip is large on *every*
+source, clean speech included: median 230 / 560 / 710 ms by size, where
+Arm A's is 4–6 ms.
 
 The two slip figures mean different things. For Arm A, slip is the recognizer
-refusing input. For Arm B, it is our own thread busy computing.
+refusing input. For Arm B, it is our own thread busy computing. For tiny it
+does not accumulate. After each blocking pass, the feeder releases the frames
+it owes back to back, so by the end of a clip it is back on schedule (final
+slip: 2 ms median). For small and medium it no longer catches up: final slip
+is 60–180 ms median, and that lag goes straight into final latency.
 
 The practical consequence: a live app must not call `addAudio()` from the
 thread reading `AudioRecord`. A stall of that size on the capture thread risks
@@ -568,20 +628,43 @@ the build**. Measuring the original parquet bytes gives the same figures, and
 `build_corpus.py` only resamples. §8's "normalise every file" meant format
 (16 kHz mono PCM16), never loudness.
 
-It went unnoticed through Phase 1 because Arm A copes. It scores 9.69% on these
-clips, plausibly because the platform recognizer normalises gain itself. It
-surfaced in Phase 2 because Moonshine does not: see
+It went unnoticed through Phase 1 because Arm A copes: it scores 9.69% on
+these clips. It surfaced in Phase 2 because Moonshine does not: see
 [the finding above](#moonshine-returns-no-text-and-no-error-on-some-quiet-clips).
 
-What it undermines:
+**The fix, and what it showed.** The corpus now carries `fleurs_en_norm`, a
+copy of the 20 English clips, each lifted by one static gain (+3.1 to
++43.6 dB) to −23 dBFS RMS, the level of the other two sources. A static gain,
+not loudness normalisation or compression, so each copy is exactly the audio
+the arms already heard, only louder. Both arms were re-run over originals and
+copies together:
 
-- **Phase 1's "Spanish is more accurate than English"** compares audio 40 dB
-  apart. The direction may survive, but the margin is not clean evidence of a
-  language effect.
-- **Arm B's clean-English WER** mixes level robustness with recognition
-  accuracy, and cannot be read as either alone.
-- **The LibriSpeech comparison is unaffected.** Both arms saw normal-level audio
-  there, so the noisy-English result stands as measured.
+| Same 20 clips | Original (very quiet) | Level-matched |
+|---|---|---|
+| Arm A WER | **9.69%** | 12.60% |
+| Arm A WER, without clip `-012` | 10.47% | **8.22%** |
+| Moonshine tiny WER | 30.05% | **11.25%** |
+| Moonshine tiny, rows with no text | 15 of 120 | **0 of 60** |
+
+Level was most of Moonshine's clean-English problem: WER fell by nearly two
+thirds and the blank outputs disappeared. Arm A also improved on 19 of 20
+clips. Its aggregate got worse only because of one clip where, at the higher
+level, the recognizer returned just the last clause
+([finding](#the-platform-recognizer-can-return-only-the-last-clause)).
+
+What it undermined:
+
+- **Phase 1's "Spanish is more accurate than English"** compared audio 40 dB
+  apart. At matched level the gap depends on a single clip (see
+  [Results](#three-things-worth-stopping-on)), so it is not established.
+- **Arm B's clean-English WER** on the original clips mixes level robustness
+  with recognition accuracy. The level-matched figure is the one to compare.
+- **The LibriSpeech comparison was never affected.** Both arms saw
+  normal-level audio there.
+
+The rebuild that added the copies reproduced all 124 existing corpus files
+byte for byte, which is also the first end-to-end check that
+`build_corpus.py` is deterministic.
 
 A related provenance gap: FLEURS's `id` column is a *sentence* id, and each
 sentence exists as several speakers' recordings, sometimes wildly different in
@@ -590,9 +673,33 @@ The manifest's `source_id` therefore does not pin which recording a clip came
 from. The build is still deterministic at the pinned dataset revision, so it
 rebuilds identically, but `source_id` alone is not an identifier.
 
-The clean fix is a loudness-normalised copy of the FLEURS English clips, run
-through every arm alongside the originals. That separates *"hears quiet
-speech"* from *"transcribes clean speech"*. It is not done yet.
+### The platform recognizer can return only the last clause
+
+On one level-matched clip, `fleurs-en-norm-short-012`, Arm A's final result
+contained only the sentence's last clause, on all four repetitions:
+
+```
+reference:  traffic flow is the study of the movement of individual drivers and
+            vehicles between two points and the interactions they make with one another
+final:      And the interactions they make with one another
+```
+
+The same sentence at its original (quiet) level transcribes perfectly, every
+time. The partial results had shown the full sentence first: 25 words were
+rewritten on the way to that final (against 9 on the quiet original). The
+final starts with a space, the way a continuation segment is formatted. That
+suggests the recognizer split the utterance internally and reported only the
+last segment. That reading is an inference; what was delivered is a fact.
+
+For anyone building on `SpeechRecognizer`: the final result is not guaranteed
+to contain everything the partials showed. An app that replaces its display
+with each result, as this harness does and as most sample code does, can lose
+most of an utterance. Accumulating across segments guards against it. So does
+the segmented-session mode the harness uses for continuous speech.
+
+It is one clip in eighty. It also decided the English-vs-Spanish comparison
+(see [Results](#three-things-worth-stopping-on)), which is why it gets a
+section.
 
 ### The platform recognizer had Spanish installed and English missing
 
@@ -750,6 +857,52 @@ available signal for "not keeping up with real-time input".
 The general rule: before excluding measurements as low-quality, check whether
 the exclusion correlates with the thing being measured. If it does, the filter
 is part of the result.
+
+*Postscript (Phase 2).* The example numbers above come from Phase 1's English
+run, whose timing did not reproduce: re-run, the same recognizer showed 6 ms
+of slip on the same noisy clips (see [Reproducibility](#reproducibility)). The
+rule stands. The illustration shows what that one session did, not what the
+recognizer always does.
+
+### "End of speech" was stamped up to one frame early
+
+Final latency means *time from the speaker stopping to the text being final*.
+Through Phase 1 and Arm B's first run, the harness stamped "the speaker
+stopped" at the moment the paced feeder returned. That is not the same moment.
+
+The feeder releases each 100 ms frame at the **start** of its window, so with
+no slip it hands over the last frame, and returns, up to one frame before the
+audio actually ends. The stamp was early, and every final latency was
+**overstated** by that gap. A feeder running behind schedule pushes the stamp
+the other way. So the error depended on slip, and could go in either
+direction.
+
+The prediction before measuring was that Moonshine, with its 250 ms median
+slip, would be *understated*. For tiny that was wrong: the feeder catches up
+by the end of each clip, and the early frame dominates. For the larger
+variants it was right, because their passes are long enough that the feeder
+is still behind when the audio runs out. Measured directly:
+
+| | Old stamp vs actual audio end | Final text, old stamp | Final text, actual audio end |
+|---|---|---|---|
+| Arm A, LibriSpeech | 53 ms early | 120 ms | 68 ms |
+| Arm A, FLEURS English | 57 ms early | 98 ms | 50 ms |
+| Arm A, Spanish | 76 ms early | 27 ms | 0 ms |
+| Moonshine tiny, LibriSpeech | 42 ms early | 102 ms | 84 ms |
+| Moonshine small, LibriSpeech | **149 ms late** | 295 ms | 442 ms |
+| Moonshine medium (1 rep), LibriSpeech | **69 ms late** | 574 ms | 634 ms |
+
+So the error ran in both directions, by up to 150 ms, and it would have
+flattered exactly the variants that are slowest to finalise.
+
+Both arms now record `final_after_audio_end_ms` (signed, against feed start +
+audio duration) alongside the old field, and the headline uses it. The old
+field is kept unchanged, so nothing published silently changes meaning.
+
+The one-frame lead itself remains: every arm receives each frame up to 100 ms
+before a microphone with 100 ms buffers would deliver it. It applies equally
+to every arm, so comparisons are fair, but absolute latencies are slightly
+optimistic.
 
 ### An empty transcript is every word missed, not a row to skip
 

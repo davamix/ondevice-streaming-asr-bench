@@ -9,6 +9,29 @@ arm has to beat. If it is good enough, shipping a model is unjustified.
 
 Measured 2026-09-23. Full method and reproduction steps in the [README](../README.md).
 
+> **Revised in Phase 2.** Arm A was re-run later the same day on a corrected
+> harness and corpus, and several conclusions below changed. The figures are
+> left as Phase 1 measured them, except where the scoring was wrong. Current
+> numbers are in the [README](../README.md#results).
+>
+> - **Spanish WER** 7.73% → **8.27%**. This is a scoring fix: a row that
+>   returned no text was skipped instead of counted as missed. Pooled with the
+>   Phase 2 run it is 8.14%.
+> - **"Spanish is more accurate than English" is not established.** The
+>   English clips were ~40 dB quieter than the Spanish ones. At matched level,
+>   the gap depends on a single clip.
+> - **English timing did not reproduce; English accuracy did, exactly.** The
+>   English run started one minute after the English language pack finished
+>   installing. Re-run, noisy English showed 6 ms of slip (not 196), first text
+>   at 1012 ms (not 1276), and final text 68 ms after the audio ended (not
+>   315 ms). So slip does not work as a proxy for difficulty after all.
+> - **"The latency profiles are opposite, by language" holds only for first
+>   text.** Spanish is slower to show text (~2.0 s vs 1.0–1.3 s), and that
+>   reproduced across three runs. Final text is fast in both languages once
+>   measured from the real end of the audio (0–76 ms).
+> - **Final latency was overstated throughout.** "End of speech" was stamped
+>   up to one frame early, by 50–75 ms for this arm.
+
 ---
 
 ## Results
