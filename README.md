@@ -10,11 +10,12 @@ This repo is the lab notebook, not the final report. It was made public before
 any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
-**Status:** Phases 0–2 complete. Arm B (Moonshine streaming English) is
-measured at all three sizes; see the [Phase 2 summary](summaries/phase-2-arm-b.md).
-Arm A was re-measured in Phase 2 on a corrected harness and corpus; several
-Phase 1 figures were revised, and the revisions are marked where they occur.
-Arms C–E not started.
+**Status:** Phases 0–2 complete; Phase 3 measured except Whisper small. Arm D
+(Parakeet) is the first model to serve **both** languages well: 6.98% WER in
+Spanish, better than the platform recognizer, and 7.05% on noisy English. See
+the [Phase 3 summary](summaries/phase-3-arms-d-e.md). A scoring fix in Phase 3
+revised noisy-English WER for Arm A and Moonshine tiny; revisions are marked
+where they occur. Arm C not started.
 
 ---
 
@@ -25,7 +26,7 @@ Arms C–E not started.
 | [Why this is not obvious](#why-this-is-not-obvious) | Why live ASR is a different problem from batch ASR, and the English/Spanish asymmetry the experiment exists to price |
 | [Hardware under test](#hardware-under-test) | The phone, its SoC, and why no published number comes from an emulator |
 | [The matrix](#the-matrix) | The five arms, with current status per arm |
-| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), and [Arm B: Moonshine](#arm-b-moonshine-streaming-english) |
+| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), [Arm B: Moonshine](#arm-b-moonshine-streaming-english), and [Arms D and E: Parakeet and Whisper](#arms-d-and-e-offline-models-made-live-both-languages) |
 | [Metrics](#metrics) | What is measured and why RTF alone would mislead |
 | [Method](#method-paced-file-fed-streaming) | Paced file-fed streaming — the one implementation detail everything rests on |
 | [Corpus](#corpus) | How the audio was built, and the concatenation trick for scored continuous speech |
@@ -34,7 +35,7 @@ Arms C–E not started.
 | [Model licences](#model-licences) | What each arm's weights permit, including one that blocks shipping |
 | [Repo layout](#repo-layout) | Where everything lives |
 | [A note on the test device](#a-note-on-the-test-device) | The safety policy, and why disabling thermal throttling is refused twice over |
-| [summaries/](summaries/) | One short write-up per completed phase — [Phase 1: Arm A](summaries/phase-1-arm-a.md) (with Phase 2's revisions marked) and [Phase 2: Arm B](summaries/phase-2-arm-b.md) |
+| [summaries/](summaries/) | One short write-up per phase — [Phase 1: Arm A](summaries/phase-1-arm-a.md), [Phase 2: Arm B](summaries/phase-2-arm-b.md) and [Phase 3: Arms D and E](summaries/phase-3-arms-d-e.md), with later revisions marked |
 | [HANDOVER.md](HANDOVER.md) | State, commands and constraints for running the next phase in a fresh session |
 
 ### Findings index
@@ -62,16 +63,18 @@ anywhere else.
 | 16 | [Filtering out "bad" measurement rows can flatter what you measure](#filtering-out-bad-measurement-rows-can-flatter-the-thing-you-are-measuring) | Measurement integrity |
 | 17 | ["End of speech" was stamped up to one frame early](#end-of-speech-was-stamped-up-to-one-frame-early) | Measurement integrity |
 | 18 | [An empty transcript is every word missed, not a row to skip](#an-empty-transcript-is-every-word-missed-not-a-row-to-skip) | Measurement integrity |
-| 19 | [Years written as digits cost four WER points](#years-written-as-digits-cost-four-wer-points) | Measurement integrity |
-| 20 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
-| 21 | [Two ONNX Runtimes in one APK collide at packaging](#two-onnx-runtimes-in-one-apk-collide-at-packaging) | Integration gotcha |
-| 22 | [sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default](#sherpa-onnxs-kotlin-vad-splits-utterances-after-5-seconds-by-default) | Integration gotcha |
-| 23 | [The battery temperature an app can read can be minutes old](#the-battery-temperature-an-app-can-read-can-be-minutes-old) | Measurement integrity |
-| 24 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
+| 19 | [Live partials from an offline model triple its compute](#live-partials-from-an-offline-model-triple-its-compute) | Measured |
+| 20 | [Silero VAD hears quiet speech, but late](#silero-vad-hears-quiet-speech-but-late) | Model behaviour |
+| 21 | [Years written as digits cost four WER points](#years-written-as-digits-cost-four-wer-points) | Measurement integrity |
+| 22 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
+| 23 | [Two ONNX Runtimes in one APK collide at packaging](#two-onnx-runtimes-in-one-apk-collide-at-packaging) | Integration gotcha |
+| 24 | [sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default](#sherpa-onnxs-kotlin-vad-splits-utterances-after-5-seconds-by-default) | Integration gotcha |
+| 25 | [The battery temperature an app can read can be minutes old](#the-battery-temperature-an-app-can-read-can-be-minutes-old) | Measurement integrity |
+| 26 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
 
-> **New here?** Start with the [Phase 2 summary](summaries/phase-2-arm-b.md)
-> and the [Phase 1 summary](summaries/phase-1-arm-a.md) for results without the
-> process. Then [Findings](#findings-and-dead-ends) for
+> **New here?** Start with the [Phase 3 summary](summaries/phase-3-arms-d-e.md),
+> then [Phase 2](summaries/phase-2-arm-b.md) and [Phase 1](summaries/phase-1-arm-a.md),
+> for results without the process. Then [Findings](#findings-and-dead-ends) for
 > what was learned the hard way, and [`PLAN.md`](PLAN.md) for the full
 > experiment design and the reasoning behind every decision.
 
@@ -122,8 +125,8 @@ the quantity of interest.
 | A | Android on-device recognizer | native | ✅ | ✅ | **0 MB** | platform | The bar to beat | ✅ **measured, both** |
 | B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ✅ **measured, all three sizes** |
 | C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ⬜ not started |
-| D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ⬜ not started |
-| E | Whisper small + base int8 (chunked) | no | ✅ | ✅ | 375 / 161 MB | sherpa-onnx | Known baseline / calibration | ⬜ not started |
+| D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ✅ **measured, both** |
+| E | Whisper small + base int8 (VAD-segmented) | no | ✅ | ✅ | 375 / 161 MB | sherpa-onnx | Known baseline / calibration | ✅ base measured, both · ⏳ small pending |
 
 Arm A decides whether bundling a model is justified at all. If the platform
 recognizer is good enough on this audio, that is a legitimate and
@@ -373,6 +376,122 @@ model's footprint from above, and it is not comparable to Arm A's.
   more. Arm A's count did not change (8 and 8), and small and medium show
   7–8 on both. Why is not known.
 
+### Arms D and E: offline models made live, both languages
+
+Parakeet TDT 0.6b v3 (Arm D) and Whisper (Arm E) are offline models: they
+take a whole utterance and return its text. Both run through sherpa-onnx
+1.13.8 with Silero VAD, the way a live app would use them
+([`SherpaOfflineArm`](bench/app/src/main/kotlin/io/github/davamix/asrbench/arms/SherpaOfflineArm.kt)):
+
+- **The VAD cuts the paced audio into utterances.** A segment closes after
+  0.25 s of silence and is decoded once for its **final** text.
+- **While speech is still open, the audio so far is re-decoded every 500 ms**
+  and shown as a **partial**. That is the Moonshine SDK's update interval, so
+  both stacks refresh text on the same cadence. A partial is skipped if the
+  previous decode is still running.
+- **Decoding runs on its own thread**, so the feed does only the VAD and
+  never stalls, unlike Moonshine's `addAudio()`
+  ([finding](#moonshine-runs-inference-inside-addaudio)). Slip therefore stays
+  under 50 ms and says little. The cost of a slow model shows up as
+  compute and as final latency.
+- 4 ONNX Runtime threads. sherpa-onnx exposes the setting, so unlike
+  Moonshine's this one is real.
+
+Whisper is told the language, as Arm A is. Parakeet takes no hint and detects
+it. Same corpus, paced feeder and phone as Arms A and B.
+
+| Arm | Source | Audio | WER | CER | Final text | First text | Revisions | Compute, with partials (finals only) | `peak_rss_mb` |
+|---|---|---|---|---|---|---|---|---|---|
+| D Parakeet | FLEURS `es_419` | clean | **6.98%** | 2.50% | 0 ms | 2373 ms | 9 | 0.52 (0.20) | 1027 |
+| D Parakeet | FLEURS `en_us` | clean, level-matched | **6.88%** | 3.24% | 186 ms | 1797 ms | 12 | 0.60 (0.22) | |
+| D Parakeet | FLEURS `en_us` | clean, original (**very quiet**) | 14.69% | 7.81% | 143 ms | 2416 ms | 24 | 0.56 (0.21) | |
+| D Parakeet | LibriSpeech `test-other` | **noisy** | **7.05%** | 3.06% | 353 ms | 1556 ms | 8 | 0.56 (0.23) | |
+| E Whisper base | FLEURS `es_419` | clean | 15.12% | 4.67% | 471 ms | 2322 ms | 14 | 0.81 (0.27) | 572 |
+| E Whisper base | FLEURS `en_us` | clean, level-matched | 11.88% | 6.64% | 618 ms | 1717 ms | 9 | 0.88 (0.28) | |
+| E Whisper base | FLEURS `en_us` | clean, original (**very quiet**) | 20.62% | 13.28% | 518 ms | 1835 ms | 26 | 0.76 (0.28) | |
+| E Whisper base | LibriSpeech `test-other` | **noisy** | 22.82% | 9.62% | 678 ms | 1522 ms | 16 | 0.83 (0.30) | |
+| E Whisper small | — | — | *not yet measured* | | | | | | |
+
+One 4-repetition run per model, 80 clips per repetition, repetition 0
+discarded. WER was identical to the hundredth in every repetition: greedy
+decoding behind a deterministic VAD, fed identical audio, gives identical text.
+Disk: Parakeet 670.5 MB, Whisper base 160.6 MB, plus 2.2 MB for Silero VAD.
+Whisper small (375 MB) is fetched and validated on the emulator but not
+measured: the battery budget ran out after the two runs above.
+
+**Against the bar, both languages:**
+
+| | Arm A (0 MB) | Moonshine small (224 MB) | Moonshine medium (416 MB) | Whisper base (161 MB) | **Parakeet (670 MB)** |
+|---|---|---|---|---|---|
+| WER, **Spanish** | 8.14% | — | — | 15.12% | **6.98%** |
+| WER, English **noisy** | 29.31% | 8.72% | **6.26%** | 22.82% | 7.05% |
+| WER, English clean, level-matched | 12.60% | 7.71% | **5.62%** | 11.88% | 6.88% |
+| WER, English clean, **very quiet** | **9.69%** | 27.29% | 25.31% | 20.62% | 14.69% |
+| First text, noisy / clean / es | 1012 / 1259 / 2009 ms | 1191 / 1655 / — | 1241 / 1285 / — | 1522 / 1717 / 2322 | 1556 / 1797 / 2373 |
+| Final text, noisy / clean / es | **68 / 76 / 0 ms** | 442 / 144 / — | 662 / 414 / — | 678 / 618 / 471 | 353 / 186 / 0 |
+| Compute, share of real time | — | 0.72 | 0.80 | 0.76–0.88 | 0.52–0.60 |
+| Peak RSS | 118 MB² | 605 MB | 933 MB | 572 MB | 1027 MB |
+| Battery per 240 clips | 3 pts | 10 pts | 11 pts | 15 pts | 10.5 pts |
+| Cooling pauses at the 35 °C gate | 0 | 0 | 1 | **7** | 0 |
+
+² Our harness only; the recognizer's own memory is in Google's process.
+
+**What Arms D and E answer:**
+
+1. **One model can serve both languages, and it is Parakeet.** It beats the
+   platform recognizer on Spanish (6.98% vs 8.14%), which nothing else in the
+   matrix has done. On English it sits between Moonshine small and medium on
+   both noisy (7.05%) and clean (6.88%) speech. It is the first arm that is
+   competitive in both languages at once, with no language setting.
+2. **Memory did not bite.** The plan flagged Parakeet as the arm most likely
+   to fail on memory, expecting 1.5–2 GB resident. It peaked at 1027 MB,
+   about 100 MB above Moonshine medium, and loaded in 2.6 s. There were no
+   kills and no errors in 320 clips. The price is disk: 670 MB, three times
+   Moonshine small.
+3. **Parakeet is also faster than Whisper base, at eight times the size.**
+   Its partial decodes take ~290 ms against Whisper base's ~480 ms, and its
+   finals 310–460 ms against 540–840 ms (medians by source). It needs 0.52–0.60 of real time with
+   partials, where Whisper base needs 0.76–0.88. So it ran cooler: no cooling
+   pauses, against seven for Whisper base, and a third less battery.
+4. **Whisper base calibrates as expected, and is not a contender.** Its
+   Spanish is nearly twice Arm A's error (15.12%), and its English is level
+   with Arm A on clean speech and well behind every bundled model on noisy.
+   On one quiet clip it produced a repetition loop ("4x4, 3x3, 3x4, 3x4…")
+   instead of the sentence, identically in every repetition.
+5. **Final text is quick; first text is not.** Final text arrives 0–350 ms
+   after the audio ends for Parakeet, because the VAD closes most segments on
+   the clip's own trailing silence and the decode is fast. First text is the
+   weak spot. At 1.5–2.4 s the two VAD arms are the slowest in the matrix. A
+   partial waits for the VAD to declare speech (at least 0.25 s of it), then
+   one 500 ms interval, then a decode. In Spanish every arm is slow
+   (2.0–2.4 s), and there Parakeet matches Arm A's final text (0 ms).
+6. **Partials cost more than the model.** Showing live text roughly triples
+   the compute: finals alone need 0.20–0.30 of real time, and re-decoding
+   open speech every 500 ms brings that to 0.52–0.88
+   ([finding](#live-partials-from-an-offline-model-triple-its-compute)).
+7. **Quiet audio costs the first word, and that is the VAD.** Unlike
+   Moonshine, the VAD found speech in every very quiet clip: no blank rows.
+   But it starts late, and both models miss the first word of the sentence on
+   11–12 of those 20 clips, against 3–4 at normal level
+   ([finding](#silero-vad-hears-quiet-speech-but-late)).
+
+**Known limits of these numbers:**
+
+- **Whisper small is not measured yet.** It is the one Arm E variant left.
+- **"Partials off" figures are derived, not measured.** Each row records how
+  long the final waited behind a running partial. Subtracting that wait
+  estimates final latency without partials: 0–250 ms for Parakeet, 90–480 ms
+  for Whisper base. A run with `--partial-ms 0` would measure it.
+- **The partial cadence is a choice.** 500 ms matches Moonshine. The first
+  partial is attempted one interval after the VAD declares speech, as in
+  sherpa-onnx's own example, which uses 200 ms. A shorter interval would bring
+  first text forward by up to 300 ms and cost more compute.
+- **Per clip, not sustained.** No session runs yet. Parakeet's worst clip used
+  0.85 of real time with partials, so a longer, hotter session is a fair
+  question.
+- **Temperatures lag** ([finding](#the-battery-temperature-an-app-can-read-can-be-minutes-old)).
+  Whisper base's seven pauses are counted from the gate's own log.
+
 ## Metrics
 
 Real-time factor alone is a batch metric and would mislead here.
@@ -448,6 +567,8 @@ python -m venv .venv
 
 .venv/Scripts/python scripts/fetch_models.py --list
 .venv/Scripts/python scripts/fetch_models.py --arm B
+.venv/Scripts/python scripts/fetch_models.py --arm D   # also --arm E; both pull silero-vad
+.venv/Scripts/python scripts/fetch_runtime.py          # sherpa-onnx AAR, hash-checked
 ```
 
 Then on a device. The emulator comes first, always — it is the blast shield for
@@ -466,6 +587,11 @@ a phone that cannot be replaced (§11.5):
 .venv/Scripts/python scripts/run_bench.py --device physical --push-models moonshine-tiny-en
 .venv/Scripts/python scripts/run_bench.py --device physical \
     --arms B:moonshine-tiny-en --langs en --reps 4 --no-push
+
+# Arms D and E: the VAD goes along with each model; both languages
+.venv/Scripts/python scripts/run_bench.py --device physical     --push-models silero-vad,parakeet-tdt-v3-int8
+.venv/Scripts/python scripts/run_bench.py --device physical     --arms D:parakeet-tdt-v3-int8 --langs en,es --reps 4 --no-push
+#   --partial-ms 0 shows final text only; the default re-decodes every 500 ms
 
 .venv/Scripts/python scripts/summarize.py             # score everything, on the PC
 ```
@@ -947,6 +1073,74 @@ It had also touched a published number. One Arm A Spanish utterance ended in
 reports the count of blank rows next to the error count, so a blank row is
 visible instead of silently vanishing.
 
+### Live partials from an offline model triple its compute
+
+An offline model can look live by re-decoding the open utterance every few
+hundred milliseconds and showing each result as partial text. This is
+sherpa-onnx's own "simulate streaming" pattern, and it is what Arms D and E
+do at a 500 ms cadence. What it costs was measured directly, because each
+row records partial and final decode time separately:
+
+| Share of real time | Finals only | With 500 ms partials |
+|---|---|---|
+| Parakeet | 0.20–0.23 | 0.52–0.60 |
+| Whisper base | 0.27–0.30 | 0.76–0.88 |
+
+Every partial decodes the whole utterance so far, from its start. A 6-second
+sentence gets seven or eight partial decodes that grow toward its full
+length, and then the final. For Whisper there is a second multiplier:
+sherpa-onnx appends 1000 frames (10 s) of padding to every input so the
+decoder finds its end-of-text token, so even a half-second partial costs a
+10.5-second encoder pass.
+
+The phone felt it. Whisper base reached the 35 °C gate six minutes into its
+run, from 30.5 °C, and paused to cool seven times in 87 minutes, 29 minutes of
+pauses in all. Parakeet, doing less work per partial, never reached the gate.
+
+There is a latency cost too. A decode cannot be interrupted, so a final that
+arrives while a partial is running waits for it: a median of 44–134 ms for
+Parakeet and 152–376 ms for Whisper base, and at worst 0.6 s and 1.0 s.
+
+For a product, the partial cadence is a dial between how live the text looks
+and how hot the phone gets. It deserves to be tuned per model, not left at a
+default. The dial is `--partial-ms`, and 0 turns partials off.
+
+### Silero VAD hears quiet speech, but late
+
+Moonshine's built-in voice detection returned **no text at all** on some of
+the very quiet FLEURS English clips
+([finding](#moonshine-returns-no-text-and-no-error-on-some-quiet-clips)).
+Silero VAD, in front of Arms D and E, did better: it found speech in every
+one of the 20 quiet clips, in every repetition. No blank rows.
+
+It does find it late. On the quiet clips both models miss the first word of
+the sentence far more often than on the same clips at normal level:
+
+| First reference word missing | Very quiet (original) | Level-matched |
+|---|---|---|
+| Parakeet | 11 / 20 | 3 / 20 |
+| Whisper base | 12 / 20 | 4 / 20 |
+
+```
+reference:            It is thinner under the maria and thicker under the highlands.
+Whisper, normal level:   is dinner under the maria and thicker under the highlands.
+Whisper, very quiet:               under the maria and thicker under the highlands.
+```
+
+(Counts are per repetition; every repetition gave the same text.)
+
+Two unrelated models failing the same way, and only on quiet audio, point at
+the stage they share. The VAD dates a segment's start about 0.3 s before the
+point where it declares speech. When a soft onset takes longer than that to
+cross its threshold, the first syllables fall outside the segment and no
+model ever hears them. That is part of the gap between Parakeet's quiet-clip
+WER (14.69%) and its level-matched WER (6.88%). How large a part was not
+separated.
+
+The same caveat as for Moonshine applies: a phone microphone with automatic
+gain delivers much hotter audio than these clips. But where it does not, a
+live app loses the start of the sentence rather than the whole of it.
+
 ### Years written as digits cost four WER points
 
 A third scoring bias, found in Phase 3, and again one that punished a
@@ -1093,7 +1287,7 @@ corpus/
   refs/                  # ground-truth transcripts
   audio/                 # gitignored, rebuildable
 results/                 # pulled JSON, one dir per device+date
-scripts/                 # fetch_corpus / build_corpus / fetch_models / score
+scripts/                 # fetch_corpus / build_corpus / fetch_models / fetch_runtime / run_bench / summarize / score
 ```
 
 ## A note on the test device
