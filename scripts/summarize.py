@@ -81,7 +81,11 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
         for run in doc.get("runs", []):
             if not keep_first and run.get("rep", 0) == 0:
                 continue
-            key = (run["arm"], run["lang"], run.get("bucket", "?"))
+            # Source is part of the key: FLEURS is clean read speech and
+            # LibriSpeech test-other is the noisy stress case. Averaging them
+            # into one WER would describe neither.
+            key = (run["arm"], run["lang"], run.get("bucket", "?"),
+                   run.get("source", "?"))
             g = groups.setdefault(key, {
                 "arm_label": run.get("arm_label", run["arm"]),
                 "runtime": run.get("runtime", "?"),
@@ -131,13 +135,13 @@ def fmt(v, spec="", dash="—"):
 
 
 def print_markdown(summary: dict) -> None:
-    print("| Arm | Lang | `latency_final_ms` | `latency_first_partial_ms` | "
+    print("| Arm | Lang | Source | `latency_final_ms` | `latency_first_partial_ms` | "
           "`partial_instability` | `rtf_sustained` | `peak_rss_mb` | "
           "`disk_size_mb` | WER | CER |")
-    print("|---|---|---|---|---|---|---|---|---|---|")
-    for (arm, lang, bucket), s in summary.items():
+    print("|---|---|---|---|---|---|---|---|---|---|---|")
+    for (arm, lang, bucket, source), s in summary.items():
         print(
-            f"| {arm} | {lang} | {fmt(s['latency_final_ms'], '.0f')} "
+            f"| {arm} | {lang} | {source} | {fmt(s['latency_final_ms'], '.0f')} "
             f"| {fmt(s['latency_first_partial_ms'], '.0f')} "
             f"| {fmt(s['partial_instability'], '.0f')} "
             f"| {fmt(s['rtf_sustained'], '.3f')} "
@@ -149,8 +153,8 @@ def print_markdown(summary: dict) -> None:
 
 
 def print_detail(summary: dict) -> None:
-    for (arm, lang, bucket), s in summary.items():
-        print(f"\n=== Arm {arm} / {lang} / {bucket}")
+    for (arm, lang, bucket, source), s in summary.items():
+        print(f"\n=== Arm {arm} / {lang} / {bucket} / {source}")
         print(f"  {s['arm_label']}  [{s['runtime']}]")
         print(f"  rows                     {s['n']}  (errors: {s['errors']})")
         print(f"  timing-clean rows        {s['n_timing']}"

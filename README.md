@@ -334,6 +334,47 @@ languages rather than burning thermal budget on a row of identical failures.
 
 *Probed 2026-09-23.*
 
+### Installing an on-device language pack: the API works, the Settings UI does not
+
+The device under test shipped with only `es-ES`, and there was **no way to add
+English through the UI**. The Settings path that documentation and forum advice
+point at — Google → Voice → Offline speech recognition — offered a language
+*selector* on this build, with no download control anywhere.
+
+A natural wrong turn: Google Translate *does* offer downloadable English, and
+it reports English as installed. That is a **different mechanism**. Translate's
+offline packs serve translation, not `SpeechRecognizer`, and installing them
+changes nothing for on-device ASR.
+
+The supported answer is an API, not a settings screen:
+
+```kotlin
+SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
+    .triggerModelDownload(recognizerIntent)   // API 33
+```
+
+On this device that took **15 seconds**:
+
+```
+installed_before: ["es-ES"]
+installed_after:  ["es-ES", "en-US"]
+succeeded: true
+```
+
+Two caveats worth carrying into any product that relies on this:
+
+- On **API 33 it is fire-and-forget.** The `ModelDownloadListener` overload
+  that reports progress and failure only arrives in API 34, so on 33 the only
+  way to know the outcome is to poll `checkRecognitionSupport` and watch the
+  installed and pending lists. The harness does exactly that.
+- It is a **request, not a command.** The download happens inside Google's
+  process and may be deferred or declined. Code should handle "still not
+  installed" as a normal outcome.
+
+The practical upshot: an app that depends on on-device recognition cannot
+assume a user's phone has their language, and cannot send them to Settings to
+fix it. It has to call `triggerModelDownload()` itself and verify.
+
 ### The platform recognizer sometimes ends a session with an error *and* correct text
 
 On about 3% of clips, Arm A finished with `ERROR_CLIENT` instead of delivering

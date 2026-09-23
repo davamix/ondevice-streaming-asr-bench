@@ -3,6 +3,7 @@ package io.github.davamix.asrbench
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.github.davamix.asrbench.arms.LanguagePackInstaller
 import io.github.davamix.asrbench.arms.PlatformRecognizerArm
 import io.github.davamix.asrbench.arms.RecognitionSupportProbe
 import org.json.JSONObject
@@ -70,6 +71,41 @@ class BenchmarkTest {
         val out = File(dir, "recognition-support.json")
         out.writeText(doc.toString(2))
         Log.i(TAG, "wrote ${out.absolutePath}")
+    }
+
+    /**
+     * Requests an on-device recognition language pack via the supported
+     * `SpeechRecognizer.triggerModelDownload()` API (API 33).
+     *
+     *   -e lang en-US   -e timeout_s 300
+     *
+     * Needed because this handset ships only `es-ES`, which makes Arm A
+     * unmeasurable on English. Note that Google Translate's offline packs are
+     * a *different* mechanism and do not satisfy this.
+     */
+    @Test
+    fun downloadLanguagePack() {
+        val lang = arg("lang", "en-US")
+        val timeoutS = arg("timeout_s", "300").toLong()
+
+        val outcome = LanguagePackInstaller.install(
+            context, lang, timeoutMs = timeoutS * 1000,
+        )
+
+        Log.i(TAG, "INSTALL RESULT[$lang]: succeeded=${outcome.succeeded} " +
+            "wentPending=${outcome.wentPending} " +
+            "installedAfter=${outcome.installedAfter} " +
+            "pendingAfter=${outcome.pendingAfter} " +
+            "waited=${outcome.waitedMs}ms error=${outcome.error}")
+
+        val dir = File(context.getExternalFilesDir(null), "results").apply { mkdirs() }
+        File(dir, "language-pack-$lang.json").writeText(
+            JSONObject(outcome.toMap()).toString(2)
+        )
+
+        // A refused or deferred download is a real outcome, not a harness
+        // failure -- the request is made into Google's process and can simply
+        // be declined. It is reported, not asserted.
     }
 
     /**

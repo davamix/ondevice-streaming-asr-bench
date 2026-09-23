@@ -171,6 +171,8 @@ def main() -> int:
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--label", default=None)
     ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--download-lang", metavar="BCP47",
+                    help="request an on-device language pack (e.g. en-US), then exit")
     ap.add_argument("--probe", action="store_true",
                     help="only probe platform recognition support, then exit")
     ap.add_argument("--smoke", action="store_true",
@@ -200,6 +202,20 @@ def main() -> int:
         install(dev)
 
     buckets = [b.strip() for b in args.buckets.split(",") if b.strip()]
+
+    if args.download_lang:
+        prepare_dirs(dev)
+        run_instrumentation(
+            dev, "downloadLanguagePack",
+            {"lang": args.download_lang, "timeout_s": "300"},
+            timeout_s=600,
+        )
+        out = pull_results(dev, f"langpack-{args.download_lang}")
+        f = out / f"language-pack-{args.download_lang}.json"
+        if f.exists():
+            print("\n=== language pack outcome ===")
+            print(f.read_text(encoding="utf-8"))
+        return 0
 
     if args.probe:
         prepare_dirs(dev)
