@@ -98,9 +98,41 @@ def _int_to_words(n: int, lang: str) -> str:
     return f"{head} {_ONES['en'][rest]}"
 
 
+def _year_to_words(n: int) -> str:
+    """1848 -> 'eighteen forty eight', 1900 -> 'nineteen hundred',
+    1905 -> 'nineteen oh five'. How English speakers read a year."""
+    hi, lo = divmod(n, 100)
+    if lo == 0:
+        tail = "hundred"
+    elif lo < 10:
+        tail = f"oh {_ONES['en'][lo]}"
+    else:
+        tail = _int_to_words(lo, "en")
+    return f"{_int_to_words(hi, 'en')} {tail}"
+
+
 def _expand_digits(text: str, lang: str) -> str:
+    """Spell out digits the way the speaker most likely said them.
+
+    An English four-digit number from 1100 to 1999 is read as a year. As a
+    plain cardinal, "1848" became "one thousand eight hundred forty eight"
+    while LibriSpeech's reference says "eighteen forty eight", so every arm
+    that writes years as digits (Arm A, Whisper) took about twelve errors per
+    pass on ls-other-short-006, and arms that spell them out took none. That
+    was a formatting penalty worth ~4 WER points on noisy English. Spanish
+    reads years as cardinals ("mil ochocientos cuarenta y ocho"), so it needs
+    no special case.
+    """
     lang = lang if lang in _ONES else "en"
-    return re.sub(r"\d+", lambda m: _int_to_words(int(m.group()), lang), text)
+
+    def spell(m: re.Match) -> str:
+        s = m.group()
+        n = int(s)
+        if lang == "en" and len(s) == 4 and 1100 <= n <= 1999:
+            return _year_to_words(n)
+        return _int_to_words(n, lang)
+
+    return re.sub(r"\d+", spell, text)
 
 
 # ── normalisation ────────────────────────────────────────────────────────
@@ -194,6 +226,10 @@ def validate() -> int:
         ("¿Cómo estás?", "es", "cómo estás"),
         ("Son las 21 horas", "es", "son las veintiuno horas"),
         ("  multiple   spaces  ", "en", "multiple spaces"),
+        ("born in 1848", "en", "born in eighteen forty eight"),
+        ("in 1900 and 1905", "en", "in nineteen hundred and nineteen oh five"),
+        ("bus 403, 2005", "en", "bus four hundred three two thousand five"),
+        ("en 1848", "es", "en mil ochocientos cuarenta y ocho"),
     ]
     for raw, lang, want in cases:
         got = normalise(raw, lang)
@@ -220,6 +256,12 @@ def validate() -> int:
     print("\nWER -- digit formatting must NOT be penalised:")
     r = score_pair("it is twenty one degrees", "It is 21 degrees.", "en")
     check("wer", r["wer"], 0.0)
+
+    print("\nYears written as digits must NOT be penalised either:")
+    r = score_pair("born january fifteenth eighteen forty eight",
+                   "Born January 15, 1848.", "en")
+    # "15" vs "fifteenth" is a genuine ordinal/cardinal mismatch: 1 of 6.
+    check("wer", r["wer"], 1 / 6)
 
     print("\nSpanish accents ARE scored (they are a real difference):")
     r = score_pair("cómo estás", "como estas", "es")
