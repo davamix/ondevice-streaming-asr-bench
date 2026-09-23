@@ -25,6 +25,15 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+# The safety messages below cite PLAN.md sections by their section sign, and a
+# Windows console defaults to cp1252, which mangles them. A safety warning that
+# renders as mojibake is a safety warning people stop reading.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 ROOT = Path(__file__).resolve().parent.parent
 
 APPLICATION_ID = "io.github.davamix.asrbench"
@@ -45,6 +54,7 @@ TEMP_ABORT_C = 43.0
 BATTERY_MIN_PCT = 30
 BATTERY_MAX_PCT = 80
 FREE_STORAGE_MIN_GB = 5.0
+FREE_STORAGE_MIN_GB_EMULATOR = 0.3
 
 
 def adb_path() -> str:
@@ -221,8 +231,12 @@ def preflight(dev: Device, *, require_thermal: bool | None = None,
               f"{bat.get('temp_c')} C charging={bat.get('charging')}")
         print(f"[preflight] free storage: {report['free_storage_gb']} GB")
 
-    if free is not None and free < FREE_STORAGE_MIN_GB:
-        problems.append(f"free storage {free:.1f} GB < {FREE_STORAGE_MIN_GB} GB")
+    # The 5 GB floor is sized for the phone, which has to hold the corpus plus
+    # up to ~670 MB of weights per arm with room to spare. An emulator running
+    # a plumbing check needs a fraction of that.
+    min_free = FREE_STORAGE_MIN_GB if not dev.is_emulator else FREE_STORAGE_MIN_GB_EMULATOR
+    if free is not None and free < min_free:
+        problems.append(f"free storage {free:.1f} GB < {min_free} GB")
 
     if require_thermal:
         temp = bat.get("temp_c")

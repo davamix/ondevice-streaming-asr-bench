@@ -193,24 +193,64 @@ class PlatformRecognizerArm(
 
             main.post { recognizer?.startListening(intent) }
 
-            val out = ParcelFileDescriptor.AutoCloseOutputStream(writeEnd)
-            val stats = out.use { stream ->
-                PacedFeeder(audio).feed(
-                    sink = { pcm, _ -> stream.writePcm16(pcm) },
-                    onStart = { state.feedStartMs = SystemClock.uptimeMillis() },
-                )
+            // The feed runs on its own thread with a watchdog.
+            //
+            // Writing to the pipe blocks once its ~64 KB buffer fills, so if
+            // the recognizer stops reading -- which it does immediately when a
+            // language pack is missing -- an inline feed would block forever
+            // and the run would hang rather than report. That is not
+            // hypothetical: it is exactly what the emulator did, and PLAN.md
+            // §12 lists a missing Spanish pack on this MIUI build as a live
+            // risk. A stalled arm must produce a recorded failure.
+            var stats: PacedFeeder.FeedStats? = null
+            var feedError: String? = null
+            val feeder = Thread({
+                try {
+                    ParcelFileDescriptor.AutoCloseOutputStream(writeEnd).use { stream ->
+                        stats = PacedFeeder(audio).feed(
+                            sink = { pcm, _ -> stream.writePcm16(pcm) },
+                            onStart = { state.feedStartMs = SystemClock.uptimeMillis() },
+                            shouldStop = { state.errorCode != null },
+                        )
+                    }
+                } catch (t: Throwable) {
+                    feedError = "${t.javaClass.simpleName}: ${t.message}"
+                }
+            }, "paced-feeder")
+            feeder.start()
+
+            // Generous but finite: real time plus slack. Exceeding this means
+            // the consumer stalled.
+            val feedBudgetMs = audio.durationMs * 2 + 15_000
+            feeder.join(feedBudgetMs)
+            if (feeder.isAlive) {
+                // Closing the read end breaks the blocked write with EPIPE.
+                runCatching { readEnd.close() }
+                feeder.join(5_000)
+                if (feedError == null) {
+                    feedError = "feed stalled: consumer stopped reading after " +
+                        "${feedBudgetMs}ms budget"
+                }
             }
-            // Closing the write end above is the end-of-audio signal.
+            // Closing the write end is the end-of-audio signal.
             state.speechEndMs = SystemClock.uptimeMillis()
 
             main.post { recognizer?.stopListening() }
 
-            val settled = done.await(FINAL_TIMEOUT_S, TimeUnit.SECONDS)
+            // If the recognizer already errored there is nothing left to wait
+            // for; only wait out the full timeout when a result is still
+            // plausibly coming.
+            val settled = if (state.errorCode != null) {
+                done.await(2, TimeUnit.SECONDS)
+            } else {
+                done.await(FINAL_TIMEOUT_S, TimeUnit.SECONDS)
+            }
 
             val err = state.errorCode
             if (err != null && tracker.text.isBlank()) {
                 return ArmResult.failed(
-                    "recognizer error ${errorName(err)}",
+                    "recognizer error ${errorName(err)}" +
+                        (feedError?.let { "; $it" } ?: ""),
                     audio.durationMs,
                 )
             }
@@ -227,10 +267,11 @@ class PlatformRecognizerArm(
                 // (PLAN.md D6) -- sustained behaviour for Arm A has to come
                 // from result timing instead.
                 rtfSustained = null,
-                maxSlipMs = stats.maxSlipMs,
+                maxSlipMs = stats?.maxSlipMs ?: 0,
                 audioDurationMs = audio.durationMs,
                 peakRssMb = io.github.davamix.asrbench.Telemetry.peakRssMb(),
                 error = when {
+                    feedError != null -> feedError
                     !settled -> "timed out after ${FINAL_TIMEOUT_S}s waiting for final result"
                     err != null -> "recognizer error ${errorName(err)} (partial text kept)"
                     else -> null
@@ -238,8 +279,9 @@ class PlatformRecognizerArm(
                 extra = mapOf(
                     "segmented" to segmented,
                     "segments" to state.segments,
-                    "feed_frames" to stats.frames,
-                    "sink_busy_ms" to stats.sinkBusyMs,
+                    "feed_frames" to (stats?.frames ?: 0),
+                    "sink_busy_ms" to (stats?.sinkBusyMs ?: 0),
+                    "feed_complete" to (stats != null),
                 ),
             )
         } catch (t: Throwable) {

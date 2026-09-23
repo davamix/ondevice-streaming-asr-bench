@@ -73,6 +73,19 @@ def install(dev: Device) -> None:
     sh(dev, "install", "-r", "-t", str(test))
 
 
+def prepare_dirs(dev: Device) -> None:
+    """Have the *app* create its directory tree before anything is pushed.
+
+    `adb push` writes as the `shell` user, and on Android 11+ a directory
+    created by shell inside an app's own external files dir is not reliably
+    readable by that app. The push reports success, the app sees an empty
+    corpus, and the failure looks like a missing file rather than a
+    permissions problem. Creating the tree app-side first avoids it.
+    """
+    print("[prepare] creating app-owned directory tree")
+    run_instrumentation(dev, "prepareDirs", {}, timeout_s=180)
+
+
 def push_corpus(dev: Device, buckets: list[str]) -> None:
     """Push manifest + only the audio the requested buckets need."""
     manifest_path = CORPUS / "manifest.json"
@@ -81,7 +94,6 @@ def push_corpus(dev: Device, buckets: list[str]) -> None:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
     dest = f"{APP_FILES}/corpus"
-    shell(dev, f"mkdir -p {dest}/audio/short {dest}/audio/session")
     sh(dev, "push", str(manifest_path), f"{dest}/manifest.json")
 
     wanted = [c for c in manifest["clips"] if c["bucket"] in buckets]
@@ -163,6 +175,8 @@ def main() -> int:
                     help="only probe platform recognition support, then exit")
     ap.add_argument("--smoke", action="store_true",
                     help="only run the single-clip Arm A smoke test")
+    ap.add_argument("--plumbing", action="store_true",
+                    help="only run the plumbing check (no recognizer needed)")
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--no-install", action="store_true")
     ap.add_argument("--no-push", action="store_true")
@@ -188,6 +202,7 @@ def main() -> int:
     buckets = [b.strip() for b in args.buckets.split(",") if b.strip()]
 
     if args.probe:
+        prepare_dirs(dev)
         run_instrumentation(
             dev, "probeRecognitionSupport",
             {"langs": "en-US,es-ES"}, timeout_s=300,
@@ -200,7 +215,15 @@ def main() -> int:
         return 0
 
     if not args.no_push:
+        prepare_dirs(dev)
         push_corpus(dev, buckets)
+
+    if args.plumbing:
+        run_instrumentation(dev, "plumbing", {}, timeout_s=600)
+        pull_results(dev, "plumbing")
+        if args.clean:
+            clean_device(dev)
+        return 0
 
     if args.smoke:
         run_instrumentation(dev, "smokeArmA", {}, timeout_s=600)

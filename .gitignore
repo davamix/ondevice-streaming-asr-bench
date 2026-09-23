@@ -40,3 +40,6 @@ local.properties
 # ── Scratch ───────────────────────────────────────────────────────────
 *.log
 scratch/
+
+# Emulator plumbing results: correctness checks, not measurements (D1).
+results/sdk_gphone64*/

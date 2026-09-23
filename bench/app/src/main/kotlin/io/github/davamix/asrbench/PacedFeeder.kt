@@ -62,7 +62,20 @@ class PacedFeeder(
      * [onStart] runs immediately before the first frame is released, so a
      * caller can timestamp "speech started" without racing the first frame.
      */
-    fun feed(sink: Sink, onStart: (() -> Unit)? = null): FeedStats {
+    fun feed(
+        sink: Sink,
+        onStart: (() -> Unit)? = null,
+        /**
+         * Checked before every frame. Returning true stops the feed early.
+         *
+         * A consumer can fail mid-clip -- the platform recognizer aborts
+         * immediately if a language pack is missing, for instance -- and a
+         * feeder that keeps pushing into something that has stopped reading
+         * will block forever once the pipe buffer fills. Stopping early turns
+         * that hang into a recorded failure.
+         */
+        shouldStop: (() -> Boolean)? = null,
+    ): FeedStats {
         val total = audio.samples.size
         var offset = 0
         var frames = 0
@@ -74,6 +87,7 @@ class PacedFeeder(
         onStart?.invoke()
 
         while (offset < total) {
+            if (shouldStop?.invoke() == true) break
             val n = minOf(framesamples, total - offset)
             val scheduled = start + frames.toLong() * frameMs
 

@@ -73,6 +73,48 @@ class BenchmarkTest {
     }
 
     /**
+     * Creates the corpus/model directory tree **as the app**, and reports what
+     * the app can actually see there.
+     *
+     * `adb push` writes as the `shell` user. On Android 11+ a directory that
+     * shell creates inside an app's own external files dir is not reliably
+     * readable by that app -- the push succeeds, the app sees nothing, and the
+     * failure looks like a missing corpus rather than a permissions problem.
+     * Having the app create the directories first makes them app-owned, and
+     * pushes into them land readable.
+     *
+     * Run before pushing anything. `scripts/run_bench.py` does this
+     * automatically.
+     */
+    @Test
+    fun prepareDirs() {
+        val filesDir = context.getExternalFilesDir(null)
+            ?: error("getExternalFilesDir returned null -- external storage unavailable")
+
+        val dirs = listOf(
+            "corpus", "corpus/audio", "corpus/audio/short", "corpus/audio/session",
+            "models", "results",
+        )
+        for (d in dirs) {
+            val f = File(filesDir, d)
+            val ok = f.exists() || f.mkdirs()
+            Log.i(TAG, "mkdir $d -> $ok (${f.absolutePath})")
+        }
+
+        // Report what is visible, so a push that silently failed is obvious.
+        Log.i(TAG, "PREPARE files dir = ${filesDir.absolutePath}")
+        Log.i(TAG, "PREPARE writable = ${filesDir.canWrite()}")
+        val corpus = File(filesDir, "corpus")
+        val manifest = File(corpus, "manifest.json")
+        Log.i(TAG, "PREPARE manifest exists=${manifest.exists()} " +
+            "canRead=${manifest.canRead()} size=${manifest.length()}")
+        val shortDir = File(filesDir, "corpus/audio/short")
+        Log.i(TAG, "PREPARE short clips visible = ${shortDir.list()?.size ?: -1}")
+
+        assertTrue("could not create ${corpus.absolutePath}", corpus.isDirectory)
+    }
+
+    /**
      * Validates everything except the recognizer: WAV parsing, the pacing
      * loop, the instability counter and the JSON writer.
      *

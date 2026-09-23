@@ -10,8 +10,10 @@ This repo is the lab notebook, not the final report. It was made public before
 any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
-**Status:** Phase 0 complete (corpus + scorer). Phase 1 not started.
-No measurements yet — the results table is empty on purpose.
+**Status:** Phase 0 complete (corpus + scorer). Phase 1 harness built and
+validated on the emulator; Arm A implemented. **No measurements yet** — the
+results table is empty on purpose, and stays that way until the phone is off
+the charger (see *Current blocker* below).
 
 ---
 
@@ -57,7 +59,7 @@ the quantity of interest.
 
 | # | Arm | Streaming | EN | ES | Size | Runtime | Role | Status |
 |---|---|---|---|---|---|---|---|---|
-| A | Android on-device recognizer | native | ✅ | ✅ | **0 MB** | platform | The bar to beat | ⬜ not started |
+| A | Android on-device recognizer | native | ✅ | ✅ | **0 MB** | platform | The bar to beat | 🔨 implemented, unmeasured |
 | B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ⬜ not started |
 | C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ⬜ not started |
 | D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ⬜ not started |
@@ -69,11 +71,41 @@ money-saving result — which is why it is built first.
 
 ## Results
 
-*Empty until Phase 1 produces numbers on the physical device. It grows here.*
+*Empty until the harness runs on the physical device. It grows here.*
 
 | Arm | Lang | `latency_final_ms` | `partial_instability` | `rtf_sustained` | `peak_rss_mb` | `disk_size_mb` | WER |
 |---|---|---|---|---|---|---|---|
 | — | — | — | — | — | — | — | — |
+
+### Current blocker
+
+The phone is **plugged in at 99%**, and the pre-flight gate refuses to run:
+
+```
+pre-flight failed for M2012K11AG (physical):
+  device is charging; charging heat plus inference heat compounds (§11.3)
+  battery 99% outside 30-80% (§11.3)
+
+Nothing was run.
+```
+
+Both conditions are physical and only the owner can change them: unplug, and
+let the charge fall to 80% or below. Nothing has been installed on the phone —
+the gate runs before the build and install steps, by design.
+
+### What the emulator already established
+
+The emulator is for plumbing, never for numbers (D1), but it validated the
+whole path end to end: install → create dirs → push corpus → run → write JSON
+→ `adb pull`.
+
+```
+paced feed: 60 frames, audio=6000ms wall=5901ms maxSlip=3ms sinkBusy=6ms
+```
+
+60 frames of 100 ms for a 6.0 s clip, finishing in 5.9 s of wall clock with a
+worst-case 3 ms deviation from schedule. The pacing is accurate, which is the
+one thing that had to be true for any latency number to mean anything.
 
 ## Metrics
 
@@ -147,6 +179,25 @@ python -m venv .venv
 .venv/Scripts/python scripts/fetch_models.py --arm B
 ```
 
+Then on a device. The emulator comes first, always — it is the blast shield for
+a phone that cannot be replaced (§11.5):
+
+```bash
+# plumbing only; no recognizer needed, no numbers of record
+.venv/Scripts/python scripts/run_bench.py --device emulator --plumbing
+
+# the phone, where every published number comes from
+.venv/Scripts/python scripts/devicelib.py --device physical   # status, read-only
+.venv/Scripts/python scripts/run_bench.py --device physical --probe
+.venv/Scripts/python scripts/run_bench.py --device physical --arms A --langs en,es --reps 4
+```
+
+`run_bench.py` refuses to start unless storage, battery level, temperature and
+charging state are all in range, and it checks the device again inside the run
+loop, aborting at 43 °C. The device is always selected explicitly — with an
+emulator frequently attached at the same time, an implicit choice is how a
+benchmark ends up pointed at the wrong machine.
+
 Scoring runs on the PC; the device emits hypothesis text only. That keeps the
 harness small and means a scoring bug is fixable without re-running a single
 measurement.
@@ -217,6 +268,36 @@ i.e. 5 ms at 16 kHz) and `total_lookahead: 16` frames — about **80 ms** of
 algorithmic lookahead. If that holds empirically it is a structural advantage no
 amount of optimisation gives a chunked offline model. To be confirmed by
 measurement in Phase 2.
+
+### `adb push` into an app's own external files dir can be invisible to that app
+
+`adb push` writes as the `shell` user. On Android 11+, a directory shell
+creates inside `/sdcard/Android/data/<pkg>/files/` is not reliably readable by
+the app that owns it: the push reports success, every byte is on the device,
+and the app sees nothing. The failure then presents as a missing corpus rather
+than a permissions problem, which sends you looking in the wrong place.
+
+The fix is to have the app create its own directory tree first — here via an
+instrumented `prepareDirs` test — and push into app-owned directories.
+
+### A stalled consumer will hang a paced feeder, not fail it
+
+A pipe buffer is about 64 KB; six seconds of 16 kHz PCM16 is 192 KB. If the
+consumer stops reading, the feeder blocks on `write` and stays blocked
+*forever*.
+
+This is not hypothetical. On the emulator the platform recognizer aborted
+immediately (`SodaSpeechRecognizer: Failed to get language pack of required
+locale: error 13` → `LANGUAGE_UNAVAILABLE`), fired `onError`, and stopped
+draining the pipe — and the run hung until an external 600 s timeout killed it.
+
+The same thing would happen on the phone if a language pack were missing, which
+is a live risk for Spanish. So the feed now runs on its own thread under a
+watchdog, stops early when the consumer reports an error, and closes the read
+end to break a blocked write. A stalled arm produces a recorded failure in
+about 0.2 s instead of a hang — and a failure is a result.
+
+This is precisely what the emulator-first rule is for.
 
 ### Excluded before testing
 
