@@ -1,0 +1,1085 @@
+{
+  "schema": 1,
+  "seed": 20260922,
+  "sample_rate": 16000,
+  "format": "mono PCM16 WAV",
+  "buckets": {
+    "short": {
+      "target_s": [
+        3.0,
+        8.0
+      ],
+      "count_per_source": 20,
+      "purpose": "latency per utterance"
+    },
+    "session": {
+      "target_s": 360.0,
+      "gap_range_s": [
+        0.5,
+        1.5
+      ],
+      "purpose": "sustained RTF and thermals"
+    }
+  },
+  "clips": [
+    {
+      "clip_id": "fleurs-en-short-000",
+      "audio": "audio/short/fleurs-en-short-000.wav",
+      "ref": "refs/fleurs-en-short-000.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 6.0,
+      "source": "fleurs_en",
+      "source_id": "1974"
+    },
+    {
+      "clip_id": "fleurs-en-short-001",
+      "audio": "audio/short/fleurs-en-short-001.wav",
+      "ref": "refs/fleurs-en-short-001.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 5.64,
+      "source": "fleurs_en",
+      "source_id": "1805"
+    },
+    {
+      "clip_id": "fleurs-en-short-002",
+      "audio": "audio/short/fleurs-en-short-002.wav",
+      "ref": "refs/fleurs-en-short-002.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.92,
+      "source": "fleurs_en",
+      "source_id": "1700"
+    },
+    {
+      "clip_id": "fleurs-en-short-003",
+      "audio": "audio/short/fleurs-en-short-003.wav",
+      "ref": "refs/fleurs-en-short-003.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 6.72,
+      "source": "fleurs_en",
+      "source_id": "1728"
+    },
+    {
+      "clip_id": "fleurs-en-short-004",
+      "audio": "audio/short/fleurs-en-short-004.wav",
+      "ref": "refs/fleurs-en-short-004.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 6.66,
+      "source": "fleurs_en",
+      "source_id": "1693"
+    },
+    {
+      "clip_id": "fleurs-en-short-005",
+      "audio": "audio/short/fleurs-en-short-005.wav",
+      "ref": "refs/fleurs-en-short-005.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.32,
+      "source": "fleurs_en",
+      "source_id": "1870"
+    },
+    {
+      "clip_id": "fleurs-en-short-006",
+      "audio": "audio/short/fleurs-en-short-006.wav",
+      "ref": "refs/fleurs-en-short-006.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 7.68,
+      "source": "fleurs_en",
+      "source_id": "1779"
+    },
+    {
+      "clip_id": "fleurs-en-short-007",
+      "audio": "audio/short/fleurs-en-short-007.wav",
+      "ref": "refs/fleurs-en-short-007.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 5.64,
+      "source": "fleurs_en",
+      "source_id": "1770"
+    },
+    {
+      "clip_id": "fleurs-en-short-008",
+      "audio": "audio/short/fleurs-en-short-008.wav",
+      "ref": "refs/fleurs-en-short-008.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 6.84,
+      "source": "fleurs_en",
+      "source_id": "1925"
+    },
+    {
+      "clip_id": "fleurs-en-short-009",
+      "audio": "audio/short/fleurs-en-short-009.wav",
+      "ref": "refs/fleurs-en-short-009.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.56,
+      "source": "fleurs_en",
+      "source_id": "1860"
+    },
+    {
+      "clip_id": "fleurs-en-short-010",
+      "audio": "audio/short/fleurs-en-short-010.wav",
+      "ref": "refs/fleurs-en-short-010.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 7.2,
+      "source": "fleurs_en",
+      "source_id": "1828"
+    },
+    {
+      "clip_id": "fleurs-en-short-011",
+      "audio": "audio/short/fleurs-en-short-011.wav",
+      "ref": "refs/fleurs-en-short-011.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 7.92,
+      "source": "fleurs_en",
+      "source_id": "1874"
+    },
+    {
+      "clip_id": "fleurs-en-short-012",
+      "audio": "audio/short/fleurs-en-short-012.wav",
+      "ref": "refs/fleurs-en-short-012.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 7.68,
+      "source": "fleurs_en",
+      "source_id": "1823"
+    },
+    {
+      "clip_id": "fleurs-en-short-013",
+      "audio": "audio/short/fleurs-en-short-013.wav",
+      "ref": "refs/fleurs-en-short-013.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.5,
+      "source": "fleurs_en",
+      "source_id": "1908"
+    },
+    {
+      "clip_id": "fleurs-en-short-014",
+      "audio": "audio/short/fleurs-en-short-014.wav",
+      "ref": "refs/fleurs-en-short-014.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 5.76,
+      "source": "fleurs_en",
+      "source_id": "1802"
+    },
+    {
+      "clip_id": "fleurs-en-short-015",
+      "audio": "audio/short/fleurs-en-short-015.wav",
+      "ref": "refs/fleurs-en-short-015.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 6.9,
+      "source": "fleurs_en",
+      "source_id": "2003"
+    },
+    {
+      "clip_id": "fleurs-en-short-016",
+      "audio": "audio/short/fleurs-en-short-016.wav",
+      "ref": "refs/fleurs-en-short-016.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 6.84,
+      "source": "fleurs_en",
+      "source_id": "1941"
+    },
+    {
+      "clip_id": "fleurs-en-short-017",
+      "audio": "audio/short/fleurs-en-short-017.wav",
+      "ref": "refs/fleurs-en-short-017.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.56,
+      "source": "fleurs_en",
+      "source_id": "1817"
+    },
+    {
+      "clip_id": "fleurs-en-short-018",
+      "audio": "audio/short/fleurs-en-short-018.wav",
+      "ref": "refs/fleurs-en-short-018.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 6.24,
+      "source": "fleurs_en",
+      "source_id": "1909"
+    },
+    {
+      "clip_id": "fleurs-en-short-019",
+      "audio": "audio/short/fleurs-en-short-019.wav",
+      "ref": "refs/fleurs-en-short-019.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 7.98,
+      "source": "fleurs_en",
+      "source_id": "1694"
+    },
+    {
+      "clip_id": "fleurs-es-short-000",
+      "audio": "audio/short/fleurs-es-short-000.wav",
+      "ref": "refs/fleurs-es-short-000.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 5.58,
+      "source": "fleurs_es",
+      "source_id": "1679"
+    },
+    {
+      "clip_id": "fleurs-es-short-001",
+      "audio": "audio/short/fleurs-es-short-001.wav",
+      "ref": "refs/fleurs-es-short-001.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.48,
+      "source": "fleurs_es",
+      "source_id": "1945"
+    },
+    {
+      "clip_id": "fleurs-es-short-002",
+      "audio": "audio/short/fleurs-es-short-002.wav",
+      "ref": "refs/fleurs-es-short-002.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.08,
+      "source": "fleurs_es",
+      "source_id": "1698"
+    },
+    {
+      "clip_id": "fleurs-es-short-003",
+      "audio": "audio/short/fleurs-es-short-003.wav",
+      "ref": "refs/fleurs-es-short-003.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.48,
+      "source": "fleurs_es",
+      "source_id": "1791"
+    },
+    {
+      "clip_id": "fleurs-es-short-004",
+      "audio": "audio/short/fleurs-es-short-004.wav",
+      "ref": "refs/fleurs-es-short-004.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.68,
+      "source": "fleurs_es",
+      "source_id": "1697"
+    },
+    {
+      "clip_id": "fleurs-es-short-005",
+      "audio": "audio/short/fleurs-es-short-005.wav",
+      "ref": "refs/fleurs-es-short-005.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.6,
+      "source": "fleurs_es",
+      "source_id": "1854"
+    },
+    {
+      "clip_id": "fleurs-es-short-006",
+      "audio": "audio/short/fleurs-es-short-006.wav",
+      "ref": "refs/fleurs-es-short-006.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.86,
+      "source": "fleurs_es",
+      "source_id": "1797"
+    },
+    {
+      "clip_id": "fleurs-es-short-007",
+      "audio": "audio/short/fleurs-es-short-007.wav",
+      "ref": "refs/fleurs-es-short-007.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.44,
+      "source": "fleurs_es",
+      "source_id": "1736"
+    },
+    {
+      "clip_id": "fleurs-es-short-008",
+      "audio": "audio/short/fleurs-es-short-008.wav",
+      "ref": "refs/fleurs-es-short-008.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.36,
+      "source": "fleurs_es",
+      "source_id": "1839"
+    },
+    {
+      "clip_id": "fleurs-es-short-009",
+      "audio": "audio/short/fleurs-es-short-009.wav",
+      "ref": "refs/fleurs-es-short-009.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.96,
+      "source": "fleurs_es",
+      "source_id": "1910"
+    },
+    {
+      "clip_id": "fleurs-es-short-010",
+      "audio": "audio/short/fleurs-es-short-010.wav",
+      "ref": "refs/fleurs-es-short-010.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.08,
+      "source": "fleurs_es",
+      "source_id": "1974"
+    },
+    {
+      "clip_id": "fleurs-es-short-011",
+      "audio": "audio/short/fleurs-es-short-011.wav",
+      "ref": "refs/fleurs-es-short-011.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.48,
+      "source": "fleurs_es",
+      "source_id": "1953"
+    },
+    {
+      "clip_id": "fleurs-es-short-012",
+      "audio": "audio/short/fleurs-es-short-012.wav",
+      "ref": "refs/fleurs-es-short-012.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.36,
+      "source": "fleurs_es",
+      "source_id": "1974"
+    },
+    {
+      "clip_id": "fleurs-es-short-013",
+      "audio": "audio/short/fleurs-es-short-013.wav",
+      "ref": "refs/fleurs-es-short-013.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.02,
+      "source": "fleurs_es",
+      "source_id": "1871"
+    },
+    {
+      "clip_id": "fleurs-es-short-014",
+      "audio": "audio/short/fleurs-es-short-014.wav",
+      "ref": "refs/fleurs-es-short-014.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.56,
+      "source": "fleurs_es",
+      "source_id": "1974"
+    },
+    {
+      "clip_id": "fleurs-es-short-015",
+      "audio": "audio/short/fleurs-es-short-015.wav",
+      "ref": "refs/fleurs-es-short-015.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.3,
+      "source": "fleurs_es",
+      "source_id": "1755"
+    },
+    {
+      "clip_id": "fleurs-es-short-016",
+      "audio": "audio/short/fleurs-es-short-016.wav",
+      "ref": "refs/fleurs-es-short-016.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.2,
+      "source": "fleurs_es",
+      "source_id": "1897"
+    },
+    {
+      "clip_id": "fleurs-es-short-017",
+      "audio": "audio/short/fleurs-es-short-017.wav",
+      "ref": "refs/fleurs-es-short-017.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 5.88,
+      "source": "fleurs_es",
+      "source_id": "1679"
+    },
+    {
+      "clip_id": "fleurs-es-short-018",
+      "audio": "audio/short/fleurs-es-short-018.wav",
+      "ref": "refs/fleurs-es-short-018.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.0,
+      "source": "fleurs_es",
+      "source_id": "1839"
+    },
+    {
+      "clip_id": "fleurs-es-short-019",
+      "audio": "audio/short/fleurs-es-short-019.wav",
+      "ref": "refs/fleurs-es-short-019.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 5.28,
+      "source": "fleurs_es",
+      "source_id": "1679"
+    },
+    {
+      "clip_id": "ls-other-short-000",
+      "audio": "audio/short/ls-other-short-000.wav",
+      "ref": "refs/ls-other-short-000.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 7.34,
+      "source": "librispeech_other",
+      "source_id": "7975-280063-0002"
+    },
+    {
+      "clip_id": "ls-other-short-001",
+      "audio": "audio/short/ls-other-short-001.wav",
+      "ref": "refs/ls-other-short-001.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.135,
+      "source": "librispeech_other",
+      "source_id": "1688-142285-0008"
+    },
+    {
+      "clip_id": "ls-other-short-002",
+      "audio": "audio/short/ls-other-short-002.wav",
+      "ref": "refs/ls-other-short-002.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 5.255,
+      "source": "librispeech_other",
+      "source_id": "7105-2330-0008"
+    },
+    {
+      "clip_id": "ls-other-short-003",
+      "audio": "audio/short/ls-other-short-003.wav",
+      "ref": "refs/ls-other-short-003.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 7.87,
+      "source": "librispeech_other",
+      "source_id": "7902-96592-0039"
+    },
+    {
+      "clip_id": "ls-other-short-004",
+      "audio": "audio/short/ls-other-short-004.wav",
+      "ref": "refs/ls-other-short-004.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.715,
+      "source": "librispeech_other",
+      "source_id": "4350-9170-0042"
+    },
+    {
+      "clip_id": "ls-other-short-005",
+      "audio": "audio/short/ls-other-short-005.wav",
+      "ref": "refs/ls-other-short-005.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 6.275,
+      "source": "librispeech_other",
+      "source_id": "533-1066-0023"
+    },
+    {
+      "clip_id": "ls-other-short-006",
+      "audio": "audio/short/ls-other-short-006.wav",
+      "ref": "refs/ls-other-short-006.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 7.95,
+      "source": "librispeech_other",
+      "source_id": "7975-280057-0004"
+    },
+    {
+      "clip_id": "ls-other-short-007",
+      "audio": "audio/short/ls-other-short-007.wav",
+      "ref": "refs/ls-other-short-007.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 3.755,
+      "source": "librispeech_other",
+      "source_id": "3538-163622-0013"
+    },
+    {
+      "clip_id": "ls-other-short-008",
+      "audio": "audio/short/ls-other-short-008.wav",
+      "ref": "refs/ls-other-short-008.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 3.2,
+      "source": "librispeech_other",
+      "source_id": "2414-128292-0017"
+    },
+    {
+      "clip_id": "ls-other-short-009",
+      "audio": "audio/short/ls-other-short-009.wav",
+      "ref": "refs/ls-other-short-009.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.46,
+      "source": "librispeech_other",
+      "source_id": "7975-280063-0001"
+    },
+    {
+      "clip_id": "ls-other-short-010",
+      "audio": "audio/short/ls-other-short-010.wav",
+      "ref": "refs/ls-other-short-010.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 6.115,
+      "source": "librispeech_other",
+      "source_id": "3331-159609-0012"
+    },
+    {
+      "clip_id": "ls-other-short-011",
+      "audio": "audio/short/ls-other-short-011.wav",
+      "ref": "refs/ls-other-short-011.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 6.3,
+      "source": "librispeech_other",
+      "source_id": "8131-117016-0005"
+    },
+    {
+      "clip_id": "ls-other-short-012",
+      "audio": "audio/short/ls-other-short-012.wav",
+      "ref": "refs/ls-other-short-012.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.895,
+      "source": "librispeech_other",
+      "source_id": "8131-117016-0051"
+    },
+    {
+      "clip_id": "ls-other-short-013",
+      "audio": "audio/short/ls-other-short-013.wav",
+      "ref": "refs/ls-other-short-013.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 5.58,
+      "source": "librispeech_other",
+      "source_id": "533-131562-0005"
+    },
+    {
+      "clip_id": "ls-other-short-014",
+      "audio": "audio/short/ls-other-short-014.wav",
+      "ref": "refs/ls-other-short-014.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 7.42,
+      "source": "librispeech_other",
+      "source_id": "6432-63723-0008"
+    },
+    {
+      "clip_id": "ls-other-short-015",
+      "audio": "audio/short/ls-other-short-015.wav",
+      "ref": "refs/ls-other-short-015.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.46,
+      "source": "librispeech_other",
+      "source_id": "1998-29454-0015"
+    },
+    {
+      "clip_id": "ls-other-short-016",
+      "audio": "audio/short/ls-other-short-016.wav",
+      "ref": "refs/ls-other-short-016.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 7.07,
+      "source": "librispeech_other",
+      "source_id": "6938-70848-0024"
+    },
+    {
+      "clip_id": "ls-other-short-017",
+      "audio": "audio/short/ls-other-short-017.wav",
+      "ref": "refs/ls-other-short-017.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 3.63,
+      "source": "librispeech_other",
+      "source_id": "3528-168669-0059"
+    },
+    {
+      "clip_id": "ls-other-short-018",
+      "audio": "audio/short/ls-other-short-018.wav",
+      "ref": "refs/ls-other-short-018.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 4.85,
+      "source": "librispeech_other",
+      "source_id": "1688-142285-0063"
+    },
+    {
+      "clip_id": "ls-other-short-019",
+      "audio": "audio/short/ls-other-short-019.wav",
+      "ref": "refs/ls-other-short-019.txt",
+      "language": "en",
+      "bucket": "short",
+      "duration_s": 5.625,
+      "source": "librispeech_other",
+      "source_id": "3528-168656-0007"
+    },
+    {
+      "clip_id": "fleurs-en-session",
+      "audio": "audio/session/fleurs-en-session.wav",
+      "ref": "refs/fleurs-en-session.txt",
+      "language": "en",
+      "bucket": "session",
+      "duration_s": 363.325,
+      "source": "fleurs_en",
+      "utterances": 34,
+      "gap_range_s": [
+        0.5,
+        1.5
+      ],
+      "segments": [
+        {
+          "clip_id": "fleurs-en-session-seg-000",
+          "source_id": "1964",
+          "start_s": 0.0,
+          "end_s": 11.88,
+          "text": "The 25 Dunlap broadsides still known to exist are the oldest surviving copies of the document. The original handwritten copy has not survived."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-001",
+          "source_id": "1914",
+          "start_s": 12.634,
+          "end_s": 19.594,
+          "text": "Twentieth century research has shown that there are two pools of genetic variation: hidden and expressed."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-002",
+          "source_id": "1867",
+          "start_s": 20.386,
+          "end_s": 27.406,
+          "text": "Plants make oxygen which humans breathe, and they take in carbon-dioxide which humans exhale (that is, breathe out)."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-003",
+          "source_id": "1797",
+          "start_s": 28.508,
+          "end_s": 40.148,
+          "text": "Everyone participates in society and uses transportation systems. Almost everyone complains about transportation systems."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-004",
+          "source_id": "1979",
+          "start_s": 41.452,
+          "end_s": 51.532,
+          "text": "The official Falklands currency is the Falkland pound (FKP) whose value is set equivalent to that of one British pound (GBP)."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-005",
+          "source_id": "1798",
+          "start_s": 52.811,
+          "end_s": 64.031,
+          "text": "In its early days, the show was featured solely at the long-running internet radio site TogiNet Radio, a site focused on talk radio."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-006",
+          "source_id": "1922",
+          "start_s": 64.531,
+          "end_s": 73.591,
+          "text": "There are of course Christian theological explanations for this tradition, but it may well be a pre-Christian Spring and Fertility ritual."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-007",
+          "source_id": "1894",
+          "start_s": 74.39,
+          "end_s": 80.87,
+          "text": "A curry is a dish based on herbs and spices, together with either meat or vegetables."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-008",
+          "source_id": "1673",
+          "start_s": 82.255,
+          "end_s": 92.335,
+          "text": "During the Revolutionary War, the thirteen states first formed a weak central government—with the Congress being its only component—under the Articles of Confederation."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-009",
+          "source_id": "1851",
+          "start_s": 93.378,
+          "end_s": 99.798,
+          "text": "Rip currents are the returning flow from waves breaking off the beach, often at a reef or similar."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-010",
+          "source_id": "1833",
+          "start_s": 100.535,
+          "end_s": 109.595,
+          "text": "Aristotle, a philosopher, theorised that everything is made up of a mixture of one or more of four elements. They were earth, water, air, and fire."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-011",
+          "source_id": "1981",
+          "start_s": 111.054,
+          "end_s": 120.954,
+          "text": "If you only go ashore using shipboard excursions you will not need a separate visa (as of 2009)."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-012",
+          "source_id": "1731",
+          "start_s": 121.938,
+          "end_s": 129.418,
+          "text": "In the archipelagos and lakes you do not necessarily need a yacht."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-013",
+          "source_id": "1707",
+          "start_s": 129.999,
+          "end_s": 140.919,
+          "text": "It is one of the main attractions of South Africa and it is considered the flagship of South African National Parks (SANParks)."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-014",
+          "source_id": "1771",
+          "start_s": 141.424,
+          "end_s": 153.324,
+          "text": "Remember that even though music on the main stages may have finished, there may be sections of the festival that will keep playing music until late into the night."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-015",
+          "source_id": "1932",
+          "start_s": 154.656,
+          "end_s": 172.536,
+          "text": "Five minutes into the display a wind starts rolling in, about a minute later, the wind is reaching 70km/h... then the rain comes, but so hard and so large that it slaps your skin like a needle, then hail fell from the sky, people panicking and screaming and running over each other."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-016",
+          "source_id": "1679",
+          "start_s": 173.229,
+          "end_s": 177.189,
+          "text": "Aerosmith have cancelled their remaining concerts on their tour."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-017",
+          "source_id": "1704",
+          "start_s": 178.085,
+          "end_s": 188.345,
+          "text": "In 1990, it was added to the list of world heritage sites in danger, due to the threat of desert sands."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-018",
+          "source_id": "1926",
+          "start_s": 188.938,
+          "end_s": 197.278,
+          "text": "Accepted were Aristotle's views on all matters of science, including psychology."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-019",
+          "source_id": "1750",
+          "start_s": 198.503,
+          "end_s": 203.123,
+          "text": "The find also grants insight into the evolution of feathers in birds."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-020",
+          "source_id": "1897",
+          "start_s": 204.025,
+          "end_s": 213.605,
+          "text": "In the north the region is bounded by the Sahel, and in the south and west by the Atlantic Ocean."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-021",
+          "source_id": "1837",
+          "start_s": 215.017,
+          "end_s": 225.277,
+          "text": "Liberal criticism of the reconstruction effort has focused on the awarding of reconstruction contracts to perceived Washington insiders."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-022",
+          "source_id": "1699",
+          "start_s": 226.335,
+          "end_s": 235.935,
+          "text": "Bishkek was described as sinking into a state of \"anarchy\" by one observer, as gangs of people roamed the streets and plundered stores of consumer goods."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-023",
+          "source_id": "1815",
+          "start_s": 237.342,
+          "end_s": 248.282,
+          "text": "The fission bomb works on the principle that it takes energy to put together a nucleus with many protons and neutrons."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-024",
+          "source_id": "1825",
+          "start_s": 249.061,
+          "end_s": 258.301,
+          "text": "If you want to be close to the action you're going to have to get in early to get a camping site close to the music."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-025",
+          "source_id": "1795",
+          "start_s": 259.429,
+          "end_s": 272.809,
+          "text": "Since 1988, ballot boxes must be transparent so that voters and observers can witness that no envelopes are present at the start of the vote and that no envelopes are added except those of the duly counted and authorized voters."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-026",
+          "source_id": "1848",
+          "start_s": 274.227,
+          "end_s": 283.467,
+          "text": "A car bomb detonated at police headquarters in Gaziantep, Turkey yesterday morning killed two police officers and injured more than twenty other people."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-027",
+          "source_id": "1859",
+          "start_s": 284.252,
+          "end_s": 300.872,
+          "text": "towards the end of the Middle Ages western Europe began to develop their own style. one of the biggest developments of the time as a result of the crusades people began to use buttons to fasten clothing."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-028",
+          "source_id": "1710",
+          "start_s": 301.411,
+          "end_s": 309.331,
+          "text": "Last week, METI announced that Apple had informed it of 34 additional overheating incidents, which the company called \"non-serious.\""
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-029",
+          "source_id": "1898",
+          "start_s": 310.1,
+          "end_s": 322.46,
+          "text": "\"He [Wales] basically lied to us from the start. First, by acting as if this was for legal reasons. Second, by pretending he was listening to us, right up to his art deletion.\""
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-030",
+          "source_id": "1800",
+          "start_s": 323.21,
+          "end_s": 331.49,
+          "text": "The bridge is scheduled to be fully operational in September 2017, when the Brazilian customs checkpoints are expected to be finished."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-031",
+          "source_id": "2009",
+          "start_s": 332.764,
+          "end_s": 343.804,
+          "text": "The most readily accessible plant resources would have been the proteins accessible in leaves and legumes, but these are hard for primates like us to digest unless they are cooked."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-032",
+          "source_id": "1938",
+          "start_s": 344.487,
+          "end_s": 355.047,
+          "text": "The hospital has followed protocol for infection control, including separating the patient from others to prevent possible infection of others."
+        },
+        {
+          "clip_id": "fleurs-en-session-seg-033",
+          "source_id": "1976",
+          "start_s": 355.825,
+          "end_s": 363.325,
+          "text": "Middle order batsmen, Sachin Tendulkar and Rahul Dravid, performed well and made a hundred-run partnership."
+        }
+      ]
+    },
+    {
+      "clip_id": "fleurs-es-session",
+      "audio": "audio/session/fleurs-es-session.wav",
+      "ref": "refs/fleurs-es-session.txt",
+      "language": "es",
+      "bucket": "session",
+      "duration_s": 371.385,
+      "source": "fleurs_es",
+      "utterances": 27,
+      "gap_range_s": [
+        0.5,
+        1.5
+      ],
+      "segments": [
+        {
+          "clip_id": "fleurs-es-session-seg-000",
+          "source_id": "1993",
+          "start_s": 0.0,
+          "end_s": 14.4,
+          "text": "El día de hoy se originó en el Océano Atlántico la tormenta número diez de su temporada de huracanes en ser nombrada, a la que se denominó Tormenta subtropical Jerry."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-001",
+          "source_id": "1785",
+          "start_s": 15.229,
+          "end_s": 32.749,
+          "text": "El andamiaje no es una técnica de aprendizaje; es, antes bien, una asistencia que proporciona apoyo a quienes atraviesan una nueva experiencia, como el uso de un nuevo programa informático o el inicio de un nuevo proyecto."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-002",
+          "source_id": "1907",
+          "start_s": 33.786,
+          "end_s": 43.326,
+          "text": "Al poco tiempo de desatarse las hostilidades, los británicos comenzaron un bloqueo naval a Alemania."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-003",
+          "source_id": "1957",
+          "start_s": 44.34,
+          "end_s": 53.04,
+          "text": "Calificó de «habladuría política y boberías» a los rumores."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-004",
+          "source_id": "1831",
+          "start_s": 53.884,
+          "end_s": 67.984,
+          "text": "El Parque Nacional de los Lagos Plitvice es muy boscoso, tiene principalmente hayas, abetos y píceas, y presenta una vegetación entre alpina y mediterránea."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-005",
+          "source_id": "1681",
+          "start_s": 69.471,
+          "end_s": 82.431,
+          "text": "No se trata, sin embargo, de una experimentación, es una prueba que se usa para descartar una o más de las posibles hipótesis, haciendo preguntas y observaciones que guían la investigación científica."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-006",
+          "source_id": "1980",
+          "start_s": 83.079,
+          "end_s": 92.679,
+          "text": "Lamentablemente, no es tarea sencilla estudiar el flujo del tráfico, ya que es no es posible hacer predicciones exactas sobre el comportamiento de los conductores."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-007",
+          "source_id": "1796",
+          "start_s": 94.053,
+          "end_s": 105.393,
+          "text": "Este sedimento era necesario para la formación de bancos de arena y playas, las que, a su vez, funcionaban como hábitats para la vida silvestre."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-008",
+          "source_id": "1842",
+          "start_s": 106.256,
+          "end_s": 129.536,
+          "text": "Dado que el plumaje de los dinosaurios no tiene un eje bien desarrollado, denominado raquis, pero sí presenta otros rasgos de las plumas (cerdas y bárbulas), los investigadores llegaron a la conclusión de que es probable que el raquis sea el resultado de un desarrollo evolutivo posterior de estas otras características."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-009",
+          "source_id": "1802",
+          "start_s": 130.758,
+          "end_s": 138.318,
+          "text": "Internet une y mezcla componentes propios de la comunicación masiva y entre personas."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-010",
+          "source_id": "1787",
+          "start_s": 139.735,
+          "end_s": 152.815,
+          "text": "Los blogs son un recurso que inspira a la colaboración y animan a los alumnos a profundizar su aprendizaje más allá del típico día escolar."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-011",
+          "source_id": "1667",
+          "start_s": 153.835,
+          "end_s": 169.195,
+          "text": "En general, pueden darse dos tipos de comportamiento cuando los gerentes comienzan a liderar a sus antiguos compañeros. De un lado del espectro, está el intento de continuar siendo «uno de los muchachos» (o muchachas)."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-012",
+          "source_id": "1666",
+          "start_s": 170.214,
+          "end_s": 178.614,
+          "text": "Es posible que quiera consultar las recomendaciones de otros gobiernos, pero están pensadas para sus propios ciudadanos."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-013",
+          "source_id": "1933",
+          "start_s": 179.172,
+          "end_s": 193.692,
+          "text": "Finalmente, existen muchos felinos pequeños (que incluyen a los gatos domésticos independientes) que se alimentan de especies de poco tamaño que existen en mucha más cantidad, como insectos, roedores, lagartijas y aves."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-014",
+          "source_id": "1810",
+          "start_s": 195.127,
+          "end_s": 206.767,
+          "text": "Una propuesta de ley fue dictada por el gobernador de California, Arnold Schwarzenegger, que no permite vender o rentar videojuegos violentos a menores de edad."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-015",
+          "source_id": "1740",
+          "start_s": 207.933,
+          "end_s": 216.753,
+          "text": "El espectáculo de luces y el sonido piramidal son una de las cosas más interesantes para los niños en la zona."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-016",
+          "source_id": "1820",
+          "start_s": 217.782,
+          "end_s": 227.982,
+          "text": "Hoy en día, las personas escriben mensajes en las pantallas de sus computadoras. No tienen la necesidad de, siquiera, aproximarse a un sacapuntas."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-017",
+          "source_id": "1788",
+          "start_s": 229.481,
+          "end_s": 243.701,
+          "text": "USA Gymnastics respalda la nota del Comité Olímpico de los Estados Unidos y reconoce que resulta imperioso que la familia olímpica fomente un entorno seguro para todos nuestros deportistas."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-018",
+          "source_id": "1887",
+          "start_s": 244.96,
+          "end_s": 253.12,
+          "text": "Liggins comenzó sus investigaciones sobre el parto prematuro en su tiempo libre, mientras trabajaba en el hospital."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-019",
+          "source_id": "1988",
+          "start_s": 253.729,
+          "end_s": 265.129,
+          "text": "A lo largo de la década de 1920, la actitud adoptada por la mayor parte de los ciudadanos y de las naciones fue la del pacifismo y el aislamiento."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-020",
+          "source_id": "1708",
+          "start_s": 265.946,
+          "end_s": 280.946,
+          "text": "Huhne ha renunciado, y Ed Davey MP lo reemplazará en el gabinete. Se espera que Norman Lamb MP asuma el puesto de ministro de negocios que Davey deja vacante."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-021",
+          "source_id": "1893",
+          "start_s": 281.746,
+          "end_s": 296.626,
+          "text": "Los Sundarbans son la cadena de manglares costeros más grande del mundo, con una longitud de 80 km (50 millas) desde la costa hacia el interior de Bangladesh y de la India."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-022",
+          "source_id": "1742",
+          "start_s": 297.185,
+          "end_s": 307.565,
+          "text": "El territorio de Hong Kong toma el nombre de la isla homónima, que es el destino gran parte de los turistas considera la atracción principal."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-023",
+          "source_id": "1867",
+          "start_s": 308.643,
+          "end_s": 319.983,
+          "text": "Las plantas generan el oxígeno que las personas respiran y absorben el dióxido de carbono que ellas exhalan (que despiden)."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-024",
+          "source_id": "1954",
+          "start_s": 320.715,
+          "end_s": 333.135,
+          "text": "Su defensa disciplinada, sus habilidades de manejo del balón y el excelente trabajo en equipo los llevaron a destacarse y quedó claro que este era el equipo a derrotar."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-025",
+          "source_id": "1690",
+          "start_s": 334.366,
+          "end_s": 355.006,
+          "text": "Coincidimos con la declaración de la USOC de que los intereses de los atletas, los clubes y sus deportes, pueden ser atendidos más apropiadamente si se avanza con cambios significativos dentro de nuestra organización, en lugar del retiro de las certificaciones."
+        },
+        {
+          "clip_id": "fleurs-es-session-seg-026",
+          "source_id": "1843",
+          "start_s": 356.145,
+          "end_s": 371.385,
+          "text": "La profesora Pamela Ferguson de la Universidad de Dundee señaló: «al parecer, los periodistas caminan sobre terreno peligroso cuando publican fotos u otra información de los sospechosos»."
+        }
+      ]
+    }
+  ]
+}

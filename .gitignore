@@ -1,0 +1,42 @@
+# ── Model weights (D8) ────────────────────────────────────────────────
+# Never mirrored into this repo. HuggingFace is the canonical source;
+# scripts/fetch-models.py fetches them against the revisions pinned in
+# models/MODELS.md. Mirroring would duplicate an existing source and drag
+# four model licences into ours -- including base-es, which is
+# non-commercial and must not be redistributed.
+models/*
+!models/MODELS.md
+
+# ── Corpus audio ──────────────────────────────────────────────────────
+# Derived artifacts: rebuildable with scripts/build-corpus.py.
+corpus/audio/
+corpus/work/
+
+# ── Self-recorded audio (D9, §11.7) ───────────────────────────────────
+# The owner's own voice. Local only, never pushed.
+corpus/self-recorded/
+
+# ── Python ────────────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.pyc
+
+# ── Gradle / Android ──────────────────────────────────────────────────
+bench/build/
+bench/app/build/
+bench/.gradle/
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+.cxx/
+
+# ── IDE ───────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+
+# ── Scratch ───────────────────────────────────────────────────────────
+*.log
+scratch/
