@@ -14,8 +14,6 @@ is running it on the phone and writing up the numbers.
 
 ## Initial prompt
 
-Paste this to start:
-
 > Continue the on-device ASR experiment in `F:\Development\Samples\android-transcription-sample`.
 >
 > Read `PLAN.md` for the experiment design, `HANDOVER.md` for
