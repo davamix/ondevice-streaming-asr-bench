@@ -1,17 +1,15 @@
 # Handover — next phase to run
 
-**Currently: Phase 2, Arm B (Moonshine streaming English). Tiny and small are
-measured; medium has a one-repetition pilot. One full run remains.**
+**Currently: Phase 3, Arms D and E via sherpa-onnx. Not started.**
 
 This file carries whatever phase is next. It is rewritten as each phase
 completes; finished phases are written up in [`summaries/`](summaries/).
 
 **For:** a fresh session picking this up with no prior context.
 
-What remains for Phase 2: a full 4-repetition `moonshine-medium-en` run once
-the phone is recharged, then the Phase 2 summary. The two methodology fixes
-that were open (quiet FLEURS audio, the final-latency stamp) are done, and
-both arms were re-run with them.
+Phases 0–2 are complete and pushed. Phase 3 brings in the two arms that can
+serve **both** English and Spanish, and so bear directly on the central
+question in PLAN.md §1: *one model for both languages, or one per language?*
 
 ---
 
@@ -20,14 +18,14 @@ both arms were re-run with them.
 > Continue the on-device ASR experiment in `F:\Development\Samples\android-transcription-sample`.
 >
 > Read `PLAN.md` for the experiment design, `HANDOVER.md` for current state
-> and exact commands, and `summaries/phase-1-arm-a.md` for what Phase 1
-> established (including the Phase 2 revisions at its top). `README.md` has
-> the full results and findings.
+> and exact commands, and the two summaries in `summaries/` for what Phases 1
+> and 2 established. `README.md` has the full results and findings.
 >
-> Phase 2 is Arm B — Moonshine streaming English. Tiny and small are measured.
-> Medium has only a one-repetition pilot. Run the full 4-repetition medium run
-> on the physical device, move the medium pilot into `results/superseded/`,
-> update the README results, then write `summaries/phase-2-arm-b.md`.
+> Phases 0–2 are complete. Phase 3 integrates sherpa-onnx with Silero VAD
+> segmentation, then measures Arm E (Whisper base and small, int8) and Arm D
+> (Parakeet TDT 0.6b v3 int8), in English and Spanish. Build and validate on
+> the emulator first, then measure on the physical device, one model at a
+> time, and update the README results as numbers come in.
 >
 > The test device is the owner's only phone. `PLAN.md` §11 is a hard safety
 > policy — read it before touching the device. The pre-flight gate in
@@ -39,128 +37,94 @@ both arms were re-run with them.
 
 | | State |
 |---|---|
-| Phase 0 (corpus, scorer) | ✅ complete; corpus now includes level-matched FLEURS English |
-| Phase 1 (Arm A) | ✅ complete, re-measured in Phase 2 — see [summaries/phase-1-arm-a.md](summaries/phase-1-arm-a.md) |
-| Phase 2 (Arm B) | 🔨 tiny and small measured; **medium piloted only** |
-| Phases 3–5 (Arms C/D/E) | ⬜ not started |
+| Phase 0 (corpus, scorer) | ✅ complete; corpus includes level-matched FLEURS English |
+| Phase 1 (Arm A) | ✅ complete, re-measured in Phase 2 — [summary](summaries/phase-1-arm-a.md) |
+| Phase 2 (Arm B) | ✅ complete — [summary](summaries/phase-2-arm-b.md) |
+| Phase 3 (Arms D, E) | ⬜ **next** |
+| Phases 4–5 (Arm C, analysis) | ⬜ not started |
 
 Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push after each phase)
 
-**Not pushed yet.** Everything since `fdcaaa0` is committed locally only. It
-includes corrections to published Phase 1 numbers, and the owner had not yet
-approved pushing them. Check before pushing.
+**The bar Phase 3 has to clear:**
 
-**What Phase 2 established so far** (full detail in the README, *Results*):
+| | Arm A (0 MB) | Moonshine small (224 MB) |
+|---|---|---|
+| WER, English noisy | 33.33% | 8.72% |
+| WER, English clean (level-matched) | 12.60% | 7.71% |
+| WER, Spanish clean | 8.14% | — (no Spanish model) |
+| First / final text, English noisy | 1012 / 68 ms | 1191 / 442 ms |
 
-| English | Arm A (0 MB) | tiny (78 MB) | small (224 MB) | medium (416 MB, 1 rep) |
-|---|---|---|---|---|
-| WER, noisy `test-other` | 33.33% | 15.77% | 8.72% | 6.71% |
-| WER, clean, level-matched | 12.60% | 11.25% | 7.71% | 5.94% |
-| Final text, noisy | 68 ms | 84 ms | 442 ms | 634 ms |
-| `rtf_sustained` | — | 0.40 | 0.72 | 0.77 |
-| Peak RSS | — | 363–475 MB | 605 MB | ~920 MB |
+Arm D or E is interesting if it serves Spanish better than Arm A's 8.14%, or
+serves both languages well enough to replace two stacks with one.
 
 ---
 
-## Next: the full medium run
+## Phase 3 steps (PLAN.md §10)
 
-```bash
-.venv/Scripts/python scripts/devicelib.py --device physical     # check the gate first
+1. **Integrate sherpa-onnx** (Android AAR) and Silero VAD segmentation into
+   `bench/`. Neither model is streaming-native: VAD cuts the paced audio into
+   utterances and each segment is transcribed offline. Mirror `MoonshineArm`'s
+   structure. Load from `files/models/<dir>`, never bundle weights, never let a
+   library self-download (D8).
+2. **Arm E, Whisper base then small** (int8, 161 / 375 MB). This is the
+   calibration baseline, in both languages. Expect heavy
+   `partial_instability`, because chunked Whisper rewrites text.
+3. **Arm D, Parakeet TDT v3 int8** (670 MB). **Watch `peak_rss_mb`.** On a
+   6 GB phone with ~2 GB free, this is where memory is expected to bite, and
+   Moonshine medium already reached 933 MB. If it fails to load or is killed,
+   record that honestly: it is a result.
 
-.venv/Scripts/python scripts/run_bench.py --device physical \
-    --arms B:moonshine-medium-en --langs en --buckets short \
-    --reps 4 --label armB-medium --no-push --timeout 7200
-```
+Models are fetched with `scripts/fetch_models.py --arm D` / `--arm E`. Only
+Moonshine and Silero VAD are downloaded locally so far. Sizes and pinned
+revisions are in `models/MODELS.md`. Note that `fetch_models.py --list` and
+`models/MODELS.md` give the int8 ONNX sizes. The 180 / 57 MB figures in
+PLAN.md §5 are whisper.cpp sizes and do not apply (README finding 4).
 
-`moonshine-medium-en` and the full corpus (including `fleurs_en_norm`) are
-already on the phone. Drop `--no-push` only if the corpus changed. Add
-`--no-build --no-install` if nothing in `bench/` changed since the last
-install.
+---
 
-**Then move the pilot out of the aggregate:** move
-`results/M2012K11AG-20260923-151948-armB-medium-pilot/` into
-`results/superseded/`, and add a row to `results/superseded/README.md` as for
-`armB-tiny-pilot`. Until the full run exists, the pilot is the only medium
-data and stays in, marked single-repetition.
+## Lessons from Phase 2 that apply directly
 
-**Expect heat.** Medium started right after small took the phone from 32.7
-to 34.7 °C in eight minutes. The start gate is 35 °C, and the in-run check
-pauses before any clip that would start above it. Start medium cool, not
-straight after another Moonshine run, and expect cooling pauses to lengthen
-the run.
+- **Score every row.** An empty hypothesis counts as all-deletions.
+  `summarize.py` reports `no text:` per group; a non-zero count deserves a
+  look.
+- **Final latency uses `final_after_audio_end_ms`,** measured from feed start
+  + audio duration. Any new arm must record it the way `MoonshineArm` and
+  `PlatformRecognizerArm` do (`final_slip_ms`, `speech_end_lag_ms`,
+  `final_after_audio_end_ms`). The old `latency_final_ms` was off by up to
+  ~260 ms either way.
+- **Check whether inference runs inside the feed call.** Moonshine's
+  `addAudio()` blocks for whole model passes, which is why its slip is large.
+  With VAD segmentation, the offline decode may run inline or on another
+  thread. Know which before interpreting slip or `rtf_sustained`.
+- **Quiet audio breaks VAD-gated models.** Moonshine returned no text at all
+  on some of the very quiet FLEURS English clips. Silero VAD may behave the
+  same. The `fleurs_en_norm` copies exist to separate level from accuracy;
+  compare on them.
+- **Report WER pooled, timing per run.** Arm A's Phase 1 English timing did
+  not reproduce, although its accuracy did.
 
 ---
 
 ## Budget and constraints
 
-**Battery.** The phone was at **46%** at handover, too low for medium: a full
-run should cost ~12 points, and the harness checks the 30% floor only before
-starting, not during the run. Charge it, unplug it, and let it fall below 80%
-before starting (the gate refuses above 80%, and while charging).
+**Heat now matters, as well as battery.** Moonshine medium was the first run
+to reach the 35 °C start gate (the harness paused ~4 minutes to cool).
+Parakeet's encoder is larger still. Start each run cool (under ~32 °C), not
+straight after another heavy run, and expect cooling pauses.
 
-**Measured cost per 240 clips (60 English clips × 4 reps):**
+**Measured cost per 240 clips** (60 English clips × 4 reps). Spanish is 20
+clips, so a third of this:
 
-| Run | Time | Battery |
-|---|---|---|
-| Arm A | 39 min | 3 points |
-| Moonshine tiny | 39 min | 6 points |
-| Moonshine small | 39 min | 10 points |
-| Moonshine medium | ~40 min (est.) | ~12 points (est. from pilot) |
+| Run | Time | Battery | Peak temp |
+|---|---|---|---|
+| Arm A | 39 min | 3 points | 29.2 °C |
+| Moonshine tiny | 39 min | 6 points | 30.7 °C |
+| Moonshine small | 39 min | 10 points | 33.5 °C |
+| Moonshine medium | 44 min | 11 points | 35.0 °C |
 
-Arm A was far slower in Phase 1 (22.8 s per clip against 8.5 s now). See
-*Reproducibility* in the README: that session's timing did not reproduce.
-
----
-
-## What changed in this session (read before trusting older notes)
-
-- **Corpus:** `fleurs_en_norm` is a copy of the 20 FLEURS English clips lifted
-  by a static gain to −23 dBFS. The originals are ~40 dB quieter than the
-  other sources, and that confounded Phase 1's English-vs-Spanish comparison
-  and Moonshine's clean-English numbers. `--langs en --buckets short` now
-  means 60 clips, not 40.
-- **Final latency:** both arms record `final_after_audio_end_ms`, measured
-  from feed start + audio duration. The old `latency_final_ms` stamped
-  "speech end" when the feeder returned: up to one frame early with no slip,
-  and late when the consumer stalls. The README headline uses the new field.
-  `summarize.py` prints it as *from actual audio end*.
-- **Scoring:** empty hypotheses are scored as all-deletions. They used to be
-  skipped, which flattered arms that heard nothing. Variants are grouped
-  separately, and superseded runs are excluded by file name.
-- **Harness:** results checkpoint at each mandatory break (`complete: false`
-  until the final write). `--session-cap-s` can lower the 10-minute
-  continuous-inference cap, never raise it; it exists to exercise the
-  checkpoint on the emulator.
-- **Phase 1 revisions:** Spanish WER is 8.14% pooled, not 7.73%. "Spanish is
-  more accurate than English" is not established. Phase 1's English timing
-  did not reproduce. See the top of `summaries/phase-1-arm-a.md`.
-
----
-
-## Open questions (not blocking)
-
-- **Update interval vs first-text latency.** First text is paced by the SDK's
-  0.5 s `DEFAULT_UPDATE_INTERVAL`, and `setUpdateInterval()` is public. A
-  short sweep would price first-text latency against `rtf_sustained`. Given
-  that small and medium already spend 72–77% of real time, a shorter interval
-  may not be affordable above tiny.
-- **Why Arm A's Phase 1 English timing was different.** The run began one
-  minute after the English language pack installed. Plausible, unconfirmed.
-- **Arm B session runs** (5–10 minutes continuous) for `rtf_sustained` and
-  thermals. PLAN.md places sustained runs in Phase 5, for surviving arms only.
-
----
-
-## The one thing that will waste your time if you miss it
-
-`Transcriber.loadFromFiles(path, int)`'s second parameter is the **model
-architecture**, not a flags bitfield — despite sitting next to
-`setTranscribeFlags()`. Passing `0` selects the non-streaming layout and fails
-looking for `encoder_model.ort`, which streaming variants do not ship.
-
-**The streaming value is `5`** (`MoonshineArm.STREAMING_ARCH`). It is not in any
-public constant; it was read out of `MicTranscriber`'s bytecode. This is already
-set correctly — do not "fix" it back to 0.
+The gate needs battery 30–80% and not charging, and it checks the level only
+before starting, not during the run. After charging, the phone must drift
+below 80% before a run can start, and it may also be warm from charging.
 
 ---
 
@@ -180,42 +144,74 @@ The address changes between sessions. If `adb devices` shows the phone twice
 (once by IP, once by mDNS) that is normal — `devicelib` dedupes by hardware
 identity. The emulator is often attached too, so always pass `--device`.
 
-### Score and write up
+### Emulator first
 
 ```bash
+D:/Android/Sdk/emulator/emulator.exe -avd Medium_Phone_API_36.0 &
+.venv/Scripts/python scripts/run_bench.py --device emulator --push-models <dir>
+.venv/Scripts/python scripts/run_bench.py --device emulator \
+    --arms <arm> --langs en --buckets short --reps 1 --label emu<arm> \
+    --session-cap-s 180
+```
+
+`--session-cap-s` lowers the continuous-inference cap (it can never raise
+it), so the per-break results checkpoint gets exercised in minutes. Emulator
+results are gitignored and never published. The emulator has only ~0.7 GB
+free, so push one model at a time there.
+
+### Measure, score, write up
+
+```bash
+.venv/Scripts/python scripts/run_bench.py --device physical --push-models <dir>
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --arms <arm> --langs en,es --buckets short --reps 4 --label <label> \
+    --no-push --timeout 7200
+
 .venv/Scripts/python scripts/summarize.py            # all results, per variant
-.venv/Scripts/python scripts/summarize.py --markdown # table
 .venv/Scripts/python scripts/summarize.py results/<dir>/<file>.json   # one run
 ```
 
-Check the `no text:` count. A non-zero count deserves a look at which clips
-produced it. Arm A's timing is best read per run rather than pooled, because
-its Phase 1 English run differed.
+`run_bench.py --arms` currently knows `A` and `B[:variant]`; Phase 3 extends
+the parser in `BenchmarkTest.benchmark()`. `summarize.py` groups by
+`extra.variant`, so give each new arm's rows a `variant` in `extra`.
+
+**Pilots:** after a full run supersedes a one-rep pilot, move the pilot's
+directory into `results/superseded/` and add a row to its README.
+`summarize.py` excludes superseded runs by file name, so the copies that
+later pulls bring back are excluded too.
 
 **Long runs:** `adb am instrument` can outlive a host-side timeout. If the
 wrapper dies, the run usually continues on the device — check
-`adb logcat -s AsrBench:*` and wait for the JSON rather than re-running. If
-the run itself dies, the last checkpoint is in the device's results dir,
-marked `complete: false`.
+`adb logcat -s AsrBench:*` and wait for the JSON. If the run itself dies, the
+last checkpoint is in the device's results dir, marked `complete: false`.
+
+---
+
+## Open from Phase 2 (not blocking)
+
+- **Moonshine update-interval sweep.** First text is paced by the SDK's 0.5 s
+  interval (`setUpdateInterval()` is public). A sweep on tiny would price
+  first-text latency against `rtf_sustained`.
+- **Moonshine session runs** (5–10 minutes continuous), especially medium,
+  for thermals. PLAN.md places sustained runs in Phase 5, for surviving arms.
+- **Why Arm A's Phase 1 English timing differed.** The run began one minute
+  after the English language pack installed. Plausible, unconfirmed.
 
 ---
 
 ## Things to know about the harness
 
-- **Emulator first.** Any new adb path, teardown, cleanup or harness change
-  gets exercised on `Medium_Phone_API_36.0` before the phone (§11.5). The APK
-  includes `x86_64` precisely so native model loading can be debugged there.
-  Emulator results are gitignored and never published.
 - **Nothing is bundled in the APK.** Models are pushed to
-  `/sdcard/Android/data/io.github.davamix.asrbench/files/models/` and loaded
-  from disk at pinned revisions. All three Moonshine variants are on the phone.
+  `/sdcard/Android/data/io.github.davamix.asrbench/files/models/`. All three
+  Moonshine variants are currently on the phone (~720 MB). Remove them from
+  that directory if storage gets tight (the gate needs ≥5 GB free; ~74 GB is
+  free now).
 - **The app must create its own directories** before anything is pushed into
-  them (`prepareDirs`). `run_bench.py` handles this.
-- **Moonshine has no thread-count setting.** Arm B rows say `threads: 4`
-  because the harness passes it; ONNX Runtime's default pool actually applies.
-- **`results/superseded/`** holds pilots and runs from a harness with known
-  measurement bugs. Excluded from every aggregate, by file name. Do not move
-  them back.
+  them (`prepareDirs`, with `model_dirs`). `run_bench.py` handles this.
+- **Moonshine's `loadFromFiles(path, int)` second argument is the model
+  architecture** (5 = streaming), not flags. Already set; do not "fix" it.
+- **Moonshine has no thread-count setting.** Check whether sherpa-onnx does;
+  if so, hold it at 4 as the plan says (§6).
 - **Scoring happens on the PC**, never on the device, so a scoring bug never
   costs a re-run.
 
@@ -236,10 +232,9 @@ throttling is part of the phenomenon being measured.
 
 **The gate** (`scripts/devicelib.py`) refuses to start a run unless: ≥5 GB free,
 battery 30–80%, temperature <35 °C, **not charging**. It aborts mid-run at
-43 °C and pauses 2 minutes every 10 minutes of continuous inference. It does
-**not** check battery level mid-run, so size runs to the charge you start
-with. There is a `--skip-preflight` flag; treat needing it as a signal to stop
-and think.
+43 °C, pauses before any clip that would start at or above 35 °C, and pauses
+2 minutes every 10 minutes of continuous inference. There is a
+`--skip-preflight` flag; treat needing it as a signal to stop and think.
 
 `RECORD_AUDIO` is **not** declared until Phase 5. Every measured run is
 file-fed and needs no microphone.

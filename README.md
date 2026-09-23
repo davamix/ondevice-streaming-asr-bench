@@ -10,11 +10,11 @@ This repo is the lab notebook, not the final report. It was made public before
 any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
-**Status:** Phases 0–1 complete. Phase 2 (Arm B, Moonshine) nearly done:
-**tiny and small measured, medium piloted** (one repetition; the full run
-needs a recharge). Arm A was re-measured in Phase 2
-on a corrected harness and corpus; several Phase 1 figures were revised, and
-the revisions are marked where they occur. Arms C–E not started.
+**Status:** Phases 0–2 complete. Arm B (Moonshine streaming English) is
+measured at all three sizes; see the [Phase 2 summary](summaries/phase-2-arm-b.md).
+Arm A was re-measured in Phase 2 on a corrected harness and corpus; several
+Phase 1 figures were revised, and the revisions are marked where they occur.
+Arms C–E not started.
 
 ---
 
@@ -34,7 +34,7 @@ the revisions are marked where they occur. Arms C–E not started.
 | [Model licences](#model-licences) | What each arm's weights permit, including one that blocks shipping |
 | [Repo layout](#repo-layout) | Where everything lives |
 | [A note on the test device](#a-note-on-the-test-device) | The safety policy, and why disabling thermal throttling is refused twice over |
-| [summaries/](summaries/) | One short write-up per completed phase — currently [Phase 1: Arm A](summaries/phase-1-arm-a.md), with Phase 2's revisions marked |
+| [summaries/](summaries/) | One short write-up per completed phase — [Phase 1: Arm A](summaries/phase-1-arm-a.md) (with Phase 2's revisions marked) and [Phase 2: Arm B](summaries/phase-2-arm-b.md) |
 | [HANDOVER.md](HANDOVER.md) | State, commands and constraints for running the next phase in a fresh session |
 
 ### Findings index
@@ -65,8 +65,9 @@ anywhere else.
 | 19 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
 | 20 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
 
-> **New here?** Start with the [Phase 1 summary](summaries/phase-1-arm-a.md)
-> for results without the process. Then [Findings](#findings-and-dead-ends) for
+> **New here?** Start with the [Phase 2 summary](summaries/phase-2-arm-b.md)
+> and the [Phase 1 summary](summaries/phase-1-arm-a.md) for results without the
+> process. Then [Findings](#findings-and-dead-ends) for
 > what was learned the hard way, and [`PLAN.md`](PLAN.md) for the full
 > experiment design and the reasoning behind every decision.
 
@@ -115,7 +116,7 @@ the quantity of interest.
 | # | Arm | Streaming | EN | ES | Size | Runtime | Role | Status |
 |---|---|---|---|---|---|---|---|---|
 | A | Android on-device recognizer | native | ✅ | ✅ | **0 MB** | platform | The bar to beat | ✅ **measured, both** |
-| B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | 🔨 **tiny, small measured; medium piloted** |
+| B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ✅ **measured, all three sizes** |
 | C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ⬜ not started |
 | D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ⬜ not started |
 | E | Whisper small + base int8 (chunked) | no | ✅ | ✅ | 375 / 161 MB | sherpa-onnx | Known baseline / calibration | ⬜ not started |
@@ -271,30 +272,31 @@ phone as Arm A. English only, because no Spanish streaming `.ort` exists (see
 | small | FLEURS `en_us` | clean, level-matched | 7.71% | 3.65% | 144 ms | 1655 ms | 8 | 0.734 | 605 |
 | small | FLEURS `en_us` | clean, original (**very quiet**) | 27.29% | 23.41% | 0 ms | 1675 ms | 8 | 0.667 | |
 | small | LibriSpeech `test-other` | **noisy** | 8.72% | 3.27% | 442 ms | 1191 ms | 8 | 0.723 | |
-| medium¹ | FLEURS `en_us` | clean, level-matched | *5.94%* | *2.39%* | *474 ms* | *1259 ms* | *8* | *0.802* | *~920* |
-| medium¹ | FLEURS `en_us` | clean, original (**very quiet**) | *24.69%* | *22.16%* | *169 ms* | *1250 ms* | *7* | *0.760* | |
-| medium¹ | LibriSpeech `test-other` | **noisy** | *6.71%* | *3.06%* | *634 ms* | *1239 ms* | *8* | *0.772* | |
+| medium | FLEURS `en_us` | clean, level-matched | 5.62% | 2.27% | 414 ms | 1285 ms | 7 | 0.797 | 933 |
+| medium | FLEURS `en_us` | clean, original (**very quiet**) | 25.31% | 22.78% | 246 ms | 1251 ms | 6 | 0.763 | |
+| medium | LibriSpeech `test-other` | **noisy** | 6.26% | 2.83% | 662 ms | 1241 ms | 8 | 0.797 | |
 
 Disk: tiny 77.7 MB · small 224.1 MB · medium 416.0 MB. Tiny is pooled over
-two runs (LibriSpeech gave 15.77% in both); small is one 4-repetition run.
-¹ **Medium is a single-repetition pilot**: 20 rows per source, indicative, not
-statistical. A full run needs a recharge first (see below). `peak_rss_mb` is a
+two runs (LibriSpeech gave 15.77% in both); small and medium are one
+4-repetition run each. A one-repetition medium pilot (6.71% / 5.94%) agreed
+with the full run and is kept in `results/superseded/`. `peak_rss_mb` is a
 process high-water mark that includes the harness's own heap. It bounds each
 model's footprint from above, and it is not comparable to Arm A's.
 
 **The size curve, English, against Arm A:**
 
-| | Arm A (0 MB) | tiny (78 MB) | small (224 MB) | medium¹ (416 MB) |
+| | Arm A (0 MB) | tiny (78 MB) | small (224 MB) | medium (416 MB) |
 |---|---|---|---|---|
-| WER, **noisy** | 33.33% | 15.77% | 8.72% | *6.71%* |
-| WER, clean, level-matched | 12.60% | 11.25% | 7.71% | *5.94%* |
-| WER, clean, **very quiet** | **9.69%** | 30.05% | 27.29% | *24.69%* |
-| First text, noisy / clean | 1012 / 1259 ms | 1058 / 1064 ms | 1191 / 1655 ms | *1239 / 1259 ms* |
-| Final text, noisy / clean | **68 / 76 ms** | 84 / 0 ms | 442 / 144 ms | *634 / 474 ms* |
-| `rtf_sustained` (worst clip) | — | 0.40 (0.61) | 0.72 (0.94) | *0.77 (0.91)* |
-| SDK time per model pass | — | ~200 ms | ~450 ms | *~550 ms* |
-| Peak RSS | 118 MB² | 363–475 MB | 605 MB | *~920 MB* |
-| Battery per 240 clips | 3 pts | 6 pts | 10 pts | *~12 pts* |
+| WER, **noisy** | 33.33% | 15.77% | 8.72% | **6.26%** |
+| WER, clean, level-matched | 12.60% | 11.25% | 7.71% | **5.62%** |
+| WER, clean, **very quiet** | **9.69%** | 30.05% | 27.29% | 25.31% |
+| First text, noisy / clean | 1012 / 1259 ms | 1058 / 1064 ms | 1191 / 1655 ms | 1241 / 1285 ms |
+| Final text, noisy / clean | **68 / 76 ms** | 84 / 0 ms | 442 / 144 ms | 662 / 414 ms |
+| `rtf_sustained` (worst clip) | — | 0.40 (0.61) | 0.72 (0.94) | 0.80 (0.95) |
+| SDK time per model pass | — | ~200 ms | ~450 ms | ~550 ms |
+| Peak RSS | 118 MB² | 363–475 MB | 605 MB | 933 MB |
+| Battery per 240 clips | 3 pts | 6 pts | 10 pts | 11 pts |
+| Peak temperature | 29.2 °C | 30.7 °C | 33.5 °C | **35.0 °C** |
 
 ² Our harness only; the recognizer's own memory is in Google's process.
 
@@ -302,19 +304,19 @@ model's footprint from above, and it is not comparable to Arm A's.
 
 1. **Does Moonshine beat Arm A on noisy English? Yes, at every size.** Tiny
    halves Arm A's WER, small cuts it to about a quarter (8.72% vs 33.33%), and
-   medium goes further still. Small's CER on noisy speech is 3.27% against
+   medium to under a fifth (6.26%). Small's CER on noisy speech is 3.27% against
    Arm A's 25.92%. That noisy-audio failure was the main reason to consider
    bundling a model, and it is fixed.
 2. **The size curve bends at small.** Going from tiny to small nearly halves
    WER on noisy audio (15.77% → 8.72%) and cuts it by a third on clean
    (11.25% → 7.71%), for +146 MB. Medium buys roughly two more points on
-   each, for +192 MB more, ~300 MB more resident memory, and noticeably slower
-   final text.
+   each (6.26% and 5.62%), for +192 MB more, ~330 MB more resident memory,
+   noticeably slower final text, and a phone running at the thermal gate.
 3. **Bigger models do not fall behind real time; they finalise later.**
-   `rtf_sustained` stays under 1.0 even for medium (0.77, worst clip 0.91),
+   `rtf_sustained` stays under 1.0 even for medium (0.80, worst clip 0.95),
    because the SDK's update cadence absorbs longer passes. The cost goes
    elsewhere. Each pass takes ~200 / 450 / 550 ms by size, and final text on
-   noisy audio moves from 84 to 442 to 634 ms after the speaker stops. For
+   noisy audio moves from 84 to 442 to 662 ms after the speaker stops. For
    Moonshine, the constraints that bind are latency and memory, not keeping
    up.
 4. **Streaming-native buys no latency over Arm A at SDK defaults.** First text
@@ -335,13 +337,14 @@ model's footprint from above, and it is not comparable to Arm A's.
 
 **Known limits of these numbers:**
 
-- **Medium is one repetition.** Its WER figures rest on ~300 reference words
-  per source. Treat them as the direction of the curve, not its value.
 - **`rtf_sustained` is per clip here, not over a session.** The metric is
   defined over 5–10 minutes of continuous audio (§6). No Arm B session has
-  been run. Medium, started straight after small, took the phone from 32.7 to
-  34.7 °C in eight minutes, the warmest of any run. That is exactly what a
-  session run would test.
+  been run. Medium is the one to watch: it is the only run of any arm to hit
+  the 35 °C gate, after about 30 minutes of clips with the mandatory breaks
+  (the harness paused ~4 minutes to cool). Across its four repetitions,
+  `rtf_sustained` held at 0.79–0.81 and final latency showed no trend while
+  the phone warmed from 33.5 to 35 °C. So there was no throttling visible at
+  this duty cycle, but a continuous session is a harder test.
 - **The thread count is not controlled for Arm B.** The harness records
   `threads: 4`, but the SDK has no such setting, so ONNX Runtime's default
   pool applies ([finding](#moonshine-015-has-no-thread-count-setting)).
@@ -580,7 +583,7 @@ the API gives no way to detect it.
 `addAudioToStream()` does not just queue audio. When an update is due, the call
 runs the model **before returning**. The time spent inside it is what
 `rtf_sustained` measures here: about 40% of the audio duration for tiny, 72%
-for small and 77% for medium. The SDK reports ~200 / 450 / 550 ms per
+for small and 80% for medium. The SDK reports ~200 / 450 / 550 ms per
 transcription pass by size. So Arm B's schedule slip is large on *every*
 source, clean speech included: median 230 / 560 / 710 ms by size, where
 Arm A's is 4–6 ms.
@@ -590,7 +593,7 @@ refusing input. For Arm B, it is our own thread busy computing. For tiny it
 does not accumulate. After each blocking pass, the feeder releases the frames
 it owes back to back, so by the end of a clip it is back on schedule (final
 slip: 2 ms median). For small and medium it no longer catches up: final slip
-is 60–180 ms median, and that lag goes straight into final latency.
+is 60–290 ms median, and that lag goes straight into final latency.
 
 The practical consequence: a live app must not call `addAudio()` from the
 thread reading `AudioRecord`. A stall of that size on the capture thread risks
@@ -890,10 +893,11 @@ is still behind when the audio runs out. Measured directly:
 | Arm A, Spanish | 76 ms early | 27 ms | 0 ms |
 | Moonshine tiny, LibriSpeech | 42 ms early | 102 ms | 84 ms |
 | Moonshine small, LibriSpeech | **149 ms late** | 295 ms | 442 ms |
-| Moonshine medium (1 rep), LibriSpeech | **69 ms late** | 574 ms | 634 ms |
+| Moonshine medium, LibriSpeech | **239 ms late** | 446 ms | 662 ms |
 
-So the error ran in both directions, by up to 150 ms, and it would have
-flattered exactly the variants that are slowest to finalise.
+So the error ran in both directions, by up to ~260 ms (medium on
+level-matched FLEURS), and it would have flattered exactly the variants that
+are slowest to finalise.
 
 Both arms now record `final_after_audio_end_ms` (signed, against feed start +
 audio duration) alongside the old field, and the headline uses it. The old

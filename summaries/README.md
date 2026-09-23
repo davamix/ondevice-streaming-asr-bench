@@ -6,7 +6,8 @@ findings section, not here.
 
 | Phase | Document | Subject |
 |---|---|---|
-| 1 | [Arm A](phase-1-arm-a.md) | The platform on-device recognizer (0 MB), both languages, clean and noisy. |
+| 1 | [Arm A](phase-1-arm-a.md) | The platform on-device recognizer (0 MB), both languages, clean and noisy. Revised in Phase 2. |
+| 2 | [Arm B](phase-2-arm-b.md) | Moonshine streaming English, tiny / small / medium (78–416 MB), against Arm A. |
 
 For the full method and reproduction steps see the [main README](../README.md);
 for the experiment design and the reasoning behind each decision see
