@@ -25,6 +25,8 @@ __pycache__/
 bench/build/
 bench/app/build/
 bench/.gradle/
+# The sherpa-onnx AAR: fetched and hash-checked by scripts/fetch_runtime.py.
+bench/app/libs/
 .gradle/
 build/
 local.properties

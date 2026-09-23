@@ -61,6 +61,18 @@ dependencies {
     // loading pinned .ort files from disk with Transcriber.loadFromFiles().
     implementation(libs.moonshine.voice)
 
+    // Arms D and E. The official sherpa-onnx release AAR, fetched and
+    // SHA-256-verified by scripts/fetch_runtime.py (gitignored, like the
+    // weights). The static-link build, because the regular one ships a
+    // libonnxruntime.so that collides with Moonshine's: see that script.
+    val sherpaAar = file("libs/sherpa-onnx-static-link-onnxruntime-1.13.8.aar")
+    if (!sherpaAar.exists()) {
+        throw GradleException(
+            "missing ${sherpaAar.path} -- run: python scripts/fetch_runtime.py"
+        )
+    }
+    implementation(files(sherpaAar))
+
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.rules)

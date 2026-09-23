@@ -7,6 +7,7 @@ import io.github.davamix.asrbench.arms.LanguagePackInstaller
 import io.github.davamix.asrbench.arms.MoonshineArm
 import io.github.davamix.asrbench.arms.PlatformRecognizerArm
 import io.github.davamix.asrbench.arms.RecognitionSupportProbe
+import io.github.davamix.asrbench.arms.SherpaOfflineArm
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -304,6 +305,11 @@ class BenchmarkTest {
         // in minutes rather than an hour.
         val sessionCapMs = minOf(arg("session_cap_s", "600").toLong(), 600L) * 1000
 
+        // Arms D and E only: how often open speech is re-decoded for partial
+        // text. 0 shows text only when the VAD closes a segment.
+        val partialMs = arg("partial_ms",
+            SherpaOfflineArm.DEFAULT_PARTIAL_INTERVAL_MS.toString()).toLong()
+
         // Arm B is selected per variant: "B:moonshine-small-en", or plain
         // "B" for every variant that has been pushed to the device.
         val arms = armIds.flatMap { spec ->
@@ -329,8 +335,31 @@ class BenchmarkTest {
                         MoonshineArm(v, MoonshineArm.variants()[v] ?: 0.0)
                     }
                 }
+                // D (Parakeet) and E (Whisper): "E:whisper-base-int8", or
+                // plain "E" for every pushed variant. One variant per run is
+                // the protocol: each one loaded holds its weights in memory.
+                "D", "E" -> {
+                    val known = SherpaOfflineArm.variants().filterValues { it.armId == id }
+                    val wanted = if (detail.isNotEmpty()) {
+                        listOf(detail)
+                    } else {
+                        known.keys.filter { v ->
+                            File(context.getExternalFilesDir(null), "models/$v").isDirectory
+                        }
+                    }
+                    check(wanted.isNotEmpty()) {
+                        "no arm $id variants found under files/models/. " +
+                            "Push them with scripts/run_bench.py --push-models"
+                    }
+                    wanted.map { v ->
+                        val model = requireNotNull(known[v]) {
+                            "unknown arm $id variant '$v'; known: ${known.keys}"
+                        }
+                        SherpaOfflineArm(v, model, threads, partialMs)
+                    }
+                }
                 else -> throw IllegalArgumentException(
-                    "arm $id is not implemented yet. Implemented: A, B"
+                    "arm $id is not implemented yet. Implemented: A, B, D, E"
                 )
             }
         }

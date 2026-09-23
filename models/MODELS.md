@@ -96,6 +96,25 @@ Licence: MIT (OpenAI Whisper upstream).
 > If the q5 sizes turn out to matter for a shipping decision, adding a
 > whisper.cpp arm is a scoped follow-up, not a change to this experiment.
 
+## Runtime for Arms D and E — sherpa-onnx
+
+Not a model, but pinned the same way, because a runtime change can move every
+number it produces. `scripts/fetch_runtime.py` fetches it into
+`bench/app/libs/` (gitignored) and checks the hash.
+
+| | |
+|---|---|
+| Release | [`k2-fsa/sherpa-onnx` v1.13.8](https://github.com/k2-fsa/sherpa-onnx/releases/tag/v1.13.8) (2026-09-10) |
+| Asset | `sherpa-onnx-static-link-onnxruntime-1.13.8.aar`, 38.7 MB |
+| SHA-256 | `b22c3fc1b6a45666d28892bb2f7694beeb77a8362d7ebd77c1a5431ec9435471` (matches GitHub's recorded digest) |
+| Licence | Apache-2.0 |
+
+**Why the static-link AAR.** The regular AAR ships `libonnxruntime.so`, and so
+does Moonshine's (a 6 MB reduced ONNX Runtime build). Both at one path in one
+APK fail packaging, and `pickFirst` would hand one stack the other's runtime.
+The static-link build links ONNX Runtime into `libsherpa-onnx-jni.so` for
+arm64-v8a and x86_64, so each stack keeps its own runtime.
+
 ## Silero VAD (segmentation for Arms C, D, E)
 
 Repo: [`onnx-community/silero-vad`](https://huggingface.co/onnx-community/silero-vad)

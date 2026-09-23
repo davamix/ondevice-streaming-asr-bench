@@ -87,12 +87,14 @@ class BenchmarkRunner(
         // directory -- a full run's worth of thermal budget spent recording
         // the same message. An arm that cannot load is dropped, loudly, and
         // the reason is written into the results.
-        val loadMs = HashMap<String, Long>()
+        // Keyed by the arm itself, not its letter: two variants of one arm
+        // share a letter, and would otherwise record each other's load time.
+        val loadMs = HashMap<Arm, Long>()
         val usable = ArrayList<Arm>()
         for (arm in config.arms) {
             val result = runCatching { arm.load(context) }
             result.onSuccess { ms ->
-                loadMs[arm.id] = ms
+                loadMs[arm] = ms
                 usable += arm
                 Log.i(TAG, "loaded arm ${arm.id} (${arm.label}) in ${ms}ms")
             }.onFailure { t ->
@@ -204,7 +206,7 @@ class BenchmarkRunner(
                         result = result,
                         batteryBefore = before,
                         batteryAfter = after,
-                        modelLoadMs = loadMs[arm.id] ?: -1L,
+                        modelLoadMs = loadMs[arm] ?: -1L,
                     )
                     rows++
 

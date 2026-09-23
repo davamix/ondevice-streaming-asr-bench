@@ -200,6 +200,26 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
             "slip_over_budget_pct": (100.0 * (len(rows) - len(timed)) / len(rows)) if rows else None,
             "max_slip_ms": max([r.get("max_slip_ms") or 0 for r in rows], default=0),
             "peak_rss_mb": med([r.get("peak_rss_mb") for r in rows]),
+            # VAD-segmented arms (D, E) only. The final waits behind any
+            # partial decode already running, because a decode cannot be
+            # interrupted. Taking that wait out estimates final latency with
+            # partials switched off -- derived, not measured.
+            "vad_arm": any("partial_decodes" in e for e in extras),
+            "final_decode_ms": med([e.get("last_final_decode_ms") for e in extras]),
+            "final_wait_ms": med([e.get("last_final_wait_ms") for e in extras]),
+            "finals_only_audio_end_ms": med([
+                max(0, e["final_after_audio_end_ms"] - (e.get("last_final_wait_ms") or 0))
+                for e in extras
+                if e.get("final_after_audio_end_ms") is not None
+                and "partial_decodes" in e
+            ]),
+            "rtf_finals_only": med([e.get("rtf_finals_only") for e in extras]),
+            "partial_decodes": med([e.get("partial_decodes") for e in extras]),
+            "multi_segment_rows": sum(1 for e in extras if (e.get("segments") or 0) > 1),
+            "no_segment_rows": sum(1 for e in extras
+                                   if "segments" in e and not e.get("segments")),
+            "rss_after_load_mb": med([e.get("rss_after_load_mb") for e in extras]),
+            "load_ms": med([r.get("model_load_ms") for r in rows]),
             "temp_max_c": max([t for t in temps if t is not None], default=None),
             "wer": scored.get("wer"),
             "cer": scored.get("cer"),
@@ -260,6 +280,17 @@ def print_detail(summary: dict) -> None:
         print(f"  rtf_sustained            {fmt(s['rtf_sustained'], '.3f')}")
         print(f"  max_slip_ms              {s['max_slip_ms']}")
         print(f"  peak_rss_mb              {fmt(s['peak_rss_mb'], '.0f')}")
+        if s["vad_arm"]:
+            print(f"  VAD arm: final decode    {fmt(s['final_decode_ms'], '.0f')} ms, "
+                  f"queued behind a partial {fmt(s['final_wait_ms'], '.0f')} ms (medians)")
+            print(f"    final, partials off    {fmt(s['finals_only_audio_end_ms'], '.0f')} ms"
+                  f"   [derived: measured minus that wait]")
+            print(f"    rtf, finals only       {fmt(s['rtf_finals_only'], '.3f')}"
+                  f"   partial decodes/clip {fmt(s['partial_decodes'], '.0f')}")
+            print(f"    segments               {s['multi_segment_rows']} rows split, "
+                  f"{s['no_segment_rows']} rows with no speech found")
+            print(f"    load                   {fmt(s['load_ms'], '.0f')} ms, "
+                  f"rss after load {fmt(s['rss_after_load_mb'], '.0f')} MB")
         print(f"  disk_size_mb             {fmt(s['disk_size_mb'], '.1f')}")
         print(f"  temp_max_c               {fmt(s['temp_max_c'], '.1f')}")
         if s["wer"] is not None:

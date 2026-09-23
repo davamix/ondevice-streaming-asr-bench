@@ -221,6 +221,9 @@ def main() -> int:
                     help="lower the 10-minute continuous-inference cap (the "
                          "harness refuses to raise it); used to exercise the "
                          "per-break checkpoint on the emulator")
+    ap.add_argument("--partial-ms", type=int, default=None,
+                    help="arms D/E: re-decode open speech for partial text "
+                         "every N ms (default 500; 0 = final text only)")
     ap.add_argument("--skip-preflight", action="store_true")
     ap.add_argument("--timeout", type=int, default=3600)
     args = ap.parse_args()
@@ -304,6 +307,8 @@ def main() -> int:
     }
     if args.session_cap_s is not None:
         extras["session_cap_s"] = str(args.session_cap_s)
+    if args.partial_ms is not None:
+        extras["partial_ms"] = str(args.partial_ms)
     run_instrumentation(dev, "benchmark", extras, timeout_s=args.timeout)
     pull_results(dev, label)
 
