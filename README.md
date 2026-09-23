@@ -10,10 +10,8 @@ This repo is the lab notebook, not the final report. It was made public before
 any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
-**Status:** Phase 0 complete (corpus + scorer). Phase 1 harness built and
-validated on the emulator; Arm A implemented. **No measurements yet** — the
-results table is empty on purpose, and stays that way until the phone is off
-the charger (see *Current blocker* below).
+**Status:** Phase 0 complete. Phase 1 complete for Spanish — Arm A measured on
+the SD870. English is blocked on a missing language pack, not on the harness.
 
 ---
 
@@ -59,7 +57,7 @@ the quantity of interest.
 
 | # | Arm | Streaming | EN | ES | Size | Runtime | Role | Status |
 |---|---|---|---|---|---|---|---|---|
-| A | Android on-device recognizer | native | ✅ | ✅ | **0 MB** | platform | The bar to beat | 🔨 implemented, unmeasured |
+| A | Android on-device recognizer | native | ⛔ pack absent | ✅ | **0 MB** | platform | The bar to beat | ✅ **ES measured** |
 | B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ⬜ not started |
 | C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ⬜ not started |
 | D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ⬜ not started |
@@ -71,41 +69,71 @@ money-saving result — which is why it is built first.
 
 ## Results
 
-*Empty until the harness runs on the physical device. It grows here.*
+Arm A, Spanish, 20 FLEURS `es_419` clips × 4 repetitions, file-fed and
+wall-clock-paced on the Snapdragon 870. Repetition 0 discarded (cold start,
+empty page cache). Phone unplugged throughout: 80% → 76%, never above 30.7 °C.
 
-| Arm | Lang | `latency_final_ms` | `partial_instability` | `rtf_sustained` | `peak_rss_mb` | `disk_size_mb` | WER |
-|---|---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — | — |
+| Arm | Lang | `latency_final_ms` | `latency_first_partial_ms` | `partial_instability` | `peak_rss_mb` | `disk_size_mb` | WER | CER |
+|---|---|---|---|---|---|---|---|---|
+| A | es | **27** | **2008** | 6 | 103 | **0** | **7.75%** | **2.30%** |
+| A | en | — | — | — | — | 0 | — | *blocked: `en-US` pack not installed* |
 
-### Current blocker
+Medians. 60 scored rows, 774 reference words, 1 error.
 
-The phone is **plugged in at 99%**, and the pre-flight gate refuses to run:
+### Reproducibility
 
-```
-pre-flight failed for M2012K11AG (physical):
-  device is charging; charging heat plus inference heat compounds (§11.3)
-  battery 99% outside 30-80% (§11.3)
+Two independent 4-rep runs, hours apart, on a fixed harness:
 
-Nothing was run.
-```
+| | run 1 | run 2 |
+|---|---|---|
+| WER | 7.71% | 7.75% |
+| `latency_final_ms` | 27 | 27 |
+| `latency_first_partial_ms` | 2010 | 2008 |
 
-Both conditions are physical and only the owner can change them: unplug, and
-let the charge fall to 80% or below. Nothing has been installed on the phone —
-the gate runs before the build and install steps, by design.
+Tighter still within a run: the *same clip* across repetitions lands within
+about 3 ms (2105 / 2109 / 2108 / 2109 ms). One clip produced byte-identical
+output on all four passes.
 
-### What the emulator already established
+That determinism is what the file-fed decision (D5) bought. A human saying the
+same sentence four times cannot produce it, and without it a 30 ms difference
+between arms would be unmeasurable.
 
-The emulator is for plumbing, never for numbers (D1), but it validated the
-whole path end to end: install → create dirs → push corpus → run → write JSON
-→ `adb pull`.
+### What this says so far
 
-```
-paced feed: 60 frames, audio=6000ms wall=5901ms maxSlip=3ms sinkBusy=6ms
-```
+**The 0 MB arm is good at Spanish.** 7.75% WER on clean read speech, with
+correct diacritics — stripping accents before scoring only moves it to 7.36%,
+so 95% of the error is genuine recognition, not orthography.
 
-60 frames of 100 ms for a 6.0 s clip, finishing in 5.9 s of wall clock with a
-worst-case 3 ms deviation from schedule. The pacing is accurate, which is the
-one thing that had to be true for any latency number to mean anything.
+**But the latency profile is lopsided.** Text *finalises* 27 ms after speech
+ends, which is excellent. It takes **two seconds to first appear**, which is
+not. Correlation between clip duration and first-partial latency is −0.20, so
+this is a roughly fixed startup cost rather than the recognizer waiting for a
+fraction of the utterance.
+
+One caveat on that number, stated plainly: the harness creates a fresh
+`SpeechRecognizer` per clip, so every utterance pays full session startup. That
+models a voice-command app correctly. A continuous-transcription app would hold
+one recognizer open and amortise the cost, so **2008 ms is an upper bound** for
+the live-dictation case. The session-bucket runs will show the amortised
+figure, and that comparison is now the most interesting open question for
+Arm A.
+
+**`rtf_sustained` is deliberately blank.** Recognition happens inside Google's
+process, so time spent in our sink is a pipe write and says nothing about the
+model. Reporting a number there would be a fiction (D6).
+
+### Decision gate (PLAN.md §10, Phase 1)
+
+Not yet answerable. Arm A is strong on Spanish, which is the language the plan
+expected to be *hardest* to serve. If that holds against Arms C/D/E, the case
+for bundling a Spanish model weakens considerably.
+
+Two things block calling it:
+- **the two-second first-partial**, until the amortised session number exists
+- **English**, which cannot be measured on this handset at all until the pack
+  is installed
+
+So arms C and D stay in the matrix for now.
 
 ## Metrics
 
@@ -306,6 +334,26 @@ languages rather than burning thermal budget on a row of identical failures.
 
 *Probed 2026-09-23.*
 
+### The platform recognizer sometimes ends a session with an error *and* correct text
+
+On about 3% of clips, Arm A finished with `ERROR_CLIENT` instead of delivering
+a final result — while having already emitted a complete, correct transcript
+through partial results.
+
+It is not clip-dependent in the way you would expect. One clip produced
+**byte-identical output on all four repetitions** but raised the error on only
+two of them. Same audio, same text, different error outcome.
+
+The practical consequence for anyone building on `SpeechRecognizer`: **treat
+"error with partial text" as a usable result, not a failure.** Discarding the
+transcript because `onError` fired would throw away perfectly good output
+several times per hundred utterances.
+
+A separate, avoidable version of this was our own bug: calling `stopListening()`
+after closing the audio source races a session that has already finalised on
+EOF, and comes back as `ERROR_CLIENT` on rows whose text is fine. Closing the
+write end is sufficient; only stop a session still running.
+
 ### `adb push` into an app's own external files dir can be invisible to that app
 
 `adb push` writes as the `shell` user. On Android 11+, a directory shell
@@ -335,6 +383,21 @@ end to break a blocked write. A stalled arm produces a recorded failure in
 about 0.2 s instead of a hang — and a failure is a result.
 
 This is precisely what the emulator-first rule is for.
+
+### Schedule slip is rare but has a long tail, and it contaminates latency
+
+The paced feeder logs how far behind the wall clock it ever fell. Median slip
+is 4 ms and the 90th percentile is 8 ms — but 3 of 60 rows in one run exceeded
+a full 100 ms frame, and one reached **1703 ms**.
+
+Audio that arrives late makes any latency measured against the clip's own
+timeline wrong, so rows over a one-frame slip budget are dropped from latency
+statistics while kept for WER — the audio arrived intact, just late. Excluding
+them moved the median first-partial by 9 ms, which is the reassuring direction:
+the outliers were few and the bulk of the data was sound.
+
+Worth recording because a harness that does not measure its own pacing cannot
+know when it is lying to you.
 
 ### Excluded before testing
 
