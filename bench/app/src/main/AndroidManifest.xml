@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      RECORD_AUDIO is deliberately ABSENT until Phase 5 (PLAN.md §11.4).
+      Every measured run is file-fed: audio reaches the recognizer through a
+      ParcelFileDescriptor pipe via RecognizerIntent.EXTRA_AUDIO_SOURCE, which
+      needs no microphone access at all. The single real-mic sanity check at
+      the end of the experiment is the only step that will need this, and it
+      gets added then.
+    -->
+
+    <!-- Arm A resolves the platform recognizer service by intent. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:icon="@android:drawable/ic_btn_speak_now"
+        android:label="ASR Bench"
+        android:supportsRtl="true">
+
+        <!--
+          No launcher Activity. This is a headless instrument driven by
+          `adb shell am instrument`; a demo UI comes after there are numbers.
+        -->
+    </application>
+</manifest>

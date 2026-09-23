@@ -1,0 +1,19 @@
+# Version catalog. Pinned deliberately: the harness is a measurement
+# instrument, and an instrument whose dependencies drift is not an instrument.
+[versions]
+agp = "9.4.1"
+coreKtx = "1.17.0"
+junit = "4.13.2"
+androidxTestExtJunit = "1.3.0"
+androidxTestRunner = "1.7.0"
+androidxTestRules = "1.7.0"
+
+[libraries]
+androidx-core-ktx    = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit                = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-test-junit  = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+androidx-test-rules  = { group = "androidx.test", name = "rules", version.ref = "androidxTestRules" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
