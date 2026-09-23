@@ -15,6 +15,49 @@ the SD870. English is blocked on a missing language pack, not on the harness.
 
 ---
 
+## Contents
+
+| Section | What's in it |
+|---|---|
+| [Why this is not obvious](#why-this-is-not-obvious) | Why live ASR is a different problem from batch ASR, and the English/Spanish asymmetry the experiment exists to price |
+| [Hardware under test](#hardware-under-test) | The phone, its SoC, and why no published number comes from an emulator |
+| [The matrix](#the-matrix) | The five arms, with current status per arm |
+| [**Results**](#results) | **The measured numbers.** Plus [reproducibility](#reproducibility), [what they say so far](#what-this-says-so-far), and the [decision gate](#decision-gate-planmd-10-phase-1) |
+| [Metrics](#metrics) | What is measured and why RTF alone would mislead |
+| [Method](#method-paced-file-fed-streaming) | Paced file-fed streaming — the one implementation detail everything rests on |
+| [Corpus](#corpus) | How the audio was built, and the concatenation trick for scored continuous speech |
+| [Reproducing](#reproducing) | Commands to rebuild the corpus, fetch models and run the harness |
+| [**Findings and dead ends**](#findings-and-dead-ends) | **The useful part** — see the table below |
+| [Model licences](#model-licences) | What each arm's weights permit, including one that blocks shipping |
+| [Repo layout](#repo-layout) | Where everything lives |
+| [A note on the test device](#a-note-on-the-test-device) | The safety policy, and why disabling thermal throttling is refused twice over |
+
+### Findings index
+
+Negative results included on purpose. Several of these are not documented
+anywhere else.
+
+| # | Finding | Kind |
+|---|---|---|
+| 1 | [Moonshine has no deployable Spanish streaming model](#moonshine-has-no-deployable-spanish-streaming-model) | Ecosystem gap |
+| 2 | [The two Moonshine repos contradict each other on licensing](#the-two-moonshine-repos-contradict-each-other-on-licensing) | Licensing |
+| 3 | [sherpa-onnx has no streaming Zipformer for Spanish](#sherpa-onnx-has-no-streaming-zipformer-for-spanish) | Ecosystem gap |
+| 4 | [Whisper "small q5 = 180 MB" does not apply to a sherpa-onnx stack](#whisper-small-q5--180-mb-does-not-apply-to-a-sherpa-onnx-stack) | Correction to the plan |
+| 5 | [Moonshine's algorithmic lookahead looks genuinely low](#moonshines-algorithmic-lookahead-looks-genuinely-low) | Observation, unconfirmed |
+| 6 | [The platform recognizer had Spanish installed and English missing](#the-platform-recognizer-had-spanish-installed-and-english-missing) | Android gotcha |
+| 7 | [Installing a language pack: the API works, the Settings UI does not](#installing-an-on-device-language-pack-the-api-works-the-settings-ui-does-not) | Android gotcha |
+| 8 | [The recognizer sometimes ends a session with an error *and* correct text](#the-platform-recognizer-sometimes-ends-a-session-with-an-error-and-correct-text) | Android gotcha |
+| 9 | [`adb push` into an app's own files dir can be invisible to that app](#adb-push-into-an-apps-own-external-files-dir-can-be-invisible-to-that-app) | Android gotcha |
+| 10 | [A stalled consumer will hang a paced feeder, not fail it](#a-stalled-consumer-will-hang-a-paced-feeder-not-fail-it) | Harness bug |
+| 11 | [Schedule slip is rare but has a long tail, and contaminates latency](#schedule-slip-is-rare-but-has-a-long-tail-and-it-contaminates-latency) | Measurement integrity |
+| 12 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
+
+> **New here?** [Results](#results) for the numbers, [Findings](#findings-and-dead-ends)
+> for what was learned the hard way, and [`PLAN.md`](PLAN.md) for the full
+> experiment design and the reasoning behind every decision.
+
+---
+
 ## Why this is not obvious
 
 Live transcription and batch transcription are different problems, and the
