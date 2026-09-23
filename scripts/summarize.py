@@ -87,8 +87,15 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
             # Emulator timings are unrelated to the quantity of interest (D1).
             continue
 
+        # Dropping repetition 0 is right when there are others to fall back
+        # on. On a single-rep run -- which is how the 6-minute session clips
+        # are measured, since four repetitions would be 48 minutes of phone
+        # time -- it silently deletes the entire group. Keep it, and mark it.
+        doc_reps = doc.get("notes", {}).get("reps", 0)
+        single_rep = doc_reps == 1
+
         for run in doc.get("runs", []):
-            if not keep_first and run.get("rep", 0) == 0:
+            if not keep_first and not single_rep and run.get("rep", 0) == 0:
                 continue
             # Source is part of the key: FLEURS is clean read speech and
             # LibriSpeech test-other is the noisy stress case. Averaging them
@@ -99,7 +106,7 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
                 "arm_label": run.get("arm_label", run["arm"]),
                 "runtime": run.get("runtime", "?"),
                 "disk_size_mb": run.get("disk_size_mb"),
-                "rows": [], "pairs": [], "errors": 0,
+                "rows": [], "pairs": [], "errors": 0, "single_rep": single_rep,
             })
             g["rows"].append(run)
             if run.get("error"):
@@ -123,6 +130,7 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
             "disk_size_mb": g["disk_size_mb"],
             "n": len(rows),
             "errors": g["errors"],
+            "single_rep": g.get("single_rep", False),
             "latency_final_ms": med([r.get("latency_final_ms") for r in rows]),
             "latency_first_partial_ms": med([r.get("latency_first_partial_ms") for r in rows]),
             "partial_instability": med([r.get("partial_instability") for r in rows]),
@@ -171,7 +179,9 @@ def print_detail(summary: dict) -> None:
     for (arm, lang, bucket, source), s in summary.items():
         print(f"\n=== Arm {arm} / {lang} / {bucket} / {source}")
         print(f"  {s['arm_label']}  [{s['runtime']}]")
-        print(f"  rows                     {s['n']}  (errors: {s['errors']})")
+        print(f"  rows                     {s['n']}  (errors: {s['errors']})"
+              + ("   [SINGLE REPETITION -- indicative, not statistical]"
+                 if s.get("single_rep") else ""))
         print(f"  slip median/p90/max      {fmt(s['slip_median_ms'], '.0f')} / "
               f"{fmt(s['slip_p90_ms'], '.0f')} / {s['max_slip_ms']} ms"
               f"   ({fmt(s['slip_over_budget_pct'], '.0f')}% over {SLIP_BUDGET_MS}ms)")
@@ -206,6 +216,10 @@ def main() -> int:
     for r in roots:
         paths.extend(sorted(r.rglob("*.json")) if r.is_dir() else [r])
     paths = [p for p in paths if p.name not in ("device.json", "recognition-support.json")]
+    # results/superseded/ holds runs from a harness with known measurement
+    # bugs. They are kept as evidence for findings in the README but must
+    # never reach an aggregate -- see results/superseded/README.md.
+    paths = [p for p in paths if "superseded" not in p.parts]
 
     if not paths:
         print("no result files found", file=sys.stderr)

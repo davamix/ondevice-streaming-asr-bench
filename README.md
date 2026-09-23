@@ -31,6 +31,7 @@ languages**, clean and noisy. Arms B–E not started.
 | [Model licences](#model-licences) | What each arm's weights permit, including one that blocks shipping |
 | [Repo layout](#repo-layout) | Where everything lives |
 | [A note on the test device](#a-note-on-the-test-device) | The safety policy, and why disabling thermal throttling is refused twice over |
+| [summaries/](summaries/) | Short write-ups: the [Phase 1 results](summaries/phase-1-arm-a.md), and the [Phase 2 handover](summaries/phase-2-handover.md) |
 
 ### Findings index
 
@@ -52,8 +53,9 @@ anywhere else.
 | 11 | [Filtering out "bad" measurement rows can flatter what you measure](#filtering-out-bad-measurement-rows-can-flatter-the-thing-you-are-measuring) | Measurement integrity |
 | 12 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
 
-> **New here?** [Results](#results) for the numbers, [Findings](#findings-and-dead-ends)
-> for what was learned the hard way, and [`PLAN.md`](PLAN.md) for the full
+> **New here?** Start with the [Phase 1 summary](summaries/phase-1-arm-a.md)
+> for results without the process. Then [Findings](#findings-and-dead-ends) for
+> what was learned the hard way, and [`PLAN.md`](PLAN.md) for the full
 > experiment design and the reasoning behind every decision.
 
 ---
