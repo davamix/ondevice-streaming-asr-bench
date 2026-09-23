@@ -31,7 +31,8 @@ languages**, clean and noisy. Arms B–E not started.
 | [Model licences](#model-licences) | What each arm's weights permit, including one that blocks shipping |
 | [Repo layout](#repo-layout) | Where everything lives |
 | [A note on the test device](#a-note-on-the-test-device) | The safety policy, and why disabling thermal throttling is refused twice over |
-| [summaries/](summaries/) | Short write-ups: the [Phase 1 results](summaries/phase-1-arm-a.md), and the [Phase 2 handover](summaries/phase-2-handover.md) |
+| [summaries/](summaries/) | One short write-up per completed phase — currently [Phase 1: Arm A](summaries/phase-1-arm-a.md) |
+| [HANDOVER.md](HANDOVER.md) | State, commands and constraints for running the next phase in a fresh session |
 
 ### Findings index
 

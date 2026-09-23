@@ -1,11 +1,14 @@
 # Summaries
 
-Short, readable write-ups. The [main README](../README.md) carries the full
-method, every finding including the dead ends, and the reproduction steps;
-[`PLAN.md`](../PLAN.md) carries the experiment design and the reasoning behind
-each decision.
+One short write-up per completed phase: what was measured, what it means, and
+the verdict. Problems hit along the way live in the [main README](../README.md)
+findings section, not here.
 
-| Document | What it is |
-|---|---|
-| [Phase 1 — Arm A](phase-1-arm-a.md) | Results and verdict for the platform on-device recognizer (0 MB), both languages, clean and noisy. |
-| [Phase 2 handover](phase-2-handover.md) | State, commands and constraints for running Arm B (Moonshine) on the phone in a new session. Includes the starting prompt. |
+| Phase | Document | Subject |
+|---|---|---|
+| 1 | [Arm A](phase-1-arm-a.md) | The platform on-device recognizer (0 MB), both languages, clean and noisy. |
+
+For the full method and reproduction steps see the [main README](../README.md);
+for the experiment design and the reasoning behind each decision see
+[`PLAN.md`](../PLAN.md). The next phase to run is described in
+[`HANDOVER.md`](../HANDOVER.md).

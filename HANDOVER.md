@@ -1,4 +1,9 @@
-# Phase 2 handover — Arm B (Moonshine streaming English)
+# Handover — next phase to run
+
+**Currently: Phase 2, Arm B (Moonshine streaming English).**
+
+This file carries whatever phase is next. It is rewritten as each phase
+completes; finished phases are written up in [`summaries/`](summaries/).
 
 **For:** a fresh session picking this up with no prior context.
 
@@ -13,7 +18,7 @@ Paste this to start:
 
 > Continue the on-device ASR experiment in `F:\Development\Samples\android-transcription-sample`.
 >
-> Read `PLAN.md` for the experiment design, `summaries/phase-2-handover.md` for
+> Read `PLAN.md` for the experiment design, `HANDOVER.md` for
 > current state and exact commands, and `summaries/phase-1-arm-a.md` for what
 > Phase 1 established. `README.md` has the full findings and method.
 >
@@ -35,7 +40,7 @@ Paste this to start:
 | | State |
 |---|---|
 | Phase 0 (corpus, scorer) | ✅ complete |
-| Phase 1 (Arm A) | ✅ complete — see [phase-1-arm-a.md](phase-1-arm-a.md) |
+| Phase 1 (Arm A) | ✅ complete — see [summaries/phase-1-arm-a.md](summaries/phase-1-arm-a.md) |
 | Phase 2 (Arm B) | 🔨 built, emulator-validated, **no phone numbers yet** |
 | Phases 3–5 (Arms C/D/E) | ⬜ not started |
 
