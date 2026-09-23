@@ -1,0 +1,107 @@
+{
+  "device": {
+    "model": "M2012K11AG",
+    "device": "alioth",
+    "soc_manufacturer": "QTI",
+    "soc_model": "SM8250",
+    "android_release": "13",
+    "sdk_int": 33,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "armeabi"
+    ],
+    "cpu_cores": 8,
+    "total_ram_mb": 5522,
+    "is_emulator": false
+  },
+  "probed_utc": 1790146878399,
+  "languages": {
+    "en-US": {
+      "language": "en-US",
+      "on_device_recognition_available": true,
+      "installed_on_device": [
+        "es-ES"
+      ],
+      "pending_on_device": [],
+      "supported_on_device": [
+        "en-US",
+        "de-DE",
+        "fr-FR",
+        "it-IT",
+        "en-AU",
+        "en-GB",
+        "en-IE",
+        "en-SG",
+        "ja-JP",
+        "de-AT",
+        "de-BE",
+        "de-CH",
+        "en-CA",
+        "en-IN",
+        "es-US",
+        "fr-BE",
+        "fr-CA",
+        "fr-CH",
+        "hi-IN",
+        "id-ID",
+        "it-CH",
+        "ko-KR",
+        "pt-BR",
+        "th-TH",
+        "cmn-Hans-CN",
+        "cmn-Hant-TW",
+        "pl-PL",
+        "ru-RU",
+        "tr-TR",
+        "vi-VN"
+      ],
+      "online_languages": [],
+      "installed_for_this_language": false,
+      "error": null
+    },
+    "es-ES": {
+      "language": "es-ES",
+      "on_device_recognition_available": true,
+      "installed_on_device": [
+        "es-ES"
+      ],
+      "pending_on_device": [],
+      "supported_on_device": [
+        "en-US",
+        "de-DE",
+        "fr-FR",
+        "it-IT",
+        "en-AU",
+        "en-GB",
+        "en-IE",
+        "en-SG",
+        "ja-JP",
+        "de-AT",
+        "de-BE",
+        "de-CH",
+        "en-CA",
+        "en-IN",
+        "es-US",
+        "fr-BE",
+        "fr-CA",
+        "fr-CH",
+        "hi-IN",
+        "id-ID",
+        "it-CH",
+        "ko-KR",
+        "pt-BR",
+        "th-TH",
+        "cmn-Hans-CN",
+        "cmn-Hant-TW",
+        "pl-PL",
+        "ru-RU",
+        "tr-TR",
+        "vi-VN"
+      ],
+      "online_languages": [],
+      "installed_for_this_language": true,
+      "error": null
+    }
+  }
+}

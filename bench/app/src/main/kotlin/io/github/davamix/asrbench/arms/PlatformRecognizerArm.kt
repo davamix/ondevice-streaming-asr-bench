@@ -57,14 +57,41 @@ class PlatformRecognizerArm(
     override val diskSizeMb = 0.0
 
     private var available: Boolean? = null
+    private var installed: List<String> = emptyList()
+    private var probed = false
 
-    override fun supports(language: String): Boolean = available != false
+    /**
+     * True only if the language pack is actually **installed**, not merely
+     * supported.
+     *
+     * The distinction is not academic. On the device under test only `es-ES`
+     * is installed; `en-US` appears in the supported list but is absent, so an
+     * English run would produce a row of identical LANGUAGE_UNAVAILABLE
+     * failures and spend thermal budget learning nothing. Checking up front
+     * turns that into one skipped arm.
+     */
+    override fun supports(language: String): Boolean {
+        if (available == false) return false
+        if (!probed) return true // not loaded yet; assume yes and let it fail loudly
+        val want = bcp47(language).substringBefore('-')
+        return installed.any { it.substringBefore('-').equals(want, ignoreCase = true) }
+    }
 
     override fun load(context: Context): Long {
         val t0 = SystemClock.uptimeMillis()
         available = SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
+        if (available == true) {
+            // One probe is enough: the installed-language list it returns does
+            // not depend on which language was asked about.
+            val support = RecognitionSupportProbe.probe(context, "en-US", timeoutS = 20)
+            installed = support.installedOnDevice
+            probed = support.error == null
+        }
         return SystemClock.uptimeMillis() - t0
     }
+
+    /** Installed language packs, for the results header. */
+    fun installedLanguages(): List<String> = installed
 
     override fun transcribe(
         context: Context,
@@ -235,7 +262,13 @@ class PlatformRecognizerArm(
             // Closing the write end is the end-of-audio signal.
             state.speechEndMs = SystemClock.uptimeMillis()
 
-            main.post { recognizer?.stopListening() }
+            // Closing the write end already signalled end-of-audio, and the
+            // recognizer finalises on EOF by itself. Calling stopListening()
+            // on a session that has already delivered its result races it and
+            // comes back as ERROR_CLIENT, so only stop one still running.
+            if (state.finalMs == null) {
+                main.post { recognizer?.stopListening() }
+            }
 
             // If the recognizer already errored there is nothing left to wait
             // for; only wait out the full timeout when a result is still
@@ -247,6 +280,7 @@ class PlatformRecognizerArm(
             }
 
             val err = state.errorCode
+            val gotCleanResult = state.finalMs != null && tracker.text.isNotBlank()
             if (err != null && tracker.text.isBlank()) {
                 return ArmResult.failed(
                     "recognizer error ${errorName(err)}" +
@@ -270,8 +304,14 @@ class PlatformRecognizerArm(
                 maxSlipMs = stats?.maxSlipMs ?: 0,
                 audioDurationMs = audio.durationMs,
                 peakRssMb = io.github.davamix.asrbench.Telemetry.peakRssMb(),
+                // An error that arrives *after* a complete result is a
+                // teardown race, not a failed transcription. Recording it as a
+                // failure would inflate the error rate with rows whose text is
+                // perfectly good; it is kept in `extra` instead so it stays
+                // visible without being counted.
                 error = when {
                     feedError != null -> feedError
+                    gotCleanResult -> null
                     !settled -> "timed out after ${FINAL_TIMEOUT_S}s waiting for final result"
                     err != null -> "recognizer error ${errorName(err)} (partial text kept)"
                     else -> null
@@ -282,6 +322,7 @@ class PlatformRecognizerArm(
                     "feed_frames" to (stats?.frames ?: 0),
                     "sink_busy_ms" to (stats?.sinkBusyMs ?: 0),
                     "feed_complete" to (stats != null),
+                    "late_error" to (if (gotCleanResult && err != null) errorName(err) else null),
                 ),
             )
         } catch (t: Throwable) {

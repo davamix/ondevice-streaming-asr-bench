@@ -41,6 +41,14 @@ class BenchmarkRunner(
         val enforceThermal: Boolean = true,
         /** Cooldown between clips, milliseconds. */
         val cooldownMs: Long = 2_000,
+        /**
+         * Cap on *continuous* inference before a mandatory break (§11.3).
+         * Exceeding it is what makes a run continuous rather than intermittent,
+         * which is the thing the policy limits.
+         */
+        val sessionCapMs: Long = 10 * 60 * 1000,
+        /** Length of that mandatory break. */
+        val sessionBreakMs: Long = 120_000,
     )
 
     class Outcome(val resultFile: File, val rows: Int, val aborted: String?)
@@ -82,6 +90,8 @@ class BenchmarkRunner(
 
         var rows = 0
         var aborted: String? = null
+        var sessionStart = System.currentTimeMillis()
+        var breaks = 0
 
         outer@ for (rep in 0 until config.reps) {
             // Randomise arm order per repetition so run order cannot be
@@ -94,6 +104,19 @@ class BenchmarkRunner(
                     if (!arm.supports(clip.language)) {
                         Log.i(TAG, "arm ${arm.id} does not support ${clip.language}, skipping")
                         continue
+                    }
+
+                    // §11.3 caps continuous inference at 10 minutes. A long
+                    // matrix is allowed to exceed that in total, but only by
+                    // being broken up -- the cap is on how long the phone runs
+                    // hot without a pause, not on how much work it does.
+                    val elapsed = System.currentTimeMillis() - sessionStart
+                    if (elapsed >= config.sessionCapMs) {
+                        breaks++
+                        Log.i(TAG, "session cap reached (${elapsed / 1000}s) -- " +
+                            "pausing ${config.sessionBreakMs / 1000}s (break #$breaks)")
+                        Thread.sleep(config.sessionBreakMs)
+                        sessionStart = System.currentTimeMillis()
                     }
 
                     val before = Telemetry.battery(context)
@@ -163,6 +186,8 @@ class BenchmarkRunner(
             }
         }
 
+        writer.note("session_breaks", breaks)
+        writer.note("session_cap_ms", config.sessionCapMs)
         if (aborted != null) writer.note("aborted", aborted)
         config.arms.forEach { runCatching { it.close() } }
 

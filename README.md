@@ -269,6 +269,43 @@ algorithmic lookahead. If that holds empirically it is a structural advantage no
 amount of optimisation gives a chunked offline model. To be confirmed by
 measurement in Phase 2.
 
+### The platform recognizer had Spanish installed and English missing
+
+PLAN.md §12 flagged this risk: *"Is Arm A's Spanish on-device model present on
+this Xiaomi/MIUI build, or does it need a download?"* — the worry being that
+Spanish would be the gap.
+
+It is the other way round. `checkRecognitionSupport()` on the device under test
+(MIUI V816, Android 13) reports:
+
+| | |
+|---|---|
+| On-device recognition available | ✅ yes |
+| **Installed** | **`es-ES` only** |
+| Supported but not installed | 30 languages, including `en-US` |
+| Pending | none |
+
+So Arm A can do Spanish immediately and **cannot do English at all** until the
+`en-US` pack is downloaded. That is consistent with an `alioth_eea` handset
+used in Spanish: Speech Services installs the pack matching the device locale,
+not the full set.
+
+Two consequences worth generalising:
+
+- **"Supported" is not "installed."** `en-US` appears in
+  `supportedOnDeviceLanguages` while being completely unusable offline. Code
+  that checks the supported list will pass and then fail at run time with
+  `ERROR_LANGUAGE_UNAVAILABLE`. Only `installedOnDeviceLanguages` answers the
+  question you actually care about.
+- **Arm A's coverage is a property of the individual handset**, not of Android
+  or of the device model. Any product relying on it needs a runtime check and a
+  fallback, because a user's phone may simply not have the language.
+
+The harness now checks installed packs in `Arm.load()` and skips unsupported
+languages rather than burning thermal budget on a row of identical failures.
+
+*Probed 2026-09-23.*
+
 ### `adb push` into an app's own external files dir can be invisible to that app
 
 `adb push` writes as the `shell` user. On Android 11+, a directory shell

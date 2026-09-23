@@ -81,7 +81,18 @@ class Device:
         return f"{self.model} ({'emulator' if self.is_emulator else 'physical'})"
 
 
-def list_devices() -> list[Device]:
+def list_devices(dedupe: bool = True) -> list[Device]:
+    """Attached devices, with duplicate transports to the same phone collapsed.
+
+    Wireless debugging advertises one phone twice -- once as `ip:port` and once
+    as an mDNS `adb-<serial>._adb-tls-connect._tcp` service -- and a USB cable
+    adds a third. They are all the same handset, so treating them as separate
+    devices would make every selection ambiguous and could, worse, run the same
+    matrix twice against one thermal budget.
+
+    Identity comes from `ro.serialno`, which is read but never printed or
+    stored: this repo is public (§11.7).
+    """
     out = subprocess.run([adb_path(), "devices", "-l"], capture_output=True, text=True)
     devices = []
     for line in out.stdout.splitlines()[1:]:
@@ -92,7 +103,24 @@ def list_devices() -> list[Device]:
         m = re.search(r"model:(\S+)", line)
         model = m.group(1) if m else "unknown"
         devices.append(Device(serial, model, serial.startswith("emulator-")))
-    return devices
+
+    if not dedupe or len(devices) < 2:
+        return devices
+
+    seen: dict[str, Device] = {}
+    for dev in devices:
+        proc = subprocess.run(
+            [adb_path(), "-s", dev.serial, "shell", "getprop", "ro.serialno"],
+            capture_output=True, text=True, timeout=20,
+        )
+        identity = proc.stdout.strip() or dev.serial
+        if identity in seen:
+            # Prefer a plain ip:port transport: it is what a person can retype.
+            if ":" in dev.serial and "_adb-tls" in seen[identity].serial:
+                seen[identity] = dev
+            continue
+        seen[identity] = dev
+    return list(seen.values())
 
 
 def pick_device(want: str | None = None, prefer_emulator: bool = False) -> Device:
