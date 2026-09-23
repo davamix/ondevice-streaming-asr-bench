@@ -10,6 +10,20 @@
       gets added then.
     -->
 
+    <!--
+      Keeps the CPU awake for the duration of a run. Without it the device
+      dozes between paced frames on long clips: SystemClock.uptimeMillis()
+      stops advancing while wall-clock time passes, so the feeder believes it
+      is on schedule while the model is actually being starved of audio in
+      real time. A 6-minute session took 17 minutes of wall clock this way and
+      reported 253 ms of slip.
+
+      A partial wake lock, not a screen-on flag: it keeps the CPU running
+      without the display's power draw and heat, which matters on a device
+      whose thermal behaviour is part of the measurement.
+    -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <!-- Arm A resolves the platform recognizer service by intent. -->
     <queries>
         <intent>

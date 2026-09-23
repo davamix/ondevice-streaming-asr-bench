@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.davamix.asrbench.arms.LanguagePackInstaller
+import io.github.davamix.asrbench.arms.MoonshineArm
 import io.github.davamix.asrbench.arms.PlatformRecognizerArm
 import io.github.davamix.asrbench.arms.RecognitionSupportProbe
 import org.json.JSONObject
@@ -290,13 +291,33 @@ class BenchmarkTest {
         val onEmulator = Telemetry.isEmulator()
         val enforceThermal = arg("thermal", if (onEmulator) "false" else "true").toBoolean()
 
-        val arms = armIds.map { id ->
-            when (id.uppercase()) {
-                "A" -> PlatformRecognizerArm(
-                    segmented = buckets.contains("session"),
+        // Arm B is selected per variant: "B:moonshine-small-en", or plain
+        // "B" for every variant that has been pushed to the device.
+        val arms = armIds.flatMap { spec ->
+            val id = spec.substringBefore(':').uppercase()
+            val detail = spec.substringAfter(':', "")
+            when (id) {
+                "A" -> listOf(
+                    PlatformRecognizerArm(segmented = buckets.contains("session"))
                 )
+                "B" -> {
+                    val wanted = if (detail.isNotEmpty()) {
+                        listOf(detail)
+                    } else {
+                        MoonshineArm.variants().keys.filter { v ->
+                            File(context.getExternalFilesDir(null), "models/$v").isDirectory
+                        }
+                    }
+                    check(wanted.isNotEmpty()) {
+                        "no Moonshine variants found under files/models/. " +
+                            "Push them with scripts/run_bench.py --push-models"
+                    }
+                    wanted.map { v ->
+                        MoonshineArm(v, MoonshineArm.variants()[v] ?: 0.0)
+                    }
+                }
                 else -> throw IllegalArgumentException(
-                    "arm $id is not implemented yet. Implemented: A"
+                    "arm $id is not implemented yet. Implemented: A, B"
                 )
             }
         }

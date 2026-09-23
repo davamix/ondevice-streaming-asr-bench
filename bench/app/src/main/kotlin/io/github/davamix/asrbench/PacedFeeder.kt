@@ -48,6 +48,12 @@ class PacedFeeder(
         val sinkBusyMs: Long,
         val maxSlipMs: Long,
         val finalSlipMs: Long,
+        /**
+         * Wall-clock time minus CPU-awake time across the whole feed. Non-zero
+         * means the device suspended mid-feed, so the model was not actually
+         * receiving audio in real time no matter what the schedule says.
+         */
+        val suspendedMs: Long,
     ) {
         /** Fraction of real time the sink consumed. > 1.0 = cannot keep up. */
         val rtfSustained: Double
@@ -83,7 +89,11 @@ class PacedFeeder(
         var maxSlip = 0L
         var lastSlip = 0L
 
-        val start = SystemClock.uptimeMillis()
+        // Paced against elapsedRealtime, which keeps counting through
+        // suspend, rather than uptimeMillis, which does not. Pacing against
+        // uptime lets a dozing device silently stretch a "real-time" feed.
+        val start = SystemClock.elapsedRealtime()
+        val startUptime = SystemClock.uptimeMillis()
         onStart?.invoke()
 
         while (offset < total) {
@@ -93,10 +103,10 @@ class PacedFeeder(
 
             // Wait until this frame is genuinely due. A model must not be
             // allowed to see audio before it would exist.
-            var now = SystemClock.uptimeMillis()
+            var now = SystemClock.elapsedRealtime()
             if (now < scheduled) {
                 SystemClock.sleep(scheduled - now)
-                now = SystemClock.uptimeMillis()
+                now = SystemClock.elapsedRealtime()
             }
 
             val slip = now - scheduled
@@ -106,16 +116,18 @@ class PacedFeeder(
             val frame = audio.samples.copyOfRange(offset, offset + n)
             val atMs = offset * 1000L / audio.sampleRate
 
-            val t0 = SystemClock.uptimeMillis()
+            val t0 = SystemClock.elapsedRealtime()
             sink.onFrame(frame, atMs)
-            sinkBusy += SystemClock.uptimeMillis() - t0
+            sinkBusy += SystemClock.elapsedRealtime() - t0
 
             offset += n
             frames++
         }
 
-        val end = SystemClock.uptimeMillis()
+        val end = SystemClock.elapsedRealtime()
+        val awake = SystemClock.uptimeMillis() - startUptime
         return FeedStats(
+            suspendedMs = (end - start) - awake,
             frames = frames,
             audioDurationMs = audio.durationMs,
             feedStartUptimeMs = start,

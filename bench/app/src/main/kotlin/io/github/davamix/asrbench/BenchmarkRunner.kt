@@ -1,6 +1,7 @@
 package io.github.davamix.asrbench
 
 import android.content.Context
+import android.os.PowerManager
 import android.util.Log
 import java.io.File
 import kotlin.random.Random
@@ -87,6 +88,16 @@ class BenchmarkRunner(
             loadMs[arm.id] = ms
             Log.i(TAG, "loaded arm ${arm.id} (${arm.label}) in ${ms}ms")
         }
+
+        // Keep the CPU awake for the whole matrix. A dozing device suspends
+        // between paced frames, which stretches a "real-time" feed without the
+        // feeder noticing -- a 6-minute session took 17 minutes of wall clock
+        // that way. The lock is released in the finally below, always.
+        val power = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        val wakeLock = power.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "asrbench:run")
+        wakeLock.setReferenceCounted(false)
+        wakeLock.acquire(MAX_RUN_MS)
+        Log.i(TAG, "wake lock acquired")
 
         var rows = 0
         var aborted: String? = null
@@ -186,6 +197,10 @@ class BenchmarkRunner(
             }
         }
 
+        if (wakeLock.isHeld) {
+            wakeLock.release()
+            Log.i(TAG, "wake lock released")
+        }
         writer.note("session_breaks", breaks)
         writer.note("session_cap_ms", config.sessionCapMs)
         if (aborted != null) writer.note("aborted", aborted)
@@ -211,5 +226,8 @@ class BenchmarkRunner(
     private companion object {
         const val TAG = "AsrBench"
         const val COOLDOWN_LIMIT_MS = 10 * 60 * 1000L
+
+        /** Upper bound on a single matrix run; the wake lock expires with it. */
+        const val MAX_RUN_MS = 3 * 60 * 60 * 1000L
     }
 }

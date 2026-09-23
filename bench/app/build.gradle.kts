@@ -22,9 +22,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            // The device under test only. Shipping other ABIs would just make
-            // the APK bigger for no benefit.
-            abiFilters += "arm64-v8a"
+            // arm64-v8a is the device under test. x86_64 is here only so the
+            // emulator can run the native arms (Moonshine ships ONNX Runtime
+            // for both), which keeps the emulator-first rule in §11.5 usable
+            // for Arm B -- otherwise the only place to debug native model
+            // loading would be the phone, which is exactly what that rule
+            // exists to prevent. No number from x86_64 is ever published (D1).
+            abiFilters += setOf("arm64-v8a", "x86_64")
         }
     }
 
@@ -51,6 +55,11 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+
+    // Arm B. Pulls appcompat, material, okhttp and WorkManager transitively --
+    // the last two are the SDK's own model downloader, which we bypass by
+    // loading pinned .ort files from disk with Transcriber.loadFromFiles().
+    implementation(libs.moonshine.voice)
 
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)

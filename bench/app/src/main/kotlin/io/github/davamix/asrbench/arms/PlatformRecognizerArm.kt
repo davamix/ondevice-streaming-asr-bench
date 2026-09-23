@@ -322,6 +322,7 @@ class PlatformRecognizerArm(
                     "feed_frames" to (stats?.frames ?: 0),
                     "sink_busy_ms" to (stats?.sinkBusyMs ?: 0),
                     "feed_complete" to (stats != null),
+                    "suspended_ms" to (stats?.suspendedMs ?: 0),
                     "late_error" to (if (gotCleanResult && err != null) errorName(err) else null),
                 ),
             )

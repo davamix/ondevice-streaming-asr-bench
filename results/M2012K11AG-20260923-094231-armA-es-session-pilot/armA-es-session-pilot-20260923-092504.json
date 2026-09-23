@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "run_label": "armA-es-session-pilot",
+  "started_utc": "2026-09-23T09:25:04Z",
+  "finished_utc": "2026-09-23T09:42:29Z",
+  "device": {
+    "model": "M2012K11AG",
+    "device": "alioth",
+    "soc_manufacturer": "QTI",
+    "soc_model": "SM8250",
+    "android_release": "13",
+    "sdk_int": 33,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "armeabi"
+    ],
+    "cpu_cores": 8,
+    "total_ram_mb": 5522,
+    "is_emulator": false
+  },
+  "notes": {
+    "frame_ms": 100,
+    "reps": 1,
+    "threads": 4,
+    "seed": 1,
+    "thermal_enforced": true,
+    "session_breaks": 0,
+    "session_cap_ms": 600000
+  },
+  "runs": [
+    {
+      "arm": "A",
+      "arm_label": "Android on-device SpeechRecognizer (segmented)",
+      "runtime": "platform (android.speech)",
+      "disk_size_mb": 0,
+      "clip_id": "fleurs-es-session",
+      "lang": "es",
+      "bucket": "session",
+      "source": "fleurs_es",
+      "rep": 0,
+      "threads": 4,
+      "hypothesis": "el día de hoy se originó en el Océano Atlántico la tormenta número 10 de su temporada de huracanes en ser nombrada a la que se denominó tormenta subtropical Sherry  antes bien una asistencia que proporciona apoyo a quienes atraviesan una nueva experiencia como el uso de un nuevo programa informático o el inicio de un nuevo proyecto  naval a Alemania  calificó de habladuría política y boberías a los rumores  el Parque Nacional de Los Lagos les dice es muy boscoso tiene principalmente hayas abetos y picias y presenta una vegetación entre alpina y meditar al baño  no se trata sin embargo de una experimentación es una prueba que se usa para descartar una o más de las posibles hipótesis haciendo preguntas y observaciones que guían la investigación científica  lamentablemente no estaría sencilla estudiar el flujo de tráfico ya que no es posible hacer proyecciones exactas sobre el comportamiento de los conductores  este sedimento era necesario para la formación de bancos de arena y playas las que a su vez funcionaban como hábitats para las vidas silvestres  un eje bien desarrollado denominado raquis pero si presenta otros lagos de la plumas cerdas y vábulas  desarrollo evolutivo posterior de otras características  Internet une y mezcla componentes propios de la comunicación masiva y entre personas  los blogs son un recurso que inspira la colaboración y animan a los alumnos a profundizar su aprendizaje más allá del típico día escolar  en general pueden darse dos tipos de comportamientos cuando los gerentes comienzan a liberar a sus antiguos compañeros  es posible que quiera consultar las recomendaciones de otros gobiernos pero están pensadas para sus propios ciudadanos  finalmente existen muchos felinos pequeños que incluyen a los gatos domésticos independientes que se alimentan de especies de poco tamaño que existen en mucha más cantidad como insectos roedores lagartijas y aves  una propuesta de ley fue dictada por el gobernador de California Arnold Schwarzenegger que no permite vender o rentar videojuegos violentos a menores de edad  el espectáculo de luces y el sonido piramidal son una de las cosas más interesantes para los niños en la zona  hoy en día las personas escriben mensajes en las pantallas de sus computadoras  un sacapuntas  usa llenastech respalda la nota del Comité Olímpico de los Estados Unidos que reconoce que resulta imperioso que la familia olímpica fomenta un entorno seguro para todos nuestros deportistas  trabajaba en el hospital  a lo largo de la década 1920 la actitud adoptada por la mayor parte de los ciudadanos y de las naciones fue la del pacifismo y el aislamiento  pasará en el gabinete  MP asume el puesto de ministro de negocios que Dave y deja vacante  los sundaron son la cadena de manglares costeros más grandes del mundo con una longitud de 80 kilómetros 50 millas desde la costa hacia el interior de Bangladesh y de la India  que es el destino gran parte de los turistas considera la atracción principal  las plantas generan el oxígeno que las personas respiran y absorben el dióxido de carbono que ellas exhalan  su defensa disciplinada sus habilidades de manejo del balón y el excelente trabajo en equipo los llevaron a destacarse y quedó claro que este era el equipo de derrotar  con la declaración de la US OC de que los intereses de los atletas los clubes y sus deportes pueden ser atendidos más apropiadamente si se avanza con cambios significativos dentro de nuestra organización  la profesora Pamela Ferguson de la Universidad de dandy señaló al parecer los periodistas caminan sobre terreno peligroso cuando publican fotos u otra información de los sospechosos",
+      "latency_first_partial_ms": 2721,
+      "latency_final_ms": 3238,
+      "partial_instability": 9328,
+      "partial_updates": 1418,
+      "rtf_sustained": null,
+      "max_slip_ms": 253,
+      "audio_duration_ms": 371385,
+      "peak_rss_mb": 111.66015625,
+      "model_load_ms": 74,
+      "battery_temp_c_before": 26.5,
+      "battery_temp_c_after": 26.7,
+      "battery_pct_before": 72,
+      "battery_pct_after": 71,
+      "charging": false,
+      "error": null,
+      "extra": {
+        "segmented": true,
+        "segments": 30,
+        "feed_frames": 3714,
+        "sink_busy_ms": 1259,
+        "feed_complete": true,
+        "late_error": null
+      }
+    }
+  ]
+}

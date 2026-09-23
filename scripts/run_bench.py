@@ -86,6 +86,34 @@ def prepare_dirs(dev: Device) -> None:
     run_instrumentation(dev, "prepareDirs", {}, timeout_s=180)
 
 
+def push_models(dev: Device, names: list[str]) -> None:
+    """Push pinned model directories to the app's files dir.
+
+    Weights are never bundled in the APK -- at 78-416 MB per Moonshine variant
+    that would mean rebuilding and reinstalling for every model change (§9).
+    They are also never fetched by the SDK's own downloader, which would let a
+    silent upstream change alter what was measured; these are the exact files
+    pinned in models/MODELS.md (D8).
+    """
+    models_root = ROOT / "models"
+    dest_root = f"{APP_FILES}/models"
+    total = 0.0
+    for name in names:
+        local = models_root / name
+        if not local.is_dir():
+            raise SystemExit(
+                f"missing {local} -- run: python scripts/fetch_models.py {name}"
+            )
+        files = [f for f in local.iterdir() if f.is_file()]
+        size = sum(f.stat().st_size for f in files) / 1e6
+        total += size
+        print(f"[push-models] {name}: {len(files)} files, {size:.1f} MB")
+        shell(dev, f"mkdir -p {dest_root}/{name}")
+        for f in files:
+            sh(dev, "push", str(f), f"{dest_root}/{name}/{f.name}")
+    print(f"[push-models] {total:.1f} MB total -> {dest_root}")
+
+
 def push_corpus(dev: Device, buckets: list[str]) -> None:
     """Push manifest + only the audio the requested buckets need."""
     manifest_path = CORPUS / "manifest.json"
@@ -182,6 +210,10 @@ def main() -> int:
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--no-install", action="store_true")
     ap.add_argument("--no-push", action="store_true")
+    ap.add_argument("--push-models", metavar="NAMES",
+                    help="comma-separated model dirs to push (e.g. "
+                         "moonshine-tiny-en,moonshine-small-en), then exit "
+                         "unless a run is also requested")
     ap.add_argument("--clean", action="store_true",
                     help="remove pushed corpus/results from the device afterwards")
     ap.add_argument("--skip-preflight", action="store_true")
@@ -229,6 +261,12 @@ def main() -> int:
             print("\n=== recognition support ===")
             print(support.read_text(encoding="utf-8"))
         return 0
+
+    if args.push_models:
+        prepare_dirs(dev)
+        push_models(dev, [m.strip() for m in args.push_models.split(",") if m.strip()])
+        if args.arms == "A" and not args.label:
+            return 0
 
     if not args.no_push:
         prepare_dirs(dev)
