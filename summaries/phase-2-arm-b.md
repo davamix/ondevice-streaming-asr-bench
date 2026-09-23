@@ -6,13 +6,20 @@ small (224 MB) and medium (416 MB), running on-device through
 Android 13). Measured against Arm A, the platform recognizer, on the same
 audio, the same afternoon, with the same harness.
 
-**Why it matters:** Arm A is free but gets about one word in three wrong on
+**Why it matters:** Arm A is free but gets more than one word in four wrong on
 noisy English. Arm B is the question of whether bundling a model fixes that,
 at what size, and at what cost in latency and memory.
 
 Measured 2026-09-23. English only, because Moonshine publishes no Spanish
 streaming model in a deployable format. Full method and reproduction steps are
 in the [README](../README.md).
+
+> **Revised in Phase 3.** Noisy-English WER for Arm A was published as 33.33%
+> and for tiny as 15.77%. Both arms write some years as digits, and the scorer
+> read "1848" as "one thousand eight hundred forty eight" against a reference
+> saying "eighteen forty eight". Corrected, they are 29.31% and 14.43%. Small
+> and medium spell years out and did not change. The verdict stands. See
+> [the finding](../README.md#years-written-as-digits-cost-four-wer-points).
 
 ---
 
@@ -24,7 +31,7 @@ is the median, measured from the moment the audio ends.
 
 | English | Arm A (0 MB) | tiny (78 MB) | small (224 MB) | medium (416 MB) |
 |---|---|---|---|---|
-| WER, **noisy** (LibriSpeech `test-other`) | 33.33% | 15.77% | 8.72% | **6.26%** |
+| WER, **noisy** (LibriSpeech `test-other`) | 29.31% | 14.43% | 8.72% | **6.26%** |
 | WER, **clean** (FLEURS, level-matched) | 12.60% | 11.25% | 7.71% | **5.62%** |
 | WER, clean but **very quiet** (FLEURS, original) | **9.69%** | 30.05% | 27.29% | 25.31% |
 | Time to **first** text, noisy / clean | 1012 / 1259 ms | 1058 / 1064 ms | 1191 / 1655 ms | 1241 / 1285 ms |
@@ -42,9 +49,9 @@ Four repetitions per variant (tiny twice), 60 English clips each: 20 noisy,
 
 ### Every size fixes the noisy-audio problem
 
-Arm A's weak spot is noise: 33% WER on LibriSpeech `test-other`. Tiny halves
-it, small cuts it to about a quarter, and medium to under a fifth (6.3%). Small's
-character error rate on noisy speech is 3.3%, against Arm A's 26%. If the app
+Arm A's weak spot is noise: 29% WER on LibriSpeech `test-other`. Tiny halves
+it, small cuts it to under a third, and medium to about a fifth (6.3%). Small's
+character error rate on noisy speech is 3.3%, against Arm A's 22%. If the app
 will be used anywhere other than a quiet room, a bundled model earns its
 megabytes.
 
@@ -96,7 +103,7 @@ sentence. Small (7.71%) and medium (5.62%) are clearly ahead of both.
 ## Verdict
 
 **Moonshine small is the English candidate to beat.** It fixes Arm A's
-noisy-audio failure outright (8.7% vs 33% WER), leads on clean speech too, and
+noisy-audio failure outright (8.7% vs 29% WER), leads on clean speech too, and
 keeps up with real time with room to spare, for 224 MB.
 
 | | Verdict |

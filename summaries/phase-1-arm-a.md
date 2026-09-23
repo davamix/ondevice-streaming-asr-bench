@@ -31,6 +31,14 @@ Measured 2026-09-23. Full method and reproduction steps in the [README](../READM
 >   measured from the real end of the audio (0–76 ms).
 > - **Final latency was overstated throughout.** "End of speech" was stamped
 >   up to one frame early, by 50–75 ms for this arm.
+>
+> **Revised again in Phase 3.** Noisy-English WER is **29.42%**, not 33.45%
+> (pooled with the Phase 2 run, 29.31%). The recognizer writes years as
+> digits, and the scorer read "1848" as "one thousand eight hundred forty
+> eight" where the reference says "eighteen forty eight". The English session
+> moves from 10.17% to 10.25%. "One word in three" is closer to one in four;
+> the verdict stands. See
+> [the finding](../README.md#years-written-as-digits-cost-four-wer-points).
 
 ---
 

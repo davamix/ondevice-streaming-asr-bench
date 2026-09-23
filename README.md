@@ -62,8 +62,12 @@ anywhere else.
 | 16 | [Filtering out "bad" measurement rows can flatter what you measure](#filtering-out-bad-measurement-rows-can-flatter-the-thing-you-are-measuring) | Measurement integrity |
 | 17 | ["End of speech" was stamped up to one frame early](#end-of-speech-was-stamped-up-to-one-frame-early) | Measurement integrity |
 | 18 | [An empty transcript is every word missed, not a row to skip](#an-empty-transcript-is-every-word-missed-not-a-row-to-skip) | Measurement integrity |
-| 19 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
-| 20 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
+| 19 | [Years written as digits cost four WER points](#years-written-as-digits-cost-four-wer-points) | Measurement integrity |
+| 20 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
+| 21 | [Two ONNX Runtimes in one APK collide at packaging](#two-onnx-runtimes-in-one-apk-collide-at-packaging) | Integration gotcha |
+| 22 | [sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default](#sherpa-onnxs-kotlin-vad-splits-utterances-after-5-seconds-by-default) | Integration gotcha |
+| 23 | [The battery temperature an app can read can be minutes old](#the-battery-temperature-an-app-can-read-can-be-minutes-old) | Measurement integrity |
+| 24 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
 
 > **New here?** Start with the [Phase 2 summary](summaries/phase-2-arm-b.md)
 > and the [Phase 1 summary](summaries/phase-1-arm-a.md) for results without the
@@ -150,7 +154,7 @@ measured it from when the feeder returned, which ran up to one frame early (see
 | es | FLEURS `es_419` | clean | **8.14%** | 2.84% | 0 ms | 2009 ms | 6 | 6 ms | 124 |
 | en | FLEURS `en_us` | clean, level-matched | **12.60%** | 8.78% | 76 ms | 1259 ms | 8 | 6 ms | 118 |
 | en | FLEURS `en_us` | clean, original (**very quiet**) | 9.69% | 4.36% | 50 ms | 1212 ms | 8 | 6 ms | 118 |
-| en | LibriSpeech `test-other` | **noisy** | **33.33%** | 25.92% | 68 ms | 1012 ms | 8 | 6 ms | 118 |
+| en | LibriSpeech `test-other` | **noisy** | **29.31%** | 22.42% | 68 ms | 1012 ms | 8 | 6 ms | 118 |
 
 Spanish is pooled over three runs (180 rows, 2322 reference words), the two
 original English sources over two runs (120 rows each), and the level-matched
@@ -169,11 +173,19 @@ recognizer runs in Google's process.
 >   else ([finding](#fleurs-english-is-recorded-40-db-quieter-than-fleurs-spanish)).
 >   Level-matched clips are now in the corpus.
 
+> **Revised in Phase 3.** Noisy-English WER was 33.33% (CER 25.92%). The
+> scorer read "1848" as "one thousand eight hundred forty eight", while the
+> reference says "eighteen forty eight", so every year this recognizer wrote
+> as digits cost about four errors
+> ([finding](#years-written-as-digits-cost-four-wer-points)). No other Arm A
+> figure moved, except the English session (10.17% → 10.25%).
+
 ### Three things worth stopping on
 
-**1. Accuracy collapses on noisy audio, and that reproduces.** 33.33% WER on
-LibriSpeech `test-other` (33.45% and 33.22% in two runs), with CER at 26%.
-Roughly one word in three is wrong in conditions resembling an ordinary room.
+**1. Accuracy collapses on noisy audio, and that reproduces.** 29.31% WER on
+LibriSpeech `test-other` (29.42% and 29.19% in two runs), with CER at 22%.
+Roughly one word in three or four is wrong in conditions resembling an
+ordinary room.
 That failure is the case a bundled model would exist to fix.
 
 **2. "Spanish is more accurate than English" is not established.** Phase 1
@@ -201,7 +213,7 @@ Accuracy reproduces almost exactly. Timing reproduced in every run but one.
 | Arm A, English | Phase 1 run | Phase 2 run |
 |---|---|---|
 | WER, FLEURS | 9.69% | 9.69% |
-| WER, LibriSpeech | 33.45% | 33.22% |
+| WER, LibriSpeech | 29.42% | 29.19% |
 | Slip median, LibriSpeech | **196 ms** | 6 ms |
 | Final text (old stamp), LibriSpeech | **315 ms** | 120 ms |
 | First text, LibriSpeech | 1276 ms | 1012 ms |
@@ -247,7 +259,7 @@ is that in the Phase 2 runs it never stalled its input.
 ### Decision gate (PLAN.md §10, Phase 1)
 
 **Arms C and D stay in the matrix.** Arm A is free and reasonable on clean
-speech, but 33% WER on noisy English is disqualifying for anything used in an
+speech, but 29% WER on noisy English is disqualifying for anything used in an
 ordinary room, and that is the case a bundled model would exist to fix. It also
 depends on a language pack the user may not have: on this handset, English had
 to be installed before it could be measured at all.
@@ -268,7 +280,7 @@ phone as Arm A. English only, because no Spanish streaming `.ort` exists (see
 |---|---|---|---|---|---|---|---|---|---|
 | tiny | FLEURS `en_us` | clean, level-matched | 11.25% | 5.76% | 0 ms | 1064 ms | 16 | 0.423 | 363–475 |
 | tiny | FLEURS `en_us` | clean, original (**very quiet**) | 30.05% | 23.05% | 0 ms | 1558 ms | 8 | 0.378 | |
-| tiny | LibriSpeech `test-other` | **noisy** | 15.77% | 7.44% | 84 ms | 1058 ms | 10 | 0.404 | |
+| tiny | LibriSpeech `test-other` | **noisy** | 14.43% | 6.44% | 84 ms | 1058 ms | 10 | 0.404 | |
 | small | FLEURS `en_us` | clean, level-matched | 7.71% | 3.65% | 144 ms | 1655 ms | 8 | 0.734 | 605 |
 | small | FLEURS `en_us` | clean, original (**very quiet**) | 27.29% | 23.41% | 0 ms | 1675 ms | 8 | 0.667 | |
 | small | LibriSpeech `test-other` | **noisy** | 8.72% | 3.27% | 442 ms | 1191 ms | 8 | 0.723 | |
@@ -277,17 +289,23 @@ phone as Arm A. English only, because no Spanish streaming `.ort` exists (see
 | medium | LibriSpeech `test-other` | **noisy** | 6.26% | 2.83% | 662 ms | 1241 ms | 8 | 0.797 | |
 
 Disk: tiny 77.7 MB · small 224.1 MB · medium 416.0 MB. Tiny is pooled over
-two runs (LibriSpeech gave 15.77% in both); small and medium are one
+two runs (LibriSpeech gave 14.43% in both); small and medium are one
 4-repetition run each. A one-repetition medium pilot (6.71% / 5.94%) agreed
 with the full run and is kept in `results/superseded/`. `peak_rss_mb` is a
 process high-water mark that includes the harness's own heap. It bounds each
 model's footprint from above, and it is not comparable to Arm A's.
 
+> **Revised in Phase 3.** Tiny's noisy-English WER was 15.77% (CER 7.44%),
+> and Arm A's, compared against below, was 33.33%. Both wrote some years as
+> digits, which the scorer penalised
+> ([finding](#years-written-as-digits-cost-four-wer-points)). Small and
+> medium spell years out and are unchanged.
+
 **The size curve, English, against Arm A:**
 
 | | Arm A (0 MB) | tiny (78 MB) | small (224 MB) | medium (416 MB) |
 |---|---|---|---|---|
-| WER, **noisy** | 33.33% | 15.77% | 8.72% | **6.26%** |
+| WER, **noisy** | 29.31% | 14.43% | 8.72% | **6.26%** |
 | WER, clean, level-matched | 12.60% | 11.25% | 7.71% | **5.62%** |
 | WER, clean, **very quiet** | **9.69%** | 30.05% | 27.29% | 25.31% |
 | First text, noisy / clean | 1012 / 1259 ms | 1058 / 1064 ms | 1191 / 1655 ms | 1241 / 1285 ms |
@@ -303,12 +321,12 @@ model's footprint from above, and it is not comparable to Arm A's.
 **What Arm B answers:**
 
 1. **Does Moonshine beat Arm A on noisy English? Yes, at every size.** Tiny
-   halves Arm A's WER, small cuts it to about a quarter (8.72% vs 33.33%), and
-   medium to under a fifth (6.26%). Small's CER on noisy speech is 3.27% against
-   Arm A's 25.92%. That noisy-audio failure was the main reason to consider
+   halves Arm A's WER (14.43% vs 29.31%), small cuts it to under a third
+   (8.72%), and medium to about a fifth (6.26%). Small's CER on noisy speech
+   is 3.27% against Arm A's 22.42%. That noisy-audio failure was the main reason to consider
    bundling a model, and it is fixed.
-2. **The size curve bends at small.** Going from tiny to small nearly halves
-   WER on noisy audio (15.77% → 8.72%) and cuts it by a third on clean
+2. **The size curve bends at small.** Going from tiny to small cuts WER by
+   two fifths on noisy audio (14.43% → 8.72%) and by a third on clean
    (11.25% → 7.71%), for +146 MB. Medium buys roughly two more points on
    each (6.26% and 5.62%), for +192 MB more, ~330 MB more resident memory,
    noticeably slower final text, and a phone running at the thermal gate.
@@ -928,6 +946,115 @@ It had also touched a published number. One Arm A Spanish utterance ended in
 7.73% to **8.27%**. Every row with a reference is now scored, and the summary
 reports the count of blank rows next to the error count, so a blank row is
 visible instead of silently vanishing.
+
+### Years written as digits cost four WER points
+
+A third scoring bias, found in Phase 3, and again one that punished a
+formatting choice rather than a recognition error.
+
+The scorer spells out digits before comparing, because references spell
+numbers out while some models write "42". It spelled "1848" as a plain
+cardinal, "one thousand eight hundred forty eight". LibriSpeech's reference
+reads it as a year: "eighteen forty eight". One noisy clip,
+`ls-other-short-006`, carries three years:
+
+```
+reference:  ... born january fifteenth eighteen forty eight john in eighteen fifty one ...
+Arm A:      ... born January 15 1848 John in 1851 ...
+Moonshine small: ... born January fifteen, eighteen, forty eight. John in eighteen fifty one ...
+```
+
+Arm A and Whisper write years as digits, and took 13 errors per pass on this
+clip's 22 words. Twelve of them came from the three years. Moonshine small and
+medium spell years out, and took one. Across the 20 noisy clips that was
+worth about four WER points, so the comparison on noisy English, the one the
+case for bundling a model rests on, was skewed against exactly the arms that
+use digits.
+
+| Noisy English (LibriSpeech) | As published | Years read as years |
+|---|---|---|
+| Arm A | 33.33% | **29.31%** |
+| Moonshine tiny | 15.77% | **14.43%** |
+| Whisper base | 26.85% | **22.82%** |
+| Moonshine small / medium | 8.72% / 6.26% | unchanged |
+
+The scorer now reads an English four-digit number from 1100 to 1999 as a
+year, and the self-test covers it. Spanish needs no change: it reads years as
+cardinals. The remaining error on that clip is "15" against "fifteenth", which
+is a genuine difference and stays.
+
+The conclusions did not move. Moonshine still cuts Arm A's noisy-audio error
+by half or more at every size. The numbers did, and the pattern is the one
+behind the two earlier findings: a scorer rule that looks neutral can
+quietly favour one output style.
+
+### Two ONNX Runtimes in one APK collide at packaging
+
+Moonshine's AAR and sherpa-onnx's regular AAR each ship
+`lib/arm64-v8a/libonnxruntime.so`. With both in one app, the build fails:
+
+```
+Execution failed for task ':app:mergeDebugNativeLibs'
+> 2 files found with path 'lib/arm64-v8a/libonnxruntime.so' from inputs:
+   - .../sherpa-onnx-1.13.8/jni/arm64-v8a/libonnxruntime.so
+   - .../moonshine-voice-0.1.5/jni/arm64-v8a/libonnxruntime.so
+```
+
+The usual fix is `jniLibs.pickFirsts`. It makes the build pass, and here it
+is the wrong fix, because the two files are different builds of ONNX Runtime.
+Moonshine's is 6.3 MB, a reduced build for its pre-optimised `.ort` models.
+sherpa-onnx's is 22.2 MB, a full build. Keeping either one gives the other SDK
+a runtime it was not built against. The best case is an operator missing at
+model load. The worst is a silent change in what gets measured (D6).
+
+sherpa-onnx publishes a second AAR,
+`sherpa-onnx-static-link-onnxruntime-<version>.aar`, with ONNX Runtime linked
+into `libsherpa-onnx-jni.so` for arm64-v8a and x86_64. It ships no
+`libonnxruntime.so` for those ABIs, so nothing collides, and each stack runs
+on its own runtime. That is the one the harness uses, pinned by hash
+(`scripts/fetch_runtime.py`).
+
+### sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default
+
+`SileroVadModelConfig` in the Kotlin API defaults `maxSpeechDuration` to
+5 s. The native library's own default is 20 s. It is not a hard cut. Once
+open speech passes that length, the VAD raises its speech threshold to 0.9
+and drops its minimum silence to 0.1 s, so the segment closes at the next
+brief pause. With the Kotlin default, most of the corpus's 7–8 s sentences
+would reach the model as two halves split at a breath, each transcribed
+without the other's context.
+
+The harness sets 20 s, and records the VAD configuration in every row.
+Whisper's window is 30 s, so 20 s constrains neither model.
+
+### The battery temperature an app can read can be minutes old
+
+The thermal gate reads battery temperature, the only temperature this handset
+exposes without root. Its thermal HAL reports no sensors to
+`dumpsys thermalservice`, and shell may not read
+`/sys/class/power_supply/battery/temp`. The value the app gets, from the
+`ACTION_BATTERY_CHANGED` broadcast, changes in coarse, irregular steps: about
+once every 80 seconds through the Moonshine medium run, and in Phase 3, once,
+not at all for 5.5 minutes.
+
+That stretch is what gave it away. During a cooling pause, the reading sat
+at 35.2 °C for 5.5 minutes and then, in one 15-second step, read 31.2 °C. A
+phone does not shed 4 °C in 15 seconds. The value had simply not been
+updated. `dumpsys battery` reports the same cached value, so the host-side
+check has the same lag.
+
+Consequences:
+
+- **The gate acts on a stale reading.** When heating, a clip can start
+  above 35 °C. When cooling, the pause runs longer than it needs to. The
+  43 °C abort has a wide enough margin that a few minutes of lag does not
+  threaten it at these workloads, but it is a lag.
+- **Every temperature in this README is a sample of a lagging signal.** The
+  "peak temperature" figures in Phases 1–2 are the highest value the phone
+  reported, not the highest the battery reached.
+
+Why the refresh is so irregular was not established. Charge-level changes do
+not explain it: most temperature updates came between them.
 
 ### Excluded before testing
 
