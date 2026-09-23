@@ -504,9 +504,12 @@ class SherpaOfflineArm(
         const val VAD_WINDOW = 512
 
         /**
-         * The Kotlin API defaults this to 5 s, which would cut the corpus's
-         * 7-8 s sentences mid-word and hand the model two fragments. 20 s is
-         * the native library's own default, and Whisper's window is 30 s.
+         * Not a hard cut: once open speech passes this length, the native VAD
+         * raises its threshold to 0.9 and drops the minimum silence to 0.1 s,
+         * so the segment ends at the next brief pause. The Kotlin API
+         * defaults this to 5 s, which would split the corpus's 7-8 s
+         * sentences at a breath and hand the model two halves. 20 s is the
+         * native library's own default, and Whisper's window is 30 s.
          */
         const val VAD_MAX_SPEECH_S = 20f
 
