@@ -20,9 +20,14 @@ input. Medians over all rows; repetition 0 discarded.
 
 | Lang | Audio | WER | CER | Time to **final** text | Time to **first** text | Revisions | Peak RSS |
 |---|---|---|---|---|---|---|---|
-| **es** | FLEURS, clean | **7.73%** | 2.33% | **27 ms** | 2010 ms | 6 | 103 MB |
-| **en** | FLEURS, clean | **9.69%** | 4.36% | 123 ms | 1260 ms | 8 | 107 MB |
+| **es** | FLEURS, clean | **8.27%** | 3.09% | **27 ms** | 2010 ms | 6 | 103 MB |
+| **en** | FLEURS, clean (very quiet†) | **9.69%** | 4.36% | 123 ms | 1260 ms | 8 | 107 MB |
 | **en** | LibriSpeech, **noisy** | **33.45%** | 26.02% | 315 ms | 1276 ms | 7 | 107 MB |
+
+*Spanish corrected from 7.73% in Phase 2: the scorer had skipped one utterance
+that returned no text, instead of counting its words as missed. † 18 of the 20
+English clips are recorded ~40 dB quieter than the Spanish ones. Both are
+explained in the [README](../README.md#an-empty-transcript-is-every-word-missed-not-a-row-to-skip).*
 
 ### Continuous speech (6 min sessions, 1 repetition — indicative)
 
@@ -37,16 +42,19 @@ input. Medians over all rows; repetition 0 discarded.
 
 ### Spanish is more accurate than English
 
-7.73% vs 9.69% on the **same corpus, same recording conditions, same
-recognizer** — FLEURS exists precisely so this comparison is not confounded by
-domain or speaker.
+8.27% vs 9.69% on the **same corpus, same recognizer** — FLEURS exists
+precisely so this comparison is not confounded by domain or speaker.
+
+It was first stated as "same recording conditions" as well. On level that turned
+out to be false: the English clips sit at a median of −63 dBFS, the Spanish at
+−22 dBFS. So the margin is not clean evidence of a language effect.
 
 This was the opposite of the expectation going in. Spanish was assumed to be
 the hard language to serve, because it is the one with no good open streaming
 models. For the free arm it is the strong one.
 
 The accuracy is real, not a scoring artifact: stripping accents before scoring
-moves Spanish only from 7.73% to 7.36%, so 95% of the error is genuine
+moves Spanish only from 8.27% to 7.88%, so 95% of the error is genuine
 recognition rather than missing diacritics.
 
 ### Accuracy collapses on noisy audio
@@ -77,7 +85,7 @@ language.
 
 Six minutes of continuous audio produced **no thermal drift** (29.2 → 29.2 °C),
 no pacing slip, and Spanish accuracy actually *improved* over short clips
-(6.68% vs 7.73%) because longer context helps.
+(6.68% vs 8.27%) because longer context helps.
 
 The startup cost is paid **once per session**, not per utterance: session
 first-text latency matches the short-clip figure in each language. So the
@@ -116,7 +124,7 @@ as a usable result rather than discarding it.
 
 | | Verdict |
 |---|---|
-| Clean Spanish | **Strong.** 7.73% WER and 27 ms to final text, for 0 MB. |
+| Clean Spanish | **Strong.** 8.27% WER and 27 ms to final text, for 0 MB. |
 | Clean English | **Adequate.** 9.69% WER. |
 | Noisy English | **Disqualifying.** 33.45% WER. |
 | Continuous use | **Fine.** No thermal or sustained-throughput problem. |

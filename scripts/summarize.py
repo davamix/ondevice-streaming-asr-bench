@@ -65,6 +65,28 @@ def load_refs() -> dict:
 SLIP_BUDGET_MS = 100
 
 
+def superseded_names(root: Path) -> set[str]:
+    """Result files that `root`'s run directories were superseded *for*.
+
+    A pulled directory is named `<model>-<utc>-<label>`, and the run it was
+    pulled for carries that label as `run_label`.
+    """
+    names: set[str] = set()
+    if not root.is_dir():
+        return names
+    for d in root.iterdir():
+        if not d.is_dir():
+            continue
+        for f in d.glob("*.json"):
+            try:
+                label = json.loads(f.read_text(encoding="utf-8")).get("run_label")
+            except (json.JSONDecodeError, AttributeError):
+                continue
+            if label and d.name.endswith(f"-{label}"):
+                names.add(f.name)
+    return names
+
+
 def med(values: list) -> float | None:
     vals = [v for v in values if v is not None]
     return statistics.median(vals) if vals else None
@@ -100,20 +122,35 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
             # Source is part of the key: FLEURS is clean read speech and
             # LibriSpeech test-other is the noisy stress case. Averaging them
             # into one WER would describe neither.
-            key = (run["arm"], run["lang"], run.get("bucket", "?"),
+            #
+            # So is the variant. Every Moonshine size reports arm "B", and
+            # without it tiny, small and medium would pool into one row -- the
+            # accuracy-vs-size curve Phase 2 exists to draw, averaged flat.
+            variant = (run.get("extra") or {}).get("variant") or ""
+            key = (run["arm"], variant, run["lang"], run.get("bucket", "?"),
                    run.get("source", "?"))
             g = groups.setdefault(key, {
                 "arm_label": run.get("arm_label", run["arm"]),
                 "runtime": run.get("runtime", "?"),
                 "disk_size_mb": run.get("disk_size_mb"),
-                "rows": [], "pairs": [], "errors": 0, "single_rep": single_rep,
+                "rows": [], "pairs": [], "errors": 0, "empty": 0,
+                "single_rep": single_rep,
             })
             g["rows"].append(run)
             if run.get("error"):
                 g["errors"] += 1
+            # An empty hypothesis is scored, not skipped: it is every reference
+            # word deleted. Skipping it removed those words from the
+            # denominator instead, so an arm that silently heard nothing
+            # scored *better* for it -- Moonshine tiny returned no text at all
+            # on 2 of 20 clean FLEURS clips in its pilot, and dropping them
+            # moved its WER from 26.9% down to 19.3%.
             ref = refs.get(run.get("clip_id"))
-            if ref and run.get("hypothesis"):
-                g["pairs"].append((ref["text"], run["hypothesis"], ref["language"]))
+            if ref:
+                hyp = run.get("hypothesis") or ""
+                if not hyp.strip():
+                    g["empty"] += 1
+                g["pairs"].append((ref["text"], hyp, ref["language"]))
 
     out = {}
     for key, g in sorted(groups.items()):
@@ -130,6 +167,7 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
             "disk_size_mb": g["disk_size_mb"],
             "n": len(rows),
             "errors": g["errors"],
+            "empty": g["empty"],
             "single_rep": g.get("single_rep", False),
             "latency_final_ms": med([r.get("latency_final_ms") for r in rows]),
             "latency_first_partial_ms": med([r.get("latency_first_partial_ms") for r in rows]),
@@ -158,13 +196,14 @@ def fmt(v, spec="", dash="—"):
 
 
 def print_markdown(summary: dict) -> None:
-    print("| Arm | Lang | Source | `latency_final_ms` | `latency_first_partial_ms` | "
+    print("| Arm | Lang | Bucket | Source | `latency_final_ms` | `latency_first_partial_ms` | "
           "`partial_instability` | `rtf_sustained` | `peak_rss_mb` | "
           "`disk_size_mb` | WER | CER |")
-    print("|---|---|---|---|---|---|---|---|---|---|---|")
-    for (arm, lang, bucket, source), s in summary.items():
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|")
+    for (arm, variant, lang, bucket, source), s in summary.items():
+        name = f"{arm} {variant.removeprefix('moonshine-')}".strip()
         print(
-            f"| {arm} | {lang} | {source} | {fmt(s['latency_final_ms'], '.0f')} "
+            f"| {name} | {lang} | {bucket} | {source} | {fmt(s['latency_final_ms'], '.0f')} "
             f"| {fmt(s['latency_first_partial_ms'], '.0f')} "
             f"| {fmt(s['partial_instability'], '.0f')} "
             f"| {fmt(s['rtf_sustained'], '.3f')} "
@@ -176,10 +215,11 @@ def print_markdown(summary: dict) -> None:
 
 
 def print_detail(summary: dict) -> None:
-    for (arm, lang, bucket, source), s in summary.items():
-        print(f"\n=== Arm {arm} / {lang} / {bucket} / {source}")
+    for (arm, variant, lang, bucket, source), s in summary.items():
+        print(f"\n=== Arm {arm}{' / ' + variant if variant else ''} / {lang} / {bucket} / {source}")
         print(f"  {s['arm_label']}  [{s['runtime']}]")
-        print(f"  rows                     {s['n']}  (errors: {s['errors']})"
+        print(f"  rows                     {s['n']}  (errors: {s['errors']}, "
+              f"no text: {s['empty']})"
               + ("   [SINGLE REPETITION -- indicative, not statistical]"
                  if s.get("single_rep") else ""))
         print(f"  slip median/p90/max      {fmt(s['slip_median_ms'], '.0f')} / "
@@ -219,7 +259,15 @@ def main() -> int:
     # results/superseded/ holds runs from a harness with known measurement
     # bugs. They are kept as evidence for findings in the README but must
     # never reach an aggregate -- see results/superseded/README.md.
-    paths = [p for p in paths if "superseded" not in p.parts]
+    #
+    # Excluded by name, not just by location: the device keeps every result
+    # file until cleaned, so a superseded run is pulled again into every later
+    # directory, where a path check alone would let it back in. Only the file
+    # a superseded directory is *named for* counts -- those directories also
+    # hold re-pulled copies of good runs, which must stay in.
+    superseded = superseded_names(RESULTS / "superseded")
+    paths = [p for p in paths
+             if "superseded" not in p.parts and p.name not in superseded]
 
     if not paths:
         print("no result files found", file=sys.stderr)
