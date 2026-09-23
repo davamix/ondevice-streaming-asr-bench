@@ -82,11 +82,27 @@ class BenchmarkRunner(
         Log.i(TAG, "matrix: ${config.arms.size} arms x ${clips.size} clips x ${config.reps} reps")
 
         // Load every arm once, outside the measurement windows.
+        // A load failure must not be swallowed. Silently continuing produced
+        // 160 rows of "transcriber not loaded" from one unreadable model
+        // directory -- a full run's worth of thermal budget spent recording
+        // the same message. An arm that cannot load is dropped, loudly, and
+        // the reason is written into the results.
         val loadMs = HashMap<String, Long>()
+        val usable = ArrayList<Arm>()
         for (arm in config.arms) {
-            val ms = runCatching { arm.load(context) }.getOrElse { -1L }
-            loadMs[arm.id] = ms
-            Log.i(TAG, "loaded arm ${arm.id} (${arm.label}) in ${ms}ms")
+            val result = runCatching { arm.load(context) }
+            result.onSuccess { ms ->
+                loadMs[arm.id] = ms
+                usable += arm
+                Log.i(TAG, "loaded arm ${arm.id} (${arm.label}) in ${ms}ms")
+            }.onFailure { t ->
+                val why = "${t.javaClass.simpleName}: ${t.message}"
+                Log.e(TAG, "arm ${arm.id} (${arm.label}) FAILED TO LOAD: $why")
+                writer.note("load_failed_${arm.id}_${arm.label}", why)
+            }
+        }
+        check(usable.isNotEmpty()) {
+            "no arm loaded successfully; see load_failed_* in the results notes"
         }
 
         // Keep the CPU awake for the whole matrix. A dozing device suspends
@@ -107,7 +123,7 @@ class BenchmarkRunner(
         outer@ for (rep in 0 until config.reps) {
             // Randomise arm order per repetition so run order cannot be
             // mistaken for an arm effect.
-            val order = config.arms.shuffled(Random(config.seed * 1000 + rep))
+            val order = usable.shuffled(Random(config.seed * 1000 + rep))
             Log.i(TAG, "rep $rep arm order: ${order.joinToString(",") { it.id }}")
 
             for (arm in order) {
@@ -204,7 +220,7 @@ class BenchmarkRunner(
         writer.note("session_breaks", breaks)
         writer.note("session_cap_ms", config.sessionCapMs)
         if (aborted != null) writer.note("aborted", aborted)
-        config.arms.forEach { runCatching { it.close() } }
+        usable.forEach { runCatching { it.close() } }
 
         val out = writer.write()
         Log.i(TAG, "wrote $rows rows to ${out.absolutePath}")

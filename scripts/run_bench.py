@@ -73,7 +73,7 @@ def install(dev: Device) -> None:
     sh(dev, "install", "-r", "-t", str(test))
 
 
-def prepare_dirs(dev: Device) -> None:
+def prepare_dirs(dev: Device, model_dirs: list[str] | None = None) -> None:
     """Have the *app* create its directory tree before anything is pushed.
 
     `adb push` writes as the `shell` user, and on Android 11+ a directory
@@ -83,7 +83,8 @@ def prepare_dirs(dev: Device) -> None:
     permissions problem. Creating the tree app-side first avoids it.
     """
     print("[prepare] creating app-owned directory tree")
-    run_instrumentation(dev, "prepareDirs", {}, timeout_s=180)
+    extras = {"model_dirs": ",".join(model_dirs)} if model_dirs else {}
+    run_instrumentation(dev, "prepareDirs", extras, timeout_s=180)
 
 
 def push_models(dev: Device, names: list[str]) -> None:
@@ -263,8 +264,9 @@ def main() -> int:
         return 0
 
     if args.push_models:
-        prepare_dirs(dev)
-        push_models(dev, [m.strip() for m in args.push_models.split(",") if m.strip()])
+        names = [m.strip() for m in args.push_models.split(",") if m.strip()]
+        prepare_dirs(dev, model_dirs=names)
+        push_models(dev, names)
         if args.arms == "A" and not args.label:
             return 0
 

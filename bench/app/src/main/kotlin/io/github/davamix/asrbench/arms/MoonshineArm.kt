@@ -37,6 +37,21 @@ class MoonshineArm(
     /** Variant directory name under `files/models/`, e.g. "moonshine-tiny-en". */
     private val variant: String,
     override val diskSizeMb: Double,
+    /**
+     * Model architecture id passed to `loadFromFiles`.
+     *
+     * The second parameter of `loadFromFiles(path, int)` is **not** a flags
+     * bitfield despite sitting next to `setTranscribeFlags`; it is the model
+     * architecture. Passing 0 selects the non-streaming layout, which looks
+     * for `encoder_model.ort` + `decoder_model_merged.ort` -- the files the
+     * legacy `base-*` models ship -- and fails on a streaming variant with
+     * "Required encoder model file does not exist".
+     *
+     * 5 is what `MicTranscriber` (the SDK's own streaming path) defaults to,
+     * which is how this was established: the value is not in any public
+     * constant, so it was read out of that class's bytecode.
+     */
+    private val arch: Int = STREAMING_ARCH,
 ) : Arm {
 
     override val id = "B"
@@ -59,9 +74,7 @@ class MoonshineArm(
 
         val t0 = SystemClock.uptimeMillis()
         val t = Transcriber()
-        // Second argument is the transcribe-flags bitfield; 0 is the default
-        // streaming behaviour.
-        t.loadFromFiles(dir.absolutePath, 0)
+        t.loadFromFiles(dir.absolutePath, arch)
         check(t.isLoaded) { "Transcriber.loadFromFiles reported not loaded for $variant" }
         transcriber = t
         val ms = SystemClock.uptimeMillis() - t0
@@ -95,6 +108,7 @@ class MoonshineArm(
                 }
                 lines[line.id] = line.text.orEmpty()
                 tracker.update(lines.values.joinToString(" ").trim())
+                state.lastTextMs = SystemClock.uptimeMillis()
                 if (line.lastTranscriptionLatencyMs > 0) {
                     state.sdkLatencySum += line.lastTranscriptionLatencyMs
                     state.sdkLatencyCount++
@@ -106,6 +120,7 @@ class MoonshineArm(
                 lines[line.id] = line.text.orEmpty()
                 tracker.update(lines.values.joinToString(" ").trim())
                 state.finalMs = SystemClock.uptimeMillis()
+                state.lastTextMs = state.finalMs
                 state.linesCompleted++
             }
 
@@ -137,10 +152,21 @@ class MoonshineArm(
             if (state.finalMs == null) state.finalMs = drainEnd
             t.freeStream(stream)
 
+            // A streaming model can finish its last line *before* the audio
+            // ends -- trailing silence gives it time to catch up -- which made
+            // a naive (finalMs - speechEnd) come back as -350 ms. Negative
+            // latency is not a thing; it means the text was already on screen
+            // when the speaker stopped. Report 0 and keep the lead time
+            // separately, since "finished early" is a real property worth
+            // seeing rather than an artefact to clamp away.
+            val lastText = state.lastTextMs ?: state.finalMs
+            val finalLatency = lastText?.let { maxOf(0L, it - speechEnd) }
+            val leadMs = lastText?.let { speechEnd - it }?.takeIf { it > 0 }
+
             ArmResult(
                 hypothesis = tracker.text,
                 latencyFirstPartialMs = state.firstPartialMs?.let { it - state.feedStartMs },
-                latencyFinalMs = state.finalMs?.let { it - speechEnd },
+                latencyFinalMs = finalLatency,
                 partialInstability = tracker.revisions,
                 partialUpdates = tracker.updates,
                 // Real here, unlike Arm A: this model ran in our process, so
@@ -152,11 +178,13 @@ class MoonshineArm(
                 error = state.error,
                 extra = mapOf(
                     "variant" to variant,
+                    "arch" to arch,
                     "lines_started" to state.lineStarts,
                     "lines_completed" to state.linesCompleted,
                     "sink_busy_ms" to stats.sinkBusyMs,
                     "suspended_ms" to (stats.suspendedMs),
                     "drain_ms" to (drainEnd - speechEnd),
+                    "finished_early_ms" to leadMs,
                     // The SDK's own latency figure, kept as an independent
                     // cross-check on our wall-clock measurement.
                     "sdk_mean_latency_ms" to
@@ -184,6 +212,7 @@ class MoonshineArm(
         @Volatile var feedStartMs = 0L
         @Volatile var firstPartialMs: Long? = null
         @Volatile var finalMs: Long? = null
+        @Volatile var lastTextMs: Long? = null
         @Volatile var error: String? = null
         @Volatile var lineStarts = 0
         @Volatile var linesCompleted = 0
@@ -193,6 +222,9 @@ class MoonshineArm(
 
     companion object {
         private const val TAG = "AsrBench"
+
+        /** Streaming architecture; see the [arch] constructor parameter. */
+        const val STREAMING_ARCH = 5
 
         /** Sizes match `models/MODELS.md` at the pinned revision. */
         fun variants(): Map<String, Double> = mapOf(

@@ -128,10 +128,17 @@ class BenchmarkTest {
         val filesDir = context.getExternalFilesDir(null)
             ?: error("getExternalFilesDir returned null -- external storage unavailable")
 
+        // Model variant dirs are created here too, for the same reason the
+        // corpus dirs are: adb push creates them as `shell`, and a
+        // shell-owned directory inside the app's own external files dir is not
+        // readable by the app. That failure mode already cost a full 160-row
+        // emulator run that reported "transcriber not loaded" on every row.
+        val modelDirs = argList("model_dirs", "")
+            .map { "models/$it" }
         val dirs = listOf(
             "corpus", "corpus/audio", "corpus/audio/short", "corpus/audio/session",
             "models", "results",
-        )
+        ) + modelDirs
         for (d in dirs) {
             val f = File(filesDir, d)
             val ok = f.exists() || f.mkdirs()

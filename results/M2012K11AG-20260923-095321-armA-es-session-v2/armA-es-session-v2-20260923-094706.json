@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "run_label": "armA-es-session-v2",
+  "started_utc": "2026-09-23T09:47:06Z",
+  "finished_utc": "2026-09-23T09:53:20Z",
+  "device": {
+    "model": "M2012K11AG",
+    "device": "alioth",
+    "soc_manufacturer": "QTI",
+    "soc_model": "SM8250",
+    "android_release": "13",
+    "sdk_int": 33,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "armeabi"
+    ],
+    "cpu_cores": 8,
+    "total_ram_mb": 5522,
+    "is_emulator": false
+  },
+  "notes": {
+    "frame_ms": 100,
+    "reps": 1,
+    "threads": 4,
+    "seed": 1,
+    "thermal_enforced": true,
+    "session_breaks": 0,
+    "session_cap_ms": 600000
+  },
+  "runs": [
+    {
+      "arm": "A",
+      "arm_label": "Android on-device SpeechRecognizer (segmented)",
+      "runtime": "platform (android.speech)",
+      "disk_size_mb": 0,
+      "clip_id": "fleurs-es-session",
+      "lang": "es",
+      "bucket": "session",
+      "source": "fleurs_es",
+      "rep": 0,
+      "threads": 4,
+      "hypothesis": "el día de hoy se originó en el Océano Atlántico la tormenta número 10 de su temporada de huracanes en ser nombrada a la que se denominó tormenta subtropical Sherry  el andamiaje no es una técnica de aprendizaje  es antes bien una asistencia que proporciona apoyo a quienes atraviesan una nueva experiencia como el uso de un nuevo programa informático o el inicio de un nuevo proyecto  al poco tiempo de desatarse las hostilidades los británicos comenzaron un bloqueo naval a Alemania  calificó de habladuría política y boberías a los rumores  el Parque Nacional de Los Lagos les dice es muy boscoso tiene principalmente hayas abetos y picias y presenta una vegetación entre alpino y mediterránea  no se trata sin embargo de una experimentación es una prueba que se usa para descartar una o más de las posibles hipótesis haciendo preguntas y observaciones que guían la investigación científica  lamentablemente no estaría sencilla a estudiar el flujo de tráfico ya que no es posible hacer predicciones exactas sobre el comportamiento de los conductores  este sedimento era necesario para la formación de bancos de arena y playas las que a su vez funcionaban como hábitats para las vidas silvestre  dado que el plumaje de los dinosaurios no tiene un eje bien desarrollado denominado raquis pero si presenta otros lagos de las plumas cerdas y vábulas  los investigadores llegaron la conclusión de que es un probable que Raki sea resultado de un desarrollo evolutivo posterior de otras características  Internet une y mezcla componentes propios de la comunicación masiva y entre personas  los blogs son un recurso que inspira la colaboración y animan a los alumnos a profundizar su aprendizaje más allá del típico Díaz escolar  en general pueden darse dos tipos de comportamientos cuando los gerentes comienzan a liberar a sus antiguos compañeros  de un lado del espectro está el intento de continuar haciendo uno de los muchachos con muchachos  es posible que quiera consultar las recomendaciones de otros gobiernos pero están pensadas para sus propios ciudadanos  finalmente existen muchos felinos pequeños que incluyen a los gatos domésticos independientes que se alimentan de especies de poco tamaño que existen en mucha más cantidad como insectos roedores lagartijas y aves  una propuesta de ley fue dictada por el gobernador de California Arnold Schwarzenegger que no permite vender o rentar videojuegos violentos a menores de edad  el espectáculo de luces y el sonido piramidal son una de las cosas más interesantes para los niños en la zona  hoy en día las personas escriben mensajes en las pantallas de sus computadoras  no tienen la necesidad de siquiera aproximarse a un sacapuntas  usa gimnastics respalda la nota del Comité Olímpico de los Estados Unidos que reconoce que resulta imperioso que la familia olímpica fomenta un entorno seguro para todos nuestros deportistas  comenzó sus investigaciones sobre el parto prematuro en su tiempo libre mientras trabajaba en el hospital  a lo largo de la década 1920 la actitud adoptada por la mayor parte de los ciudadanos y de las naciones fue la del pacifismo y el aislamiento  June ha renunciado y ed David mp2 reemplazará en el gabinete  se espera que Norman lamp MP asume el puesto de ministro de negocios que Dave y deja vacante  los sundaron son la cadena de manglares costeros más grandes del mundo con una longitud de 80 kilómetros 50 millas desde la costa hacia el interior de Bangladesh y de la India  el territorio de Hong Kong toma el nombre de la isla homónima que es el destino gran parte de los turistas considera la atracción principal  las plantas generan el oxígeno que las personas respiran y absorben el dióxido de carbono que ellas exhalan  que despiden  su defensa disciplinada sus habilidades de manejo del balón y el excelente trabajo en equipo los llevaron a destacarse y quedó claro que este era el equipo ha derrotar  coincidimos con la declaración de la US OC de que los intereses de los atletas los clubes y sus deportes pueden ser atendidos más apropiadamente si se avanza con cambios significativos dentro de nuestra organización en lugar del retiro de la certificaciones  la profesora Pamela Ferguson de la Universidad de dandy señaló al parecer los periodistas caminan sobre terreno peligroso cuando publican fotos u otra información de los sospechosos",
+      "latency_first_partial_ms": 2510,
+      "latency_final_ms": 43,
+      "partial_instability": 12136,
+      "partial_updates": 1715,
+      "rtf_sustained": null,
+      "max_slip_ms": 12,
+      "audio_duration_ms": 371385,
+      "peak_rss_mb": 129.90234375,
+      "model_load_ms": 88,
+      "battery_temp_c_before": 26.7,
+      "battery_temp_c_after": 29.7,
+      "battery_pct_before": 70,
+      "battery_pct_after": 70,
+      "charging": false,
+      "error": null,
+      "extra": {
+        "segmented": true,
+        "segments": 33,
+        "feed_frames": 3714,
+        "sink_busy_ms": 2082,
+        "feed_complete": true,
+        "suspended_ms": 0,
+        "late_error": null
+      }
+    }
+  ]
+}

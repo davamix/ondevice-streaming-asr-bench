@@ -139,7 +139,24 @@ class PlatformRecognizerArm(
             override fun onEndOfSpeech() {}
 
             override fun onPartialResults(partialResults: Bundle?) {
-                noteText(bestOf(partialResults))
+                // In segmented mode a partial covers only the segment in
+                // flight, while completed segments are delivered separately.
+                // Feeding the bare partial to the tracker would make it look
+                // as though the entire transcript had been rewritten on every
+                // update -- which reported 12136 revisions on a 712-word
+                // session, an artefact roughly 30x the real figure.
+                //
+                // What the user actually sees is the settled text plus the
+                // segment currently being revised, so that is what is tracked.
+                val partial = bestOf(partialResults)
+                if (partial.isBlank()) return
+                noteText(
+                    if (segmented && segmentTexts.isNotEmpty()) {
+                        (segmentTexts + partial).joinToString(" ")
+                    } else {
+                        partial
+                    }
+                )
             }
 
             override fun onResults(results: Bundle?) {
