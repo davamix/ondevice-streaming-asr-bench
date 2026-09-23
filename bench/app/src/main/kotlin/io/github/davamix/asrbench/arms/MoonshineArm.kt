@@ -163,6 +163,13 @@ class MoonshineArm(
             val finalLatency = lastText?.let { maxOf(0L, it - speechEnd) }
             val leadMs = lastText?.let { speechEnd - it }?.takeIf { it > 0 }
 
+            // When the speaker actually stopped, on the wall clock. speechEnd
+            // is when the feed *returned*, which is later by however far the
+            // feeder had slipped behind schedule -- 250 ms median for this
+            // arm, because inference runs inside addAudio(). Measuring from
+            // speechEnd therefore understates final latency by that lag.
+            val audioEnd = state.feedStartMs + audio.durationMs
+
             ArmResult(
                 hypothesis = tracker.text,
                 latencyFirstPartialMs = state.firstPartialMs?.let { it - state.feedStartMs },
@@ -185,6 +192,11 @@ class MoonshineArm(
                     "suspended_ms" to (stats.suspendedMs),
                     "drain_ms" to (drainEnd - speechEnd),
                     "finished_early_ms" to leadMs,
+                    "final_slip_ms" to stats.finalSlipMs,
+                    "speech_end_lag_ms" to (speechEnd - audioEnd),
+                    // Signed: negative means the text was final before the
+                    // audio ended. The unbiased counterpart of latency_final_ms.
+                    "final_after_audio_end_ms" to lastText?.let { it - audioEnd },
                     // The SDK's own latency figure, kept as an independent
                     // cross-check on our wall-clock measurement.
                     "sdk_mean_latency_ms" to

@@ -298,6 +298,12 @@ class BenchmarkTest {
         val onEmulator = Telemetry.isEmulator()
         val enforceThermal = arg("thermal", if (onEmulator) "false" else "true").toBoolean()
 
+        // The continuous-inference cap can be lowered, never raised: 10
+        // minutes is a safety policy for the phone (§11.3). Lowering it is how
+        // the checkpoint written at each break gets exercised on the emulator
+        // in minutes rather than an hour.
+        val sessionCapMs = minOf(arg("session_cap_s", "600").toLong(), 600L) * 1000
+
         // Arm B is selected per variant: "B:moonshine-small-en", or plain
         // "B" for every variant that has been pushed to the device.
         val arms = armIds.flatMap { spec ->
@@ -343,6 +349,7 @@ class BenchmarkTest {
                 label = label,
                 seed = seed,
                 enforceThermal = enforceThermal,
+                sessionCapMs = sessionCapMs,
             ),
         ).run()
 

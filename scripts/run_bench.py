@@ -217,6 +217,10 @@ def main() -> int:
                          "unless a run is also requested")
     ap.add_argument("--clean", action="store_true",
                     help="remove pushed corpus/results from the device afterwards")
+    ap.add_argument("--session-cap-s", type=int, default=None,
+                    help="lower the 10-minute continuous-inference cap (the "
+                         "harness refuses to raise it); used to exercise the "
+                         "per-break checkpoint on the emulator")
     ap.add_argument("--skip-preflight", action="store_true")
     ap.add_argument("--timeout", type=int, default=3600)
     args = ap.parse_args()
@@ -289,19 +293,18 @@ def main() -> int:
         return 0
 
     label = args.label or f"arms{args.arms.replace(',', '')}-{args.buckets.replace(',', '')}"
-    run_instrumentation(
-        dev, "benchmark",
-        {
-            "arms": args.arms,
-            "langs": args.langs,
-            "buckets": args.buckets,
-            "reps": str(args.reps),
-            "threads": str(args.threads),
-            "label": label,
-            "seed": str(args.seed),
-        },
-        timeout_s=args.timeout,
-    )
+    extras = {
+        "arms": args.arms,
+        "langs": args.langs,
+        "buckets": args.buckets,
+        "reps": str(args.reps),
+        "threads": str(args.threads),
+        "label": label,
+        "seed": str(args.seed),
+    }
+    if args.session_cap_s is not None:
+        extras["session_cap_s"] = str(args.session_cap_s)
+    run_instrumentation(dev, "benchmark", extras, timeout_s=args.timeout)
     pull_results(dev, label)
 
     if args.clean:

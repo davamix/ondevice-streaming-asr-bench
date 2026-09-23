@@ -4,7 +4,9 @@
 Produces, under corpus/audio/ (gitignored, rebuildable):
 
   short/    ~5 s utterances -- latency per utterance, and the clip length that
-            makes Whisper's 30 s padding penalty visible.
+            makes Whisper's 30 s padding penalty visible. Includes a
+            level-matched copy of the FLEURS English clips (`fleurs-en-norm-*`),
+            because the originals are recorded ~40 dB quieter than the rest.
   session/  5-10 min of continuous speech -- sustained RTF and thermals.
 
 Sessions are built by concatenating scored clips with inserted silence gaps.
@@ -32,6 +34,7 @@ import tempfile
 import wave
 from pathlib import Path
 
+import numpy as np
 import pyarrow.parquet as pq
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -52,6 +55,16 @@ SHORT_COUNT = 20
 # the 10-minute continuous-inference cap in PLAN.md §11.3.
 SESSION_TARGET_S = 360.0  # 6 minutes
 GAP_MIN_S, GAP_MAX_S = 0.5, 1.5
+
+# FLEURS en_us is recorded ~40 dB quieter than es_419 and LibriSpeech (median
+# -62.6 dBFS RMS against ~-23), which confounded every English-vs-Spanish and
+# clean-vs-noisy comparison built on it. A level-matched copy of the English
+# short clips sits alongside the originals, lifted by one static gain per clip
+# to the level of the other sources. A static gain, not loudness normalisation
+# or compression, so the copy is exactly the audio the arms already heard, only
+# louder -- the one variable being isolated.
+LEVEL_MATCH_DBFS = -23.0
+PEAK_CEILING_DBFS = -1.0  # never clip: the gain yields to this if it must
 
 SOURCES = {
     "fleurs_en": {
@@ -190,6 +203,62 @@ def build_shorts(key: str, rng: random.Random, clips: list[dict]) -> list[dict]:
     return out
 
 
+def read_pcm16(path: Path) -> np.ndarray:
+    with wave.open(str(path), "rb") as w:
+        return np.frombuffer(w.readframes(w.getnframes()), dtype="<i2")
+
+
+def write_pcm16(samples: np.ndarray, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(dest), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SAMPLE_RATE)
+        w.writeframes(samples.astype("<i2").tobytes())
+
+
+def dbfs(x: np.ndarray) -> tuple[float, float]:
+    """(RMS, peak) of float samples in [-1, 1], in dBFS."""
+    rms = float(np.sqrt(np.mean(x ** 2)))
+    peak = float(np.max(np.abs(x)))
+    return 20 * np.log10(max(rms, 1e-12)), 20 * np.log10(max(peak, 1e-12))
+
+
+def build_level_matched(shorts: list[dict], key: str, clips: list[dict]) -> list[dict]:
+    """A copy of `shorts`, each lifted by a static gain to LEVEL_MATCH_DBFS.
+
+    References are shared with the originals rather than copied: the words are
+    identical by construction, and one file per sentence keeps it that way.
+    """
+    out = []
+    for src in shorts:
+        x = read_pcm16(ROOT / "corpus" / src["audio"]).astype(np.float64) / 32768.0
+        rms_db, peak_db = dbfs(x)
+        gain_db = min(LEVEL_MATCH_DBFS - rms_db, PEAK_CEILING_DBFS - peak_db)
+        y = np.round(x * 10 ** (gain_db / 20) * 32768.0)
+        y = np.clip(y, -32768, 32767)
+        clip_id = src["clip_id"].replace("-short-", "-norm-short-")
+        rel = f"audio/short/{clip_id}.wav"
+        write_pcm16(y, ROOT / "corpus" / rel)
+        out_rms, _ = dbfs(y / 32768.0)
+        entry = {
+            **{k: v for k, v in src.items() if k not in ("clip_id", "audio", "source")},
+            "clip_id": clip_id,
+            "audio": rel,
+            "source": key,
+            "derived_from": src["clip_id"],
+            "gain_db": round(gain_db, 2),
+            "rms_dbfs_before": round(rms_db, 1),
+            "rms_dbfs_after": round(out_rms, 1),
+        }
+        out.append(entry)
+        clips.append(entry)
+    gains = sorted(e["gain_db"] for e in out)
+    print(f"[level] {key}: {len(out)} clips, gain {gains[0]:+.1f} .. {gains[-1]:+.1f} dB "
+          f"-> {LEVEL_MATCH_DBFS} dBFS RMS")
+    return out
+
+
 def build_session(key: str, rng: random.Random, exclude: set[str],
                   clips: list[dict]) -> dict:
     """Concatenate clips with silence gaps into one multi-minute session."""
@@ -291,6 +360,10 @@ def main() -> int:
     shorts_en = build_shorts("fleurs_en", random.Random(SEED + 1), clips)
     shorts_es = build_shorts("fleurs_es", random.Random(SEED + 2), clips)
     build_shorts("librispeech_other", random.Random(SEED + 3), clips)
+
+    # Derived from the English shorts above, not sampled: same sentences,
+    # same speakers, only the level differs.
+    build_level_matched(shorts_en, "fleurs_en_norm", clips)
 
     # Sessions: disjoint from the short set, so sustained-RTF audio is not
     # audio the latency measurement already warmed.

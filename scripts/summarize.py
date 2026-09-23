@@ -116,6 +116,14 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
         doc_reps = doc.get("notes", {}).get("reps", 0)
         single_rep = doc_reps == 1
 
+        # A run checkpoints its results during each mandatory break. If it
+        # then died, the checkpoint is what survives: real rows, but not the
+        # run that was asked for.
+        if doc.get("notes", {}).get("complete") is False:
+            print(f"[summarize] WARNING {path.name} is a checkpoint of a run "
+                  f"that did not finish -- rows included, run incomplete",
+                  file=sys.stderr)
+
         for run in doc.get("runs", []):
             if not keep_first and not single_rep and run.get("rep", 0) == 0:
                 continue
@@ -159,6 +167,11 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
         timed = [r for r in rows if is_timing_clean(r)]
         scored = score_corpus(g["pairs"]) if g["pairs"] else {}
         temps = [r.get("battery_temp_c_after") for r in rows]
+        # Final latency against when the audio actually ended, not when the
+        # feeder returned. Only rows from the Phase 2 harness onward carry it.
+        extras = [r.get("extra") or {} for r in rows]
+        after_end = [e["final_after_audio_end_ms"] for e in extras
+                     if e.get("final_after_audio_end_ms") is not None]
         out[key] = {
             "n_timing": len(timed),
             "n_slipped": len(rows) - len(timed),
@@ -170,6 +183,12 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
             "empty": g["empty"],
             "single_rep": g.get("single_rep", False),
             "latency_final_ms": med([r.get("latency_final_ms") for r in rows]),
+            # Clamped like latency_final_ms: text already final when the
+            # speaker stopped is 0 ms of waiting, not negative waiting.
+            "latency_final_audio_end_ms": med([max(0, v) for v in after_end]),
+            "final_after_audio_end_signed_ms": med(after_end),
+            "speech_end_lag_ms": med([e.get("speech_end_lag_ms") for e in extras]),
+            "n_audio_end": len(after_end),
             "latency_first_partial_ms": med([r.get("latency_first_partial_ms") for r in rows]),
             "partial_instability": med([r.get("partial_instability") for r in rows]),
             "rtf_sustained": med([r.get("rtf_sustained") for r in rows]),
@@ -196,14 +215,16 @@ def fmt(v, spec="", dash="—"):
 
 
 def print_markdown(summary: dict) -> None:
-    print("| Arm | Lang | Bucket | Source | `latency_final_ms` | `latency_first_partial_ms` | "
+    print("| Arm | Lang | Bucket | Source | `latency_final_ms` | final, from audio end | "
+          "`latency_first_partial_ms` | "
           "`partial_instability` | `rtf_sustained` | `peak_rss_mb` | "
           "`disk_size_mb` | WER | CER |")
-    print("|---|---|---|---|---|---|---|---|---|---|---|---|")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     for (arm, variant, lang, bucket, source), s in summary.items():
         name = f"{arm} {variant.removeprefix('moonshine-')}".strip()
         print(
             f"| {name} | {lang} | {bucket} | {source} | {fmt(s['latency_final_ms'], '.0f')} "
+            f"| {fmt(s['latency_final_audio_end_ms'], '.0f')} "
             f"| {fmt(s['latency_first_partial_ms'], '.0f')} "
             f"| {fmt(s['partial_instability'], '.0f')} "
             f"| {fmt(s['rtf_sustained'], '.3f')} "
@@ -226,6 +247,11 @@ def print_detail(summary: dict) -> None:
               f"{fmt(s['slip_p90_ms'], '.0f')} / {s['max_slip_ms']} ms"
               f"   ({fmt(s['slip_over_budget_pct'], '.0f')}% over {SLIP_BUDGET_MS}ms)")
         print(f"  latency_final_ms         {fmt(s['latency_final_ms'], '.0f')}  (median)")
+        if s["n_audio_end"]:
+            print(f"    from actual audio end  {fmt(s['latency_final_audio_end_ms'], '.0f')}"
+                  f"   [n={s['n_audio_end']}; signed median "
+                  f"{fmt(s['final_after_audio_end_signed_ms'], '.0f')}; old stamp late by "
+                  f"{fmt(s['speech_end_lag_ms'], '.0f')} ms]")
         print(f"  latency_first_partial_ms {fmt(s['latency_first_partial_ms'], '.0f')}  (median)")
         print(f"    same, low-slip rows    {fmt(s['latency_first_partial_ms_lowslip'], '.0f')}"
               f"   [n={s['n_timing']}, biased toward easy clips -- see SLIP_BUDGET_MS]")

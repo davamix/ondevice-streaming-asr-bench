@@ -279,6 +279,13 @@ class PlatformRecognizerArm(
             // Closing the write end is the end-of-audio signal.
             state.speechEndMs = SystemClock.uptimeMillis()
 
+            // When the speaker actually stopped, on the wall clock. speechEndMs
+            // is later than this by the feeder's final slip plus the join, so
+            // latency measured from it is understated whenever the recognizer
+            // stalls its input -- which it does most on noisy audio. Null if
+            // the feed never ran.
+            val audioEnd = stats?.let { state.feedStartMs + audio.durationMs }
+
             // Closing the write end already signalled end-of-audio, and the
             // recognizer finalises on EOF by itself. Calling stopListening()
             // on a session that has already delivered its result races it and
@@ -341,6 +348,12 @@ class PlatformRecognizerArm(
                     "feed_complete" to (stats != null),
                     "suspended_ms" to (stats?.suspendedMs ?: 0),
                     "late_error" to (if (gotCleanResult && err != null) errorName(err) else null),
+                    "final_slip_ms" to stats?.finalSlipMs,
+                    "speech_end_lag_ms" to audioEnd?.let { state.speechEndMs - it },
+                    // Signed: the unbiased counterpart of latency_final_ms.
+                    "final_after_audio_end_ms" to audioEnd?.let { end ->
+                        state.finalMs?.let { it - end }
+                    },
                 ),
             )
         } catch (t: Throwable) {

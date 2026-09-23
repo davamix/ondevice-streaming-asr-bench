@@ -142,6 +142,15 @@ class BenchmarkRunner(
                         breaks++
                         Log.i(TAG, "session cap reached (${elapsed / 1000}s) -- " +
                             "pausing ${config.sessionBreakMs / 1000}s (break #$breaks)")
+                        // Checkpoint while nothing is being measured. Results
+                        // are otherwise written only at the end, so a crash an
+                        // hour into a 90-minute run would lose all of it. The
+                        // same file is overwritten, and marked incomplete
+                        // until the final write.
+                        writer.note("complete", false)
+                        runCatching { writer.write() }
+                            .onSuccess { Log.i(TAG, "checkpoint: $rows rows -> ${it.name}") }
+                            .onFailure { Log.w(TAG, "checkpoint write failed: $it") }
                         Thread.sleep(config.sessionBreakMs)
                         sessionStart = System.currentTimeMillis()
                     }
@@ -219,6 +228,7 @@ class BenchmarkRunner(
         }
         writer.note("session_breaks", breaks)
         writer.note("session_cap_ms", config.sessionCapMs)
+        writer.note("complete", true)
         if (aborted != null) writer.note("aborted", aborted)
         usable.forEach { runCatching { it.close() } }
 
