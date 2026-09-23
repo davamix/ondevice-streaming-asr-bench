@@ -48,11 +48,20 @@ def load_refs() -> dict:
     return refs
 
 
-# One frame. If the feeder fell further behind the wall clock than this, the
-# audio reached the model later than the clip's own timeline says it did, and
-# any latency measured against that timeline is contaminated. Such rows still
-# carry valid *text* -- the audio arrived intact, just late -- so they are kept
-# for WER and dropped only from the latency statistics.
+# One frame of pacing. Slip beyond this means the feeder could not hand over
+# audio on time, because the consumer stopped draining fast enough.
+#
+# Headline latency is reported over ALL rows, not slip-filtered ones. Filtering
+# looked right at first and is wrong: slip is not harness noise, it is the
+# recognizer stalling, and it stalls hardest on the audio it finds hardest.
+# Dropping slipped rows therefore drops the difficult clips and flatters the
+# arm -- on LibriSpeech test-other it moved median final latency from 315 ms to
+# 114 ms by keeping only the easy two-thirds.
+#
+# So slip is reported as its own metric instead. For Arm A that earns its keep
+# twice over: recognition happens inside Google's process, so rtf_sustained is
+# unmeasurable, and slip is the only signal we have for "the recognizer is not
+# keeping up with real-time input".
 SLIP_BUDGET_MS = 100
 
 
@@ -114,10 +123,16 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
             "disk_size_mb": g["disk_size_mb"],
             "n": len(rows),
             "errors": g["errors"],
-            "latency_final_ms": med([r.get("latency_final_ms") for r in timed]),
-            "latency_first_partial_ms": med([r.get("latency_first_partial_ms") for r in timed]),
-            "partial_instability": med([r.get("partial_instability") for r in timed]),
-            "rtf_sustained": med([r.get("rtf_sustained") for r in timed]),
+            "latency_final_ms": med([r.get("latency_final_ms") for r in rows]),
+            "latency_first_partial_ms": med([r.get("latency_first_partial_ms") for r in rows]),
+            "partial_instability": med([r.get("partial_instability") for r in rows]),
+            "rtf_sustained": med([r.get("rtf_sustained") for r in rows]),
+            "latency_final_ms_lowslip": med([r.get("latency_final_ms") for r in timed]),
+            "latency_first_partial_ms_lowslip": med([r.get("latency_first_partial_ms") for r in timed]),
+            "slip_median_ms": med([r.get("max_slip_ms") for r in rows]),
+            "slip_p90_ms": (sorted([r.get("max_slip_ms") or 0 for r in rows])[int(0.9 * len(rows))]
+                            if rows else None),
+            "slip_over_budget_pct": (100.0 * (len(rows) - len(timed)) / len(rows)) if rows else None,
             "max_slip_ms": max([r.get("max_slip_ms") or 0 for r in rows], default=0),
             "peak_rss_mb": med([r.get("peak_rss_mb") for r in rows]),
             "temp_max_c": max([t for t in temps if t is not None], default=None),
@@ -157,10 +172,14 @@ def print_detail(summary: dict) -> None:
         print(f"\n=== Arm {arm} / {lang} / {bucket} / {source}")
         print(f"  {s['arm_label']}  [{s['runtime']}]")
         print(f"  rows                     {s['n']}  (errors: {s['errors']})")
-        print(f"  timing-clean rows        {s['n_timing']}"
-              f"  (dropped {s['n_slipped']} over {SLIP_BUDGET_MS}ms slip)")
+        print(f"  slip median/p90/max      {fmt(s['slip_median_ms'], '.0f')} / "
+              f"{fmt(s['slip_p90_ms'], '.0f')} / {s['max_slip_ms']} ms"
+              f"   ({fmt(s['slip_over_budget_pct'], '.0f')}% over {SLIP_BUDGET_MS}ms)")
         print(f"  latency_final_ms         {fmt(s['latency_final_ms'], '.0f')}  (median)")
         print(f"  latency_first_partial_ms {fmt(s['latency_first_partial_ms'], '.0f')}  (median)")
+        print(f"    same, low-slip rows    {fmt(s['latency_first_partial_ms_lowslip'], '.0f')}"
+              f"   [n={s['n_timing']}, biased toward easy clips -- see SLIP_BUDGET_MS]")
+        print(f"    final, low-slip rows   {fmt(s['latency_final_ms_lowslip'], '.0f')}")
         print(f"  partial_instability      {fmt(s['partial_instability'], '.0f')}  (median)")
         print(f"  rtf_sustained            {fmt(s['rtf_sustained'], '.3f')}")
         print(f"  max_slip_ms              {s['max_slip_ms']}")

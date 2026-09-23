@@ -10,8 +10,8 @@ This repo is the lab notebook, not the final report. It was made public before
 any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
-**Status:** Phase 0 complete. Phase 1 complete for Spanish — Arm A measured on
-the SD870. English is blocked on a missing language pack, not on the harness.
+**Status:** Phases 0–1 complete. Arm A measured on the SD870 in **both
+languages**, clean and noisy. Arms B–E not started.
 
 ---
 
@@ -22,7 +22,7 @@ the SD870. English is blocked on a missing language pack, not on the harness.
 | [Why this is not obvious](#why-this-is-not-obvious) | Why live ASR is a different problem from batch ASR, and the English/Spanish asymmetry the experiment exists to price |
 | [Hardware under test](#hardware-under-test) | The phone, its SoC, and why no published number comes from an emulator |
 | [The matrix](#the-matrix) | The five arms, with current status per arm |
-| [**Results**](#results) | **The measured numbers.** Plus [reproducibility](#reproducibility), [what they say so far](#what-this-says-so-far), and the [decision gate](#decision-gate-planmd-10-phase-1) |
+| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank](#rtf_sustained-is-blank-and-slip-stands-in-for-it), and the [decision gate](#decision-gate-planmd-10-phase-1) |
 | [Metrics](#metrics) | What is measured and why RTF alone would mislead |
 | [Method](#method-paced-file-fed-streaming) | Paced file-fed streaming — the one implementation detail everything rests on |
 | [Corpus](#corpus) | How the audio was built, and the concatenation trick for scored continuous speech |
@@ -49,7 +49,7 @@ anywhere else.
 | 8 | [The recognizer sometimes ends a session with an error *and* correct text](#the-platform-recognizer-sometimes-ends-a-session-with-an-error-and-correct-text) | Android gotcha |
 | 9 | [`adb push` into an app's own files dir can be invisible to that app](#adb-push-into-an-apps-own-external-files-dir-can-be-invisible-to-that-app) | Android gotcha |
 | 10 | [A stalled consumer will hang a paced feeder, not fail it](#a-stalled-consumer-will-hang-a-paced-feeder-not-fail-it) | Harness bug |
-| 11 | [Schedule slip is rare but has a long tail, and contaminates latency](#schedule-slip-is-rare-but-has-a-long-tail-and-it-contaminates-latency) | Measurement integrity |
+| 11 | [Filtering out "bad" measurement rows can flatter what you measure](#filtering-out-bad-measurement-rows-can-flatter-the-thing-you-are-measuring) | Measurement integrity |
 | 12 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
 
 > **New here?** [Results](#results) for the numbers, [Findings](#findings-and-dead-ends)
@@ -100,7 +100,7 @@ the quantity of interest.
 
 | # | Arm | Streaming | EN | ES | Size | Runtime | Role | Status |
 |---|---|---|---|---|---|---|---|---|
-| A | Android on-device recognizer | native | ⛔ pack absent | ✅ | **0 MB** | platform | The bar to beat | ✅ **ES measured** |
+| A | Android on-device recognizer | native | ✅ | ✅ | **0 MB** | platform | The bar to beat | ✅ **measured, both** |
 | B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ⬜ not started |
 | C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ⬜ not started |
 | D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ⬜ not started |
@@ -112,20 +112,48 @@ money-saving result — which is why it is built first.
 
 ## Results
 
-Arm A, Spanish, 20 FLEURS `es_419` clips × 4 repetitions, file-fed and
-wall-clock-paced on the Snapdragon 870. Repetition 0 discarded (cold start,
-empty page cache). Phone unplugged throughout: 80% → 76%, never above 30.7 °C.
+Arm A (the platform on-device recognizer, 0 MB bundled), file-fed and
+wall-clock-paced on the Snapdragon 870. Repetition 0 discarded. Medians over
+all rows. Phone unplugged throughout, never above 30.7 °C.
 
-| Arm | Lang | `latency_final_ms` | `latency_first_partial_ms` | `partial_instability` | `peak_rss_mb` | `disk_size_mb` | WER | CER |
-|---|---|---|---|---|---|---|---|---|
-| A | es | **27** | **2008** | 6 | 103 | **0** | **7.75%** | **2.30%** |
-| A | en | — | — | — | — | 0 | — | *blocked: `en-US` pack not installed* |
+| Lang | Source | Audio | WER | CER | `latency_final_ms` | `latency_first_partial_ms` | `partial_instability` | slip median | `peak_rss_mb` |
+|---|---|---|---|---|---|---|---|---|---|
+| es | FLEURS `es_419` | clean read | **7.73%** | 2.33% | **27** | 2010 | 6 | 4 ms | 103 |
+| en | FLEURS `en_us` | clean read | **9.69%** | 4.36% | 123 | 1260 | 8 | 6 ms | 107 |
+| en | LibriSpeech `test-other` | **noisy** | **33.45%** | 26.02% | 315 | 1276 | 7 | **196 ms** | 107 |
 
-Medians. 60 scored rows, 774 reference words, 1 error.
+Spanish: 120 rows / 1539 reference words, pooled over two independent runs.
+English: 60 rows each / 960 and 894 reference words.
+
+### Three things worth stopping on
+
+**1. Spanish is more accurate than English.** 7.73% vs 9.69% WER on the *same
+corpus, same recording conditions, same recognizer* — FLEURS exists precisely
+so this comparison is not confounded by domain. The language the plan expected
+to be hardest to serve is the one the free arm handles best.
+
+**2. Accuracy collapses on noisy audio.** 33.45% WER on LibriSpeech
+`test-other` is 3.5× worse than clean English, and CER goes from 4.4% to 26%.
+Clean read speech flatters this arm badly. Any judgement based only on FLEURS
+would be wrong about real-world use, which is exactly why the noisy stress case
+is in the corpus.
+
+**3. The latency profiles are opposite, by language.**
+
+| | Spanish | English |
+|---|---|---|
+| time to *first* text | 2010 ms (slow) | 1260 ms |
+| time to *finalise* after speech ends | 27 ms (instant) | 123 ms |
+
+Spanish takes two seconds to show anything and then commits instantly; English
+shows text sooner but takes ~5× longer to settle. These are different models
+with different buffering, not one recognizer with one behaviour — so "Android's
+on-device recognizer has latency X" is not a meaningful statement without
+naming the language.
 
 ### Reproducibility
 
-Two independent 4-rep runs, hours apart, on a fixed harness:
+Two independent 4-rep Spanish runs, hours apart:
 
 | | run 1 | run 2 |
 |---|---|---|
@@ -133,50 +161,48 @@ Two independent 4-rep runs, hours apart, on a fixed harness:
 | `latency_final_ms` | 27 | 27 |
 | `latency_first_partial_ms` | 2010 | 2008 |
 
-Tighter still within a run: the *same clip* across repetitions lands within
-about 3 ms (2105 / 2109 / 2108 / 2109 ms). One clip produced byte-identical
-output on all four passes.
+Tighter within a run: the *same clip* across repetitions lands within about
+3 ms (2105 / 2109 / 2108 / 2109 ms), and one clip produced byte-identical text
+on all four passes. That determinism is what file-fed measurement bought (D5);
+a human repeating a sentence four times cannot produce it.
 
-That determinism is what the file-fed decision (D5) bought. A human saying the
-same sentence four times cannot produce it, and without it a 30 ms difference
-between arms would be unmeasurable.
+### `rtf_sustained` is blank, and slip stands in for it
 
-### What this says so far
+Recognition runs inside Google's process, so time spent in our sink is a pipe
+write and says nothing about the model. Reporting a number there would be a
+fiction (D6).
 
-**The 0 MB arm is good at Spanish.** 7.75% WER on clean read speech, with
-correct diacritics — stripping accents before scoring only moves it to 7.36%,
-so 95% of the error is genuine recognition, not orthography.
+Schedule slip fills the gap. It measures how far the paced feeder fell behind
+the wall clock — i.e. how long the recognizer stopped draining audio — and it
+tracks difficulty exactly as you would hope:
 
-**But the latency profile is lopsided.** Text *finalises* 27 ms after speech
-ends, which is excellent. It takes **two seconds to first appear**, which is
-not. Correlation between clip duration and first-partial latency is −0.20, so
-this is a roughly fixed startup cost rather than the recognizer waiting for a
-fraction of the utterance.
+| | slip median | % over one frame |
+|---|---|---|
+| Spanish, clean | 4 ms | 2% |
+| English, clean | 6 ms | 42% |
+| English, **noisy** | **196 ms** | **67%** |
 
-One caveat on that number, stated plainly: the harness creates a fresh
-`SpeechRecognizer` per clip, so every utterance pays full session startup. That
-models a voice-command app correctly. A continuous-transcription app would hold
-one recognizer open and amortise the cost, so **2008 ms is an upper bound** for
-the live-dictation case. The session-bucket runs will show the amortised
-figure, and that comparison is now the most interesting open question for
-Arm A.
-
-**`rtf_sustained` is deliberately blank.** Recognition happens inside Google's
-process, so time spent in our sink is a pipe write and says nothing about the
-model. Reporting a number there would be a fiction (D6).
+On noisy audio the recognizer stalls the input pipe for roughly 200 ms per
+clip. For an arm whose internals are invisible, that is the "not keeping up
+with real time" signal.
 
 ### Decision gate (PLAN.md §10, Phase 1)
 
-Not yet answerable. Arm A is strong on Spanish, which is the language the plan
-expected to be *hardest* to serve. If that holds against Arms C/D/E, the case
-for bundling a Spanish model weakens considerably.
+**Arms C and D stay in the matrix.** Arm A is genuinely good on clean Spanish
+and free, which is a real result — but 33% WER on noisy English is
+disqualifying for anything used in an ordinary room, and that is the case a
+bundled model would exist to fix.
 
-Two things block calling it:
-- **the two-second first-partial**, until the amortised session number exists
-- **English**, which cannot be measured on this handset at all until the pack
-  is installed
+Still open before the gate can close properly:
 
-So arms C and D stay in the matrix for now.
+- **The first-partial numbers are an upper bound.** The harness builds a fresh
+  `SpeechRecognizer` per clip, so every utterance pays full session startup.
+  That models a voice-command app; continuous dictation would hold one open and
+  amortise it. The session bucket settles this.
+- **Nothing is known yet about sustained behaviour** — no 5–10 minute run, so
+  no thermal drift data.
+- **Arm A depends on a language pack the user may not have.** It had to be
+  installed on this handset before English could be measured at all.
 
 ## Metrics
 
@@ -468,20 +494,34 @@ about 0.2 s instead of a hang — and a failure is a result.
 
 This is precisely what the emulator-first rule is for.
 
-### Schedule slip is rare but has a long tail, and it contaminates latency
+### Filtering out "bad" measurement rows can flatter the thing you are measuring
 
-The paced feeder logs how far behind the wall clock it ever fell. Median slip
-is 4 ms and the 90th percentile is 8 ms — but 3 of 60 rows in one run exceeded
-a full 100 ms frame, and one reached **1703 ms**.
+The paced feeder records how far behind the wall clock it ever fell. The first
+instinct — drop rows where slip exceeded a frame, because their latency is
+contaminated — is wrong here, and the way it is wrong is worth generalising.
 
-Audio that arrives late makes any latency measured against the clip's own
-timeline wrong, so rows over a one-frame slip budget are dropped from latency
-statistics while kept for WER — the audio arrived intact, just late. Excluding
-them moved the median first-partial by 9 ms, which is the reassuring direction:
-the outliers were few and the bulk of the data was sound.
+Slip is not harness noise. It is the recognizer pausing its intake, and it
+pauses hardest on the audio it finds hardest. On LibriSpeech `test-other` two
+thirds of rows exceeded the budget. Dropping them keeps the easy third:
 
-Worth recording because a harness that does not measure its own pacing cannot
-know when it is lying to you.
+| | all rows | slip ≤ 100 ms | effect |
+|---|---|---|---|
+| `latency_final_ms` (noisy en) | 315 | 114 | **2.8× better** |
+| `latency_first_partial_ms` (noisy en) | 1276 | 1010 | 21% better |
+| `latency_final_ms` (clean es) | 27 | 27 | none |
+
+The filter would have made the arm look nearly three times faster on exactly
+the audio it handles worst, while doing nothing on the audio it handles well —
+the worst possible shape for a bias, because it is invisible unless you check.
+
+Headline numbers therefore use every row, and slip is reported as its own
+metric. For Arm A it doubles as the missing one: recognition happens inside
+Google's process, so `rtf_sustained` is unmeasurable, and slip is the only
+available signal for "not keeping up with real-time input".
+
+The general rule: before excluding measurements as low-quality, check whether
+the exclusion correlates with the thing being measured. If it does, the filter
+is part of the result.
 
 ### Excluded before testing
 
