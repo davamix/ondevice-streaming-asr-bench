@@ -39,6 +39,12 @@ Measured 2026-09-23. Full method and reproduction steps in the [README](../READM
 > moves from 10.17% to 10.25%. "One word in three" is closer to one in four;
 > the verdict stands. See
 > [the finding](../README.md#years-written-as-digits-cost-four-wer-points).
+>
+> **Spanish, revised in Phase 3.** The scorer also read "12:00" as "doce
+> cero", which no one says, and every arm lost that word; fixed, the 20
+> Spanish clips score 7.78%. Spanish has since grown to 100 clips, on which
+> this recognizer scores **7.62%**. "Clean Spanish: strong" stands, but
+> Parakeet (Phase 3) beats it measurably: 4.64% on the same 100 clips.
 
 ---
 

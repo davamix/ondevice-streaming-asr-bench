@@ -1,6 +1,6 @@
 # Handover — next phase to run
 
-**Currently: re-measure Spanish on 100 clips (Arm A, Parakeet), then Phase 4, Arm C. Not started.**
+**Currently: Phase 4, Arm C (Moonshine `base-es`). Not started.**
 
 This file carries whatever phase is next. It is rewritten as each phase
 completes; finished phases are written up in [`summaries/`](summaries/).
@@ -22,10 +22,9 @@ language?*
 > and exact commands, and the three summaries in `summaries/` for what Phases
 > 1–3 established. `README.md` has the full results and findings.
 >
-> Phases 0–3 are complete. First re-measure Arm A and Parakeet on the
-> expanded 100-clip Spanish set ("Before Phase 4" in HANDOVER.md). Then
-> Phase 4 integrates Arm C (Moonshine `base-es`, VAD-segmented), validates it
-> on the emulator, and measures it on the phone in Spanish. Then compare Spanish across Arms A, C, D and E and answer the
+> Phases 0–3 are complete. Phase 4 integrates Arm C (Moonshine `base-es`,
+> VAD-segmented), validates it on the emulator, and measures it on the phone
+> on the 100-clip Spanish set. Then compare Spanish across Arms A, C, D and E and answer the
 > PLAN.md §1 question. Update the README results as numbers come in.
 >
 > The test device is the owner's only phone. `PLAN.md` §11 is a hard safety
@@ -42,8 +41,8 @@ language?*
 | Phase 1 (Arm A) | ✅ complete, revised in Phases 2 and 3 — [summary](summaries/phase-1-arm-a.md) |
 | Phase 2 (Arm B) | ✅ complete, revised in Phase 3 — [summary](summaries/phase-2-arm-b.md) |
 | Phase 3 (Arms D, E) | ✅ complete — [summary](summaries/phase-3-arms-d-e.md) |
-| Spanish re-measure (100 clips) | ⬜ **next**, corpus built and commands ready |
-| Phase 4 (Arm C) | ⬜ after the re-measure |
+| Spanish on 100 clips (Arm A, Parakeet) | ✅ done 2026-09-24 |
+| Phase 4 (Arm C) | ⬜ **next** |
 | Phase 5 (analysis, sessions, mic check) | ⬜ not started |
 
 Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push after each phase)
@@ -52,59 +51,37 @@ Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push afte
 
 | | Arm A (0 MB) | Moonshine small (224 MB) | Whisper small (375 MB) | Parakeet (670 MB) |
 |---|---|---|---|---|
-| Spanish | 8.14% | — | 11.63% | **6.98%** |
+| Spanish, 100 clips | 7.62% | — | — | **4.64%** |
+| Spanish, original 20 clips | 7.78% | — | 11.28% | **6.61%** |
 | English noisy | 29.31% | 8.72% | 14.43% | **7.05%** |
 | English clean, level-matched | 12.60% | 7.71% | **5.31%** | 6.88% |
 | Final text, noisy / Spanish | **68 / 0 ms** | 442 / — | 2424 / 2750 ms | 353 / 0 ms |
 | First text, noisy / Spanish | **1.0 / 2.0 s** | 1.2 / — | 2.2 / 3.0 s | 1.6 / 2.4 s |
 
-Parakeet is the one-model-for-both candidate. The two-stack alternative is
-Moonshine small (English) plus Arm A (Spanish). Arm C is interesting if it
-serves Spanish near 7–8% at 65 MB, which would make a small two-stack option
-without depending on the platform's language pack.
+Parakeet is the one-model-for-both candidate, and on 100 Spanish clips it
+beats Arm A measurably (3.0 points, 95% interval +0.6 to +5.9). The two-stack
+alternative is Moonshine small (English) plus Arm A (Spanish). Arm C is
+interesting if it serves Spanish near Arm A's 7.62% at 65 MB, which would make
+a small two-stack option without depending on the platform's language pack.
+Judge it with `scripts/compare.py`, not by the two pooled numbers.
 
 ---
 
-## Before Phase 4 — re-measure Spanish on 100 clips
+## Done before Phase 4 — Spanish on 100 clips
 
-Twenty Spanish clips could not separate the arms. On them, Arm A and Parakeet
-differ by ~1 WER point with a 95% interval of about −3 to +5
-(`scripts/compare.py --standard`). The corpus now has 80 more Spanish clips
-(`fleurs-es-short-020` to `-099`, distinct sentences, 1,513 more words). The
-build reproduced all earlier files byte for byte. Arm A and Parakeet need
-measuring on them before Arm C, so all three share one 100-clip Spanish set:
+Twenty Spanish clips could not separate the arms, so the corpus gained 80
+Spanish clips (`fleurs-es-short-020` to `-099`, one recording per unused
+sentence, 3–10 s). Arm A (3 reps) and Parakeet (2 reps) were re-measured on
+all 100 on 2026-09-24: 7.62% and 4.64%. Results are in
+`results/*-armA-es100` and `results/*-armD-es100`. Whisper was not
+re-measured: it is calibration, and Whisper small costs ~40 battery points a
+run. Comparisons involving it use the original 20 clips, which
+`compare.py` picks automatically as the shared set.
 
-```bash
-# Arm A: pushes the expanded corpus. Three reps, because Arm A's text varies
-# a little between runs; ~65 min, ~4 battery points.
-.venv/Scripts/python scripts/run_bench.py --device physical \
-    --arms A --langs es --buckets short --reps 3 --label armA-es100 \
-    --no-build --no-install --timeout 7200
-
-# Parakeet: identical text every rep, so two reps (rep 0 is discarded);
-# ~45 min, ~10 battery points.
-.venv/Scripts/python scripts/run_bench.py --device physical \
-    --arms D:parakeet-tdt-v3-int8 --langs es --buckets short --reps 2 \
-    --label armD-es100 --no-build --no-install --no-push --timeout 7200
-
-.venv/Scripts/python scripts/compare.py --standard
-```
-
-Run the battery watchdog alongside each. Then update the Spanish figures in
-the README, the Phase 3 summary and this file. The pushed Phase 3 text says
-Parakeet *beats* Arm A in Spanish; the 20 clips do not support that, and the
-new figures decide what replaces it.
-
-Two scorer changes land with this, both PC-side:
-
-- **Clip-weighted pooling** (`score.score_clips`). Each clip counts once,
-  however many rows it has, so the old 20-clip runs do not outweigh the new
-  100-clip ones. It changed none of the 27 existing WER/CER figures.
-- **Clock times.** "12:00" was read as "doce cero", a word nobody says, and
-  every arm lost it on `fleurs-es-short-005`. On-the-hour times now read as
-  the hour, and "p. m." as one token. This moved every Spanish WER by about
-  −0.35 points, uniformly (Arm A 8.14 → 7.78%, Parakeet 6.98 → 6.61%). It
-  needs a revision note when the Spanish figures are rewritten.
+Two scorer changes came with it, both PC-side and self-tested. Each clip now
+counts once however many rows it has (`score.score_clips`), and on-the-hour
+clock times read as the hour ("12:00" had been "doce cero"). Both are in the
+README findings.
 
 ## Phase 4 — Arm C (Moonshine `base-es`)
 
@@ -131,7 +108,8 @@ like Arms D and E. The integration is an open design choice:
 Either way, keep what Phase 3 established: decode off the feed thread, 500 ms
 partials, record `last_final_wait_ms` and `final_after_audio_end_ms`.
 Spanish only, on all 100 Spanish clips (4 reps: 400 clips). Then compare
-Spanish across A / C / D / E with `scripts/compare.py`,
+Spanish across A / C / D with `scripts/compare.py` on the shared 100 clips
+(E only on the original 20),
 which is PLAN.md §10 step 18.
 
 ---
@@ -147,6 +125,11 @@ which is PLAN.md §10 step 18.
   first-draft statements were wrong: the Kotlin VAD's 5 s
   `maxSpeechDuration` does not hard-cut (it tightens the VAD), and the stale
   battery temperature is not tied to charge-level changes.
+- **Report an interval, not two numbers.** Twenty clips could not tell
+  Parakeet from Arm A in Spanish; 100 could. Offline arms give identical text
+  every rep, so reps add no accuracy evidence. `scripts/compare.py --standard`
+  re-checks every comparison the README makes. English rankings among the
+  bundled models are still within noise on 20 clips.
 - **A scorer rule can favour one output style.** Years written as digits cost
   Arm A four WER points on noisy English. When a new arm formats text
   differently (numbers, names, punctuation), look at its worst clips before
@@ -176,6 +159,8 @@ which is PLAN.md §10 step 18.
 | Whisper base | 320 | 87 min | 20 points | 35.2 °C | 7 |
 | Parakeet | 320 | 53 min | 14 points | 34.5 °C | 0 |
 | Whisper small | 320 | 156 min | 39 points | 35.5 °C | 15 |
+| Arm A, Spanish 100 clips | 300 | 61 min | 5 points | 30.2 °C | 0 |
+| Parakeet, Spanish 100 clips | 200 | 41 min | 11 points | 33.2 °C | 0 |
 
 The gate needs battery 30–80% and not charging, and it checks the level only
 at start. §11.3 asks for 30–80% *throughout*, so run this watchdog alongside
@@ -197,9 +182,9 @@ old (README finding). A cooling pause can therefore run long, and a clip can
 start slightly above 35 °C. `dumpsys battery` has the same lag. The thermal
 HAL exposes no sensors on this phone, and the sysfs node is denied to shell.
 
-The phone ended Phase 3 at 41%. Arm C is Spanish only (80 clips for 4 reps)
-and `base-es` is small, so a run should cost far less than Phase 3's, but it
-still needs 30–80% at the start.
+The phone ended the Spanish re-measure at 62%. Arm C is Spanish only (400
+clips for 4 reps) and `base-es` is small, so a run should cost less than
+Parakeet's, but it still needs 30–80% at the start.
 
 ---
 
@@ -303,7 +288,8 @@ last checkpoint is in the device's results dir, marked `complete: false`.
 - **Nothing is bundled in the APK.** Models are pushed to
   `/sdcard/Android/data/io.github.davamix.asrbench/files/models/`. On the phone
   now: all three Moonshine variants, `silero-vad`, both Whisper variants and
-  `parakeet-tdt-v3-int8` (~1.9 GB). ~73 GB free, so no need to remove any.
+  `parakeet-tdt-v3-int8` (~1.9 GB), and the 162-clip corpus. ~73 GB free, so
+  no need to remove any.
 - **The app must create its own directories** before anything is pushed into
   them (`prepareDirs`, with `model_dirs`). `run_bench.py` handles this.
 - **Two ONNX Runtimes live in the APK**, Moonshine's and sherpa-onnx's

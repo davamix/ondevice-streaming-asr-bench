@@ -11,10 +11,11 @@ any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
 **Status:** Phases 0–3 complete. Arm D
-(Parakeet) is the first model to serve **both** languages well: 6.98% WER in
-Spanish, better than the platform recognizer, and 7.05% on noisy English. See
-the [Phase 3 summary](summaries/phase-3-arms-d-e.md). A scoring fix in Phase 3
-revised noisy-English WER for Arm A and Moonshine tiny; revisions are marked
+(Parakeet) is the first model to serve **both** languages well: 4.64% WER in
+Spanish against the platform recognizer's 7.62%, on 100 clips, and 7.05% on
+noisy English. See the [Phase 3 summary](summaries/phase-3-arms-d-e.md).
+Phase 3 also grew the Spanish set from 20 clips to 100, because 20 could not
+tell the arms apart, and fixed two scoring rules. Revised figures are marked
 where they occur. Arm C not started.
 
 ---
@@ -66,11 +67,12 @@ anywhere else.
 | 19 | [Live partials from an offline model multiply its compute](#live-partials-from-an-offline-model-multiply-its-compute) | Measured |
 | 20 | [Silero VAD hears quiet speech, but late](#silero-vad-hears-quiet-speech-but-late) | Model behaviour |
 | 21 | [Years written as digits cost four WER points](#years-written-as-digits-cost-four-wer-points) | Measurement integrity |
-| 22 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
-| 23 | [Two ONNX Runtimes in one APK collide at packaging](#two-onnx-runtimes-in-one-apk-collide-at-packaging) | Integration gotcha |
-| 24 | [sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default](#sherpa-onnxs-kotlin-vad-splits-utterances-after-5-seconds-by-default) | Integration gotcha |
-| 25 | [The battery temperature an app can read can be minutes old](#the-battery-temperature-an-app-can-read-can-be-minutes-old) | Measurement integrity |
-| 26 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
+| 22 | [Twenty clips could not tell the arms apart](#twenty-clips-could-not-tell-the-arms-apart) | Measurement integrity |
+| 23 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
+| 24 | [Two ONNX Runtimes in one APK collide at packaging](#two-onnx-runtimes-in-one-apk-collide-at-packaging) | Integration gotcha |
+| 25 | [sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default](#sherpa-onnxs-kotlin-vad-splits-utterances-after-5-seconds-by-default) | Integration gotcha |
+| 26 | [The battery temperature an app can read can be minutes old](#the-battery-temperature-an-app-can-read-can-be-minutes-old) | Measurement integrity |
+| 27 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
 
 > **New here?** Start with the [Phase 3 summary](summaries/phase-3-arms-d-e.md),
 > then [Phase 2](summaries/phase-2-arm-b.md) and [Phase 1](summaries/phase-1-arm-a.md),
@@ -154,14 +156,16 @@ measured it from when the feeder returned, which ran up to one frame early (see
 
 | Lang | Source | Audio | WER | CER | Final text | First text | Revisions | Slip median | `peak_rss_mb` |
 |---|---|---|---|---|---|---|---|---|---|
-| es | FLEURS `es_419` | clean | **8.14%** | 2.84% | 0 ms | 2009 ms | 6 | 6 ms | 124 |
+| es | FLEURS `es_419` | clean | **7.62%** | 3.76% | 0 ms | 2009 ms | 6 | 6 ms | 124 |
 | en | FLEURS `en_us` | clean, level-matched | **12.60%** | 8.78% | 76 ms | 1259 ms | 8 | 6 ms | 118 |
 | en | FLEURS `en_us` | clean, original (**very quiet**) | 9.69% | 4.36% | 50 ms | 1212 ms | 8 | 6 ms | 118 |
 | en | LibriSpeech `test-other` | **noisy** | **29.31%** | 22.42% | 68 ms | 1012 ms | 8 | 6 ms | 118 |
 
-Spanish is pooled over three runs (180 rows, 2322 reference words), the two
-original English sources over two runs (120 rows each), and the level-matched
-clips come from one run (60 rows). `peak_rss_mb` is our harness only; the
+Spanish covers 100 clips (1,766 reference words): the original 20, measured
+in four runs, and 80 added in Phase 3, measured in the fourth. Each clip
+counts once, however many runs measured it. The two original English sources
+are pooled over two runs (120 rows each), and the level-matched clips come
+from one run (60 rows). `peak_rss_mb` is our harness only; the
 recognizer runs in Google's process.
 
 > **Revised in Phase 2.** Three things Phase 1 published have changed:
@@ -176,12 +180,18 @@ recognizer runs in Google's process.
 >   else ([finding](#fleurs-english-is-recorded-40-db-quieter-than-fleurs-spanish)).
 >   Level-matched clips are now in the corpus.
 
-> **Revised in Phase 3.** Noisy-English WER was 33.33% (CER 25.92%). The
-> scorer read "1848" as "one thousand eight hundred forty eight", while the
-> reference says "eighteen forty eight", so every year this recognizer wrote
-> as digits cost about four errors
-> ([finding](#years-written-as-digits-cost-four-wer-points)). No other Arm A
-> figure moved, except the English session (10.17% → 10.25%).
+> **Revised in Phase 3.** Two scoring fixes and a larger Spanish set:
+>
+> - **Noisy-English WER** was 33.33% (CER 25.92%). The scorer read "1848" as
+>   "one thousand eight hundred forty eight", while the reference says
+>   "eighteen forty eight", so every year this recognizer wrote as digits cost
+>   about four errors
+>   ([finding](#years-written-as-digits-cost-four-wer-points)). The English
+>   session moved too, from 10.17% to 10.25%.
+> - **Spanish WER** was 8.14% on 20 clips. The scorer read "12:00" as "doce
+>   cero", which no one says, and fixing that brings those 20 clips to 7.78%.
+>   On the 100-clip set it is 7.62%
+>   ([finding](#twenty-clips-could-not-tell-the-arms-apart)).
 
 ### Three things worth stopping on
 
@@ -194,7 +204,7 @@ That failure is the case a bundled model would exist to fix.
 **2. "Spanish is more accurate than English" is not established.** Phase 1
 reported 7.73% vs 9.69% on "the same corpus, recorded the same way". Neither
 half survived. The English clips turned out to be ~40 dB quieter, and Spanish
-was corrected to 8.14%. At matched level, English scores 12.60%, but that
+was corrected to 8.14% (7.62% on the 100-clip set since Phase 3). At matched level, English scores 12.60%, but that
 figure is dominated by one clip where the recognizer returned only the last
 clause ([finding](#the-platform-recognizer-can-return-only-the-last-clause)).
 On the other 19 clips, level-matched English scores 8.22%. So the language gap
@@ -236,6 +246,10 @@ recognizer.
 | WER, utterances that returned text | 7.71% | 7.75% | 7.88% |
 | First text | 2019 ms | 2008 ms | 2009 ms |
 | Final text (old stamp) | 28 ms | 27 ms | 27 ms |
+
+These are the Phase 2 scorer's figures. Under Phase 3's (clock times read
+as the hour), the three runs read 8.43%, 7.39% and 7.52%. A fourth run, a day
+later, gave 7.78% on the same 20 clips, with first text at 2006 ms.
 
 Run 1's higher WER is one utterance, `fleurs-es-short-009`. It ended in
 `ERROR_CLIENT` / `EPIPE` before emitting any text, on a sentence every other
@@ -402,15 +416,15 @@ it. Same corpus, paced feeder and phone as Arms A and B.
 
 | Arm | Source | Audio | WER | CER | Final text | First text | Revisions | Compute, with partials (finals only) | `peak_rss_mb` |
 |---|---|---|---|---|---|---|---|---|---|
-| D Parakeet | FLEURS `es_419` | clean | **6.98%** | 2.50% | 0 ms | 2373 ms | 9 | 0.52 (0.20) | 1027 |
+| D Parakeet | FLEURS `es_419`, 100 clips | clean | **4.64%** | 1.88% | 0 ms | 2372 ms | 12 | 0.58 (0.21) | 1027 |
 | D Parakeet | FLEURS `en_us` | clean, level-matched | **6.88%** | 3.24% | 186 ms | 1797 ms | 12 | 0.60 (0.22) | |
 | D Parakeet | FLEURS `en_us` | clean, original (**very quiet**) | 14.69% | 7.81% | 143 ms | 2416 ms | 24 | 0.56 (0.21) | |
 | D Parakeet | LibriSpeech `test-other` | **noisy** | **7.05%** | 3.06% | 353 ms | 1556 ms | 8 | 0.56 (0.23) | |
-| E Whisper base | FLEURS `es_419` | clean | 15.12% | 4.67% | 471 ms | 2322 ms | 14 | 0.81 (0.27) | 572 |
+| E Whisper base | FLEURS `es_419`, 20 clips | clean | 14.79% | 4.35% | 471 ms | 2322 ms | 14 | 0.81 (0.27) | 572 |
 | E Whisper base | FLEURS `en_us` | clean, level-matched | 11.88% | 6.64% | 618 ms | 1717 ms | 9 | 0.88 (0.28) | |
 | E Whisper base | FLEURS `en_us` | clean, original (**very quiet**) | 20.62% | 13.28% | 518 ms | 1835 ms | 26 | 0.76 (0.28) | |
 | E Whisper base | LibriSpeech `test-other` | **noisy** | 22.82% | 9.62% | 678 ms | 1522 ms | 16 | 0.83 (0.30) | |
-| E Whisper small | FLEURS `es_419` | clean | 11.63% | 4.54% | 2750 ms | 2990 ms | 2 | 1.24 (0.52) | 997 |
+| E Whisper small | FLEURS `es_419`, 20 clips | clean | 11.28% | 4.22% | 2750 ms | 2990 ms | 2 | 1.24 (0.52) | 997 |
 | E Whisper small | FLEURS `en_us` | clean, level-matched | **5.31%** | 2.39% | 2683 ms | 2306 ms | 4 | 1.36 (0.53) | |
 | E Whisper small | FLEURS `en_us` | clean, original (**very quiet**) | 10.31% | 5.69% | 2659 ms | 2400 ms | 8 | 1.31 (0.53) | |
 | E Whisper small | LibriSpeech `test-other` | **noisy** | 14.43% | 6.19% | 2424 ms | 2180 ms | 5 | 1.35 (0.59) | |
@@ -420,13 +434,17 @@ discarded. WER was identical to the hundredth in every repetition: greedy
 decoding behind a deterministic VAD, fed identical audio, gives identical text.
 Disk: Parakeet 670.5 MB, Whisper small 375.4 MB, Whisper base 160.6 MB, plus
 2.2 MB for Silero VAD. Parakeet and Whisper base were measured on 2026-09-23,
-Whisper small the next morning after a recharge.
+Whisper small the next morning after a recharge. Parakeet's Spanish row is
+from a second run that day on the 100-clip Spanish set; its text on the
+original 20 clips was byte-identical to the first run's. Whisper was measured
+on the original 20 Spanish clips only.
 
 **Against the bar, both languages:**
 
 | | Arm A (0 MB) | Moonshine small (224 MB) | Moonshine medium (416 MB) | Whisper base (161 MB) | Whisper small (375 MB) | **Parakeet (670 MB)** |
 |---|---|---|---|---|---|---|
-| WER, **Spanish** | 8.14% | — | — | 15.12% | 11.63% | **6.98%** |
+| WER, **Spanish**, 100 clips | 7.62% | — | — | — | — | **4.64%** |
+| WER, Spanish, original 20 clips | 7.78% | — | — | 14.79% | 11.28% | **6.61%** |
 | WER, English **noisy** | 29.31% | 8.72% | **6.26%** | 22.82% | 14.43% | 7.05% |
 | WER, English clean, level-matched | 12.60% | 7.71% | 5.62% | 11.88% | **5.31%** | 6.88% |
 | WER, English clean, **very quiet** | **9.69%** | 27.29% | 25.31% | 20.62% | 10.31% | 14.69% |
@@ -442,9 +460,12 @@ Whisper small the next morning after a recharge.
 **What Arms D and E answer:**
 
 1. **One model can serve both languages, and it is Parakeet.** It beats the
-   platform recognizer on Spanish (6.98% vs 8.14%), which nothing else in the
-   matrix has done. On English it sits between Moonshine small and medium on
-   both noisy (7.05%) and clean (6.88%) speech. It is the first arm that is
+   platform recognizer in Spanish: 4.64% against 7.62% on 100 clips, a gap of
+   3.0 points with a 95% interval of +0.6 to +5.9
+   ([finding](#twenty-clips-could-not-tell-the-arms-apart)). Nothing else in
+   the matrix does. On English it is level with Moonshine small and medium,
+   on noisy (7.05%) and on clean (6.88%) speech. No English difference among
+   the three is large enough for 20 clips to resolve. It is the first arm
    competitive in both languages at once, with no language setting.
 2. **Memory did not bite.** The plan flagged Parakeet as the arm most likely
    to fail on memory, expecting 1.5–2 GB resident. It peaked at 1027 MB,
@@ -457,13 +478,15 @@ Whisper small the next morning after a recharge.
    partials, where Whisper base needs 0.76–0.88. So it ran cooler: no cooling
    pauses, against seven for Whisper base, and a third less battery.
 4. **Whisper calibrates as expected, and neither size is a contender.**
-   Base's Spanish is nearly twice Arm A's error (15.12%), and its English is
-   level with Arm A on clean speech and well behind every bundled model on
-   noisy. On one quiet clip it produced a repetition loop ("4x4, 3x3, 3x4,
+   Base's Spanish is nearly twice Arm A's error (14.79% against 7.78% on the
+   same 20 clips), and its English is level with Arm A on clean speech and
+   well behind every bundled model on noisy. On one quiet clip it produced a repetition loop ("4x4, 3x3, 3x4,
    3x4…") instead of the sentence, in every repetition. Small is the most
    accurate model in the matrix on clean English (5.31%), and the most robust
-   bundled model on very quiet audio (10.31%, close to Arm A's 9.69%). But its
-   Spanish (11.63%) still trails Arm A, and it is far too slow to be live:
+   bundled model on very quiet audio (10.31%, close to Arm A's 9.69%). Its
+   Spanish is well behind Parakeet's and 3.5 points behind Arm A's on the same
+   20 clips (11.28% vs 7.78%), a gap 20 clips cannot resolve. It is also far
+   too slow to be live:
    final text 2.4–2.8 s after the speaker stops, each final decode ~2 s.
 5. **Final text is quick; first text is not.** Final text arrives 0–350 ms
    after the audio ends for Parakeet, because the VAD closes most segments on
@@ -1212,6 +1235,64 @@ The conclusions did not move. Moonshine still cuts Arm A's noisy-audio error
 by half or more at every size. The numbers did, and the pattern is the one
 behind the two earlier findings: a scorer rule that looks neutral can
 quietly favour one output style.
+
+**Clock times, the same week.** Checking the new Spanish references for
+digits turned up a sibling. FLEURS writes "a las 12:00 GMT", and the digit
+expansion read it as "doce cero": a word nobody says and no arm produced, so
+every arm lost it. This one charged all arms alike, so it moved every Spanish
+WER by about −0.35 points and changed no ranking. On-the-hour times now read
+as the hour, and "p. m." as one token.
+
+### Twenty clips could not tell the arms apart
+
+After Phase 3's first write-up, the README said Parakeet beats the platform
+recognizer in Spanish, 6.98% against 8.14%. The numbers were right, but the
+data could not support the claim. The Spanish set was 20 clips, 258
+reference words. And these models give the same text on every repetition, so
+four repetitions are still 20 clips of evidence, not 80. A paired bootstrap
+over clips (`scripts/compare.py`) put the difference at +1.2 points, with a
+95% interval of −3.2 to +4.9. The two were indistinguishable.
+
+The set was thinner than it looked. FLEURS records each sentence by several
+speakers, so the 20 clips held 15 distinct sentences. Three were the same
+sentence about Aerosmith, and one of those recordings (`-017`) defeated all
+three offline models ("I just mean.", "Idres mi se lo") while Arm A got it.
+In a 20-clip set, one recording like that is a twentieth of the evidence.
+
+Phase 3 added 80 Spanish clips, one recording each of 80 sentences not
+already used, and measured Arm A and Parakeet on all 100:
+
+| Spanish WER | Original 20 clips (257 words) | All 100 clips (1,766 words) |
+|---|---|---|
+| Arm A | 7.78% | 7.62% |
+| Parakeet | 6.61% | 4.64% |
+| Difference, with 95% interval | +1.2 [−3.2, +4.9] | **+3.0 [+0.6, +5.9]** |
+
+The 20-clip figures use the current scorer. The claim survives, now on
+evidence that can carry it. The original 20 turned out to be the harder
+clips for Parakeet: 6.61% there, 4.31% on the new 80.
+
+Run over every other comparison the README makes, the same tool shows which
+English claims 20 clips can support:
+
+| English WER | A − B | 95% interval | |
+|---|---|---|---|
+| Arm A − Moonshine small, noisy | +20.6 | +9.1 to +34.3 | resolved |
+| Moonshine small − Parakeet, noisy | +1.7 | −2.3 to +5.7 | not resolved |
+| Moonshine medium − Parakeet, noisy | −0.8 | −5.5 to +4.1 | not resolved |
+| Moonshine small − Parakeet, clean | +0.8 | −0.9 to +2.7 | not resolved |
+| Whisper small − Parakeet, clean | −1.6 | −4.4 to +1.2 | not resolved |
+
+The case for bundling a model at all rests on the first row, and it holds by
+a wide margin. The ranking among the bundled English models does not hold:
+at 20 clips, English differences under about four points are noise. Before
+the final recommendation ranks Moonshine against Parakeet, English needs the
+same treatment Spanish got.
+
+Two general lessons. Repeating a deterministic model adds evidence about its
+timing, not its accuracy. And "X beats Y" needs an interval, not two pooled
+numbers side by side. `scripts/compare.py --standard` re-checks every
+comparison the README relies on.
 
 ### Two ONNX Runtimes in one APK collide at packaging
 
