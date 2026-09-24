@@ -11,7 +11,7 @@ made live with Silero VAD through sherpa-onnx 1.13.8, on a Snapdragon 870
 
 **Why it matters:** this is the central question of the experiment. English
 has a strong bundled option (Moonshine small, 8.7% WER on noisy speech) but no
-Spanish one. Spanish has the free platform recognizer (7.62%), which fails on
+Spanish one. Spanish has the free platform recognizer (7.39%), which fails on
 noisy English (29%). Either one model serves both, or the app ships two
 stacks.
 
@@ -22,11 +22,11 @@ method in the
 
 > **Revised in Phase 3.** The first version of this summary said Parakeet
 > beats Arm A in Spanish, 6.98% against 8.14% on 20 clips. Those 20 clips
-> could not support it: the 95% interval on the difference ran from −3.2 to
-> +4.9 points. On 100 clips they can, and it holds: 4.64% against 7.62%. See
-> [the finding](../README.md#twenty-clips-could-not-tell-the-arms-apart). A
-> scoring fix for clock times also lowered every Spanish figure by ~0.35
-> points.
+> could not support it: the 95% interval on the difference ran from about
+> −3 to +5 points. On 100 clips they can, and it holds: 4.47% against 7.39%.
+> See [the finding](../README.md#twenty-clips-could-not-tell-the-arms-apart).
+> Scoring fixes for clock times and percent signs also lowered the Spanish
+> figures, Arm A's most.
 
 ---
 
@@ -39,11 +39,11 @@ measured from the moment the audio ends.
 
 | | Arm A (0 MB) | Moonshine small (224 MB) | Moonshine medium (416 MB) | Whisper base (161 MB) | Whisper small (375 MB) | **Parakeet (670 MB)** |
 |---|---|---|---|---|---|---|
-| WER, **Spanish**, 100 clips (FLEURS) | 7.62% | — | — | — | — | **4.64%** |
-| WER, Spanish, original 20 clips | 7.78% | — | — | 14.79% | 11.28% | **6.61%** |
+| WER, **Spanish**, 100 clips (FLEURS) | 7.39% | — | — | — | — | **4.47%** |
+| WER, Spanish, original 20 clips | 7.75% | — | — | 14.73% | 11.24% | **6.20%** |
 | WER, English **noisy** (LibriSpeech `test-other`) | 29.31% | 8.72% | **6.26%** | 22.82% | 14.43% | 7.05% |
 | WER, English clean (FLEURS, level-matched) | 12.60% | 7.71% | 5.62% | 11.88% | **5.31%** | 6.88% |
-| WER, English clean but **very quiet** | **9.69%** | 27.29% | 25.31% | 20.62% | 10.31% | 14.69% |
+| WER, English clean but **very quiet** | **9.69%** | 27.29% | 25.31% | 21.88% | 10.31% | 14.69% |
 | Time to **first** text, noisy / clean / Spanish | 1.0 / 1.3 / 2.0 s | 1.2 / 1.7 / — | 1.2 / 1.3 / — | 1.5 / 1.7 / 2.3 s | 2.2 / 2.3 / 3.0 s | 1.6 / 1.8 / 2.4 s |
 | Time to **final** text, noisy / clean / Spanish | **68 / 76 / 0 ms** | 442 / 144 / — | 662 / 414 / — | 678 / 618 / 471 ms | 2424 / 2683 / 2750 ms | 353 / 186 / 0 ms |
 | Share of real time spent computing | — | 0.72 | 0.80 | 0.76–0.88 | 1.24–1.36 | 0.52–0.60 |
@@ -61,8 +61,8 @@ its 100-clip re-measure.
 ### Parakeet serves both languages
 
 Parakeet is the first model in the matrix that is strong in both languages at
-once. In Spanish it beats the platform recognizer: 4.64% against 7.62% on 100
-clips, a 3.0-point gap whose 95% interval (+0.6 to +5.9) excludes zero.
+once. In Spanish it beats the platform recognizer: 4.47% against 7.39% on 100
+clips, a 2.9-point gap whose 95% interval (+0.55 to +5.81) excludes zero.
 Nothing else measured so far does. In English it is level with Moonshine
 small and medium, on noisy speech (7.05%) and on clean (6.88%); none of those
 differences is resolvable on 20 clips. It detects the language by itself; it
@@ -101,14 +101,14 @@ one refresh interval (500 ms), and the first decode has to finish.
 
 ### Whisper is a baseline, not a candidate
 
-Whisper base has nearly twice Arm A's error in Spanish (14.79% against 7.78%
+Whisper base has nearly twice Arm A's error in Spanish (14.73% against 7.75%
 on the same 20 clips), is level with Arm A on clean English, and is far behind
 every bundled model on noisy English. On one clip it looped ("4x4, 3x3, 3x4, 3x4…") instead of
 transcribing, in every repetition.
 
 Whisper small is the most accurate model measured on clean English (5.31%),
 and holds up on very quiet audio better than any other bundled model
-(10.31%). Its Spanish (11.28%) is well behind Parakeet's, and it is too slow
+(10.31%). Its Spanish (11.24%) is well behind Parakeet's, and it is too slow
 to feel live: final text arrives 2.4–2.8 s after the speaker stops.
 
 ### Quiet speech loses its first word
@@ -129,7 +129,7 @@ memory, and first text that takes about two seconds to appear.
 
 | | Verdict |
 |---|---|
-| Spanish | **Parakeet** (4.64%), ahead of Arm A (7.62%) on 100 clips; the gap is resolved. |
+| Spanish | **Parakeet** (4.47%), ahead of Arm A (7.39%) on 100 clips; the gap is resolved. |
 | Noisy English | **Moonshine small or medium, or Parakeet** (8.7 / 6.3 / 7.1%). 20 clips cannot rank them. |
 | One model for both | **Parakeet.** Nothing else is competitive in both. |
 | Memory | **Fits.** 1.03 GB peak, no failures. |

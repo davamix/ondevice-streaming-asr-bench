@@ -66,6 +66,15 @@ SHORT_COUNT = 20
 ES_EXTRA_COUNT = 80
 ES_EXTRA_MAX_S = 10.0
 
+# English gets the same treatment, for the same reason: on 20 clips per source
+# the bundled English models (Moonshine small and medium, Parakeet) could not
+# be ranked against each other. 80 more FLEURS English sentences (with their
+# level-matched copies) and 80 more LibriSpeech test-other utterances, drawn
+# after everything above so every existing file rebuilds byte for byte.
+# FLEURS English has 118 unused sentences inside 3-8 s, so the original window
+# holds; no widening as for Spanish.
+EN_EXTRA_COUNT = 80
+
 # Sessions: long enough to expose thermal drift, short enough to stay inside
 # the 10-minute continuous-inference cap in PLAN.md §11.3.
 SESSION_TARGET_S = 360.0  # 6 minutes
@@ -390,7 +399,7 @@ def main() -> int:
     # Short utterances: both languages, plus the noisy-English stress case.
     shorts_en = build_shorts("fleurs_en", random.Random(SEED + 1), clips)
     shorts_es = build_shorts("fleurs_es", random.Random(SEED + 2), clips)
-    build_shorts("librispeech_other", random.Random(SEED + 3), clips)
+    shorts_ls = build_shorts("librispeech_other", random.Random(SEED + 3), clips)
 
     # Derived from the English shorts above, not sampled: same sentences,
     # same speakers, only the level differs.
@@ -398,8 +407,8 @@ def main() -> int:
 
     # Sessions: disjoint from the short set, so sustained-RTF audio is not
     # audio the latency measurement already warmed.
-    build_session("fleurs_en", random.Random(SEED + 11),
-                  {c["source_id"] for c in shorts_en}, clips)
+    session_en = build_session("fleurs_en", random.Random(SEED + 11),
+                               {c["source_id"] for c in shorts_en}, clips)
     session_es = build_session("fleurs_es", random.Random(SEED + 12),
                                {c["source_id"] for c in shorts_es}, clips)
 
@@ -411,6 +420,18 @@ def main() -> int:
                  exclude=frozenset(used_es), distinct=True,
                  max_s=ES_EXTRA_MAX_S)
 
+    # After the Spanish extras, for the same reason (see EN_EXTRA_COUNT).
+    used_en = ({c["source_id"] for c in shorts_en}
+               | {s["source_id"] for s in session_en["segments"]})
+    extra_en = build_shorts("fleurs_en", random.Random(SEED + 5), clips,
+                            count=EN_EXTRA_COUNT, first_index=len(shorts_en),
+                            exclude=frozenset(used_en), distinct=True)
+    build_level_matched(extra_en, "fleurs_en_norm", clips)
+    build_shorts("librispeech_other", random.Random(SEED + 6), clips,
+                 count=EN_EXTRA_COUNT, first_index=len(shorts_ls),
+                 exclude=frozenset(c["source_id"] for c in shorts_ls),
+                 distinct=True)
+
     manifest = {
         "schema": 1,
         "seed": SEED,
@@ -420,10 +441,10 @@ def main() -> int:
             "short": {
                 "target_s": [SHORT_MIN_S, SHORT_MAX_S],
                 "count_per_source": {
-                    "fleurs_en": SHORT_COUNT,
-                    "fleurs_en_norm": SHORT_COUNT,
+                    "fleurs_en": SHORT_COUNT + EN_EXTRA_COUNT,
+                    "fleurs_en_norm": SHORT_COUNT + EN_EXTRA_COUNT,
                     "fleurs_es": SHORT_COUNT + ES_EXTRA_COUNT,
-                    "librispeech_other": SHORT_COUNT,
+                    "librispeech_other": SHORT_COUNT + EN_EXTRA_COUNT,
                 },
                 "purpose": "latency per utterance",
             },

@@ -287,6 +287,8 @@ class BenchmarkTest {
         val armIds = argList("arms", "A")
         val langs = argList("langs", "en,es")
         val buckets = argList("buckets", "short")
+        // Empty means every source; see BenchmarkRunner.Config.sources.
+        val sources = argList("sources", "")
         val reps = arg("reps", "4").toInt()
         val threads = arg("threads", "4").toInt()
         val label = arg("label", "bench")
@@ -373,6 +375,7 @@ class BenchmarkTest {
                 arms = arms,
                 languages = langs,
                 buckets = buckets,
+                sources = sources,
                 reps = reps,
                 threads = threads,
                 label = label,

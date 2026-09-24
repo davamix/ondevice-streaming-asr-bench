@@ -11,8 +11,8 @@ any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
 **Status:** Phases 0–3 complete. Arm D
-(Parakeet) is the first model to serve **both** languages well: 4.64% WER in
-Spanish against the platform recognizer's 7.62%, on 100 clips, and 7.05% on
+(Parakeet) is the first model to serve **both** languages well: 4.47% WER in
+Spanish against the platform recognizer's 7.39%, on 100 clips, and 7.05% on
 noisy English. See the [Phase 3 summary](summaries/phase-3-arms-d-e.md).
 Phase 3 also grew the Spanish set from 20 clips to 100, because 20 could not
 tell the arms apart, and fixed two scoring rules. Revised figures are marked
@@ -156,12 +156,12 @@ measured it from when the feeder returned, which ran up to one frame early (see
 
 | Lang | Source | Audio | WER | CER | Final text | First text | Revisions | Slip median | `peak_rss_mb` |
 |---|---|---|---|---|---|---|---|---|---|
-| es | FLEURS `es_419` | clean | **7.62%** | 3.76% | 0 ms | 2009 ms | 6 | 6 ms | 124 |
+| es | FLEURS `es_419` | clean | **7.39%** | 3.55% | 0 ms | 2009 ms | 6 | 6 ms | 124 |
 | en | FLEURS `en_us` | clean, level-matched | **12.60%** | 8.78% | 76 ms | 1259 ms | 8 | 6 ms | 118 |
 | en | FLEURS `en_us` | clean, original (**very quiet**) | 9.69% | 4.36% | 50 ms | 1212 ms | 8 | 6 ms | 118 |
 | en | LibriSpeech `test-other` | **noisy** | **29.31%** | 22.42% | 68 ms | 1012 ms | 8 | 6 ms | 118 |
 
-Spanish covers 100 clips (1,766 reference words): the original 20, measured
+Spanish covers 100 clips (1,767 reference words): the original 20, measured
 in four runs, and 80 added in Phase 3, measured in the fourth. Each clip
 counts once, however many runs measured it. The two original English sources
 are pooled over two runs (120 rows each), and the level-matched clips come
@@ -187,10 +187,11 @@ recognizer runs in Google's process.
 >   "eighteen forty eight", so every year this recognizer wrote as digits cost
 >   about four errors
 >   ([finding](#years-written-as-digits-cost-four-wer-points)). The English
->   session moved too, from 10.17% to 10.25%.
+>   session moved too, from 10.17% to 10.10%.
 > - **Spanish WER** was 8.14% on 20 clips. The scorer read "12:00" as "doce
->   cero", which no one says, and fixing that brings those 20 clips to 7.78%.
->   On the 100-clip set it is 7.62%
+>   cero", which no one says, and dropped the "%" this recognizer writes
+>   where the reference says "por ciento". Fixed, those 20 clips score 7.75%.
+>   On the 100-clip set it is 7.39%
 >   ([finding](#twenty-clips-could-not-tell-the-arms-apart)).
 
 ### Three things worth stopping on
@@ -204,7 +205,7 @@ That failure is the case a bundled model would exist to fix.
 **2. "Spanish is more accurate than English" is not established.** Phase 1
 reported 7.73% vs 9.69% on "the same corpus, recorded the same way". Neither
 half survived. The English clips turned out to be ~40 dB quieter, and Spanish
-was corrected to 8.14% (7.62% on the 100-clip set since Phase 3). At matched level, English scores 12.60%, but that
+was corrected to 8.14% (7.39% on the 100-clip set since Phase 3). At matched level, English scores 12.60%, but that
 figure is dominated by one clip where the recognizer returned only the last
 clause ([finding](#the-platform-recognizer-can-return-only-the-last-clause)).
 On the other 19 clips, level-matched English scores 8.22%. So the language gap
@@ -247,9 +248,10 @@ recognizer.
 | First text | 2019 ms | 2008 ms | 2009 ms |
 | Final text (old stamp) | 28 ms | 27 ms | 27 ms |
 
-These are the Phase 2 scorer's figures. Under Phase 3's (clock times read
-as the hour), the three runs read 8.43%, 7.39% and 7.52%. A fourth run, a day
-later, gave 7.78% on the same 20 clips, with first text at 2006 ms.
+These are the Phase 2 scorer's figures. Under Phase 3's (clock times,
+percent signs and similar formatting read as spoken), the three runs read
+8.40%, 7.36% and 7.49%. A fourth run, a day later, gave 7.75% on the same 20
+clips, with first text at 2006 ms.
 
 Run 1's higher WER is one utterance, `fleurs-es-short-009`. It ended in
 `ERROR_CLIENT` / `EPIPE` before emitting any text, on a sentence every other
@@ -416,15 +418,15 @@ it. Same corpus, paced feeder and phone as Arms A and B.
 
 | Arm | Source | Audio | WER | CER | Final text | First text | Revisions | Compute, with partials (finals only) | `peak_rss_mb` |
 |---|---|---|---|---|---|---|---|---|---|
-| D Parakeet | FLEURS `es_419`, 100 clips | clean | **4.64%** | 1.88% | 0 ms | 2372 ms | 12 | 0.58 (0.21) | 1027 |
+| D Parakeet | FLEURS `es_419`, 100 clips | clean | **4.47%** | 1.76% | 0 ms | 2372 ms | 12 | 0.58 (0.21) | 1027 |
 | D Parakeet | FLEURS `en_us` | clean, level-matched | **6.88%** | 3.24% | 186 ms | 1797 ms | 12 | 0.60 (0.22) | |
 | D Parakeet | FLEURS `en_us` | clean, original (**very quiet**) | 14.69% | 7.81% | 143 ms | 2416 ms | 24 | 0.56 (0.21) | |
 | D Parakeet | LibriSpeech `test-other` | **noisy** | **7.05%** | 3.06% | 353 ms | 1556 ms | 8 | 0.56 (0.23) | |
-| E Whisper base | FLEURS `es_419`, 20 clips | clean | 14.79% | 4.35% | 471 ms | 2322 ms | 14 | 0.81 (0.27) | 572 |
+| E Whisper base | FLEURS `es_419`, 20 clips | clean | 14.73% | 4.35% | 471 ms | 2322 ms | 14 | 0.81 (0.27) | 572 |
 | E Whisper base | FLEURS `en_us` | clean, level-matched | 11.88% | 6.64% | 618 ms | 1717 ms | 9 | 0.88 (0.28) | |
-| E Whisper base | FLEURS `en_us` | clean, original (**very quiet**) | 20.62% | 13.28% | 518 ms | 1835 ms | 26 | 0.76 (0.28) | |
+| E Whisper base | FLEURS `en_us` | clean, original (**very quiet**) | 21.88% | 13.39% | 518 ms | 1835 ms | 26 | 0.76 (0.28) | |
 | E Whisper base | LibriSpeech `test-other` | **noisy** | 22.82% | 9.62% | 678 ms | 1522 ms | 16 | 0.83 (0.30) | |
-| E Whisper small | FLEURS `es_419`, 20 clips | clean | 11.28% | 4.22% | 2750 ms | 2990 ms | 2 | 1.24 (0.52) | 997 |
+| E Whisper small | FLEURS `es_419`, 20 clips | clean | 11.24% | 4.22% | 2750 ms | 2990 ms | 2 | 1.24 (0.52) | 997 |
 | E Whisper small | FLEURS `en_us` | clean, level-matched | **5.31%** | 2.39% | 2683 ms | 2306 ms | 4 | 1.36 (0.53) | |
 | E Whisper small | FLEURS `en_us` | clean, original (**very quiet**) | 10.31% | 5.69% | 2659 ms | 2400 ms | 8 | 1.31 (0.53) | |
 | E Whisper small | LibriSpeech `test-other` | **noisy** | 14.43% | 6.19% | 2424 ms | 2180 ms | 5 | 1.35 (0.59) | |
@@ -443,11 +445,11 @@ on the original 20 Spanish clips only.
 
 | | Arm A (0 MB) | Moonshine small (224 MB) | Moonshine medium (416 MB) | Whisper base (161 MB) | Whisper small (375 MB) | **Parakeet (670 MB)** |
 |---|---|---|---|---|---|---|
-| WER, **Spanish**, 100 clips | 7.62% | — | — | — | — | **4.64%** |
-| WER, Spanish, original 20 clips | 7.78% | — | — | 14.79% | 11.28% | **6.61%** |
+| WER, **Spanish**, 100 clips | 7.39% | — | — | — | — | **4.47%** |
+| WER, Spanish, original 20 clips | 7.75% | — | — | 14.73% | 11.24% | **6.20%** |
 | WER, English **noisy** | 29.31% | 8.72% | **6.26%** | 22.82% | 14.43% | 7.05% |
 | WER, English clean, level-matched | 12.60% | 7.71% | 5.62% | 11.88% | **5.31%** | 6.88% |
-| WER, English clean, **very quiet** | **9.69%** | 27.29% | 25.31% | 20.62% | 10.31% | 14.69% |
+| WER, English clean, **very quiet** | **9.69%** | 27.29% | 25.31% | 21.88% | 10.31% | 14.69% |
 | First text, noisy / clean / es | 1012 / 1259 / 2009 ms | 1191 / 1655 / — | 1241 / 1285 / — | 1522 / 1717 / 2322 | 2180 / 2306 / 2990 | 1556 / 1797 / 2373 |
 | Final text, noisy / clean / es | **68 / 76 / 0 ms** | 442 / 144 / — | 662 / 414 / — | 678 / 618 / 471 | 2424 / 2683 / 2750 | 353 / 186 / 0 |
 | Compute, share of real time | — | 0.72 | 0.80 | 0.76–0.88 | **1.24–1.36** | 0.52–0.60 |
@@ -460,8 +462,8 @@ on the original 20 Spanish clips only.
 **What Arms D and E answer:**
 
 1. **One model can serve both languages, and it is Parakeet.** It beats the
-   platform recognizer in Spanish: 4.64% against 7.62% on 100 clips, a gap of
-   3.0 points with a 95% interval of +0.6 to +5.9
+   platform recognizer in Spanish: 4.47% against 7.39% on 100 clips, a gap of
+   2.9 points with a 95% interval of +0.55 to +5.81
    ([finding](#twenty-clips-could-not-tell-the-arms-apart)). Nothing else in
    the matrix does. On English it is level with Moonshine small and medium,
    on noisy (7.05%) and on clean (6.88%) speech. No English difference among
@@ -478,14 +480,14 @@ on the original 20 Spanish clips only.
    partials, where Whisper base needs 0.76–0.88. So it ran cooler: no cooling
    pauses, against seven for Whisper base, and a third less battery.
 4. **Whisper calibrates as expected, and neither size is a contender.**
-   Base's Spanish is nearly twice Arm A's error (14.79% against 7.78% on the
+   Base's Spanish is nearly twice Arm A's error (14.73% against 7.75% on the
    same 20 clips), and its English is level with Arm A on clean speech and
    well behind every bundled model on noisy. On one quiet clip it produced a repetition loop ("4x4, 3x3, 3x4,
    3x4…") instead of the sentence, in every repetition. Small is the most
    accurate model in the matrix on clean English (5.31%), and the most robust
    bundled model on very quiet audio (10.31%, close to Arm A's 9.69%). Its
    Spanish is well behind Parakeet's and 3.5 points behind Arm A's on the same
-   20 clips (11.28% vs 7.78%), a gap 20 clips cannot resolve. It is also far
+   20 clips (11.24% vs 7.75%), a gap 20 clips cannot resolve. It is also far
    too slow to be live:
    final text 2.4–2.8 s after the speaker stops, each final decode ~2 s.
 5. **Final text is quick; first text is not.** Final text arrives 0–350 ms
@@ -568,7 +570,7 @@ Built by `scripts/build_corpus.py` from pinned dataset revisions
 
 | Bucket | Content | Purpose |
 |---|---|---|
-| `short` | 20 clips × 3 sources, 3–8 s (mean 5.5–6.7 s), plus a level-matched copy of the English FLEURS clips, plus 80 more Spanish clips (3–10 s, mean 8.6 s) | latency per utterance; accuracy |
+| `short` | 100 clips × 3 sources (FLEURS `en_us`, FLEURS `es_419`, LibriSpeech `test-other`), plus a level-matched copy of every English FLEURS clip. 3–8 s (mean 5.4–6.5 s), except Spanish clips 20–99 at 3–10 s (mean 8.6 s) | latency per utterance; accuracy |
 | `session` | 1 per language, ~6 min, 0.5–1.5 s gaps | sustained RTF, thermals |
 
 Sources are deliberately symmetric: FLEURS `en_us` and `es_419` are the same
@@ -577,12 +579,12 @@ comparison is not confounded by domain or recording conditions. LibriSpeech
 `test-other` adds the noisy-English stress case that FLEURS's clean read
 speech does not cover.
 
-Current build: 162 clips, 32.0 minutes total (en 723.3 s, es 1193.9 s), all
-16 kHz mono PCM16. Twenty of them are `fleurs_en_norm`: the English FLEURS
-clips lifted by a static gain to −23 dBFS RMS, because the originals are
-recorded ~40 dB quieter than the other sources
+Current build: 402 clips, 56.6 minutes total (en 2202.4 s, es 1193.9 s),
+all 16 kHz mono PCM16. A hundred of them are `fleurs_en_norm`: the English
+FLEURS clips lifted by a static gain to −23 dBFS RMS, because the originals
+are recorded ~40 dB quieter than the other sources
 ([finding](#fleurs-english-is-recorded-40-db-quieter-than-fleurs-spanish)).
-The build is deterministic: adding them reproduced every existing file byte
+The build is deterministic: each addition reproduced every existing file byte
 for byte. Session clips are disjoint from short clips, so
 sustained-RTF audio is not audio the latency measurement already warmed.
 
@@ -592,12 +594,25 @@ differ by about one WER point with a 95% interval four points wide on either
 side (`scripts/compare.py`). The first 20 also hold only 15 distinct
 sentences, because FLEURS records each sentence by several speakers. The 80
 added in Phase 3 (`fleurs-es-short-020` to `-099`) are one recording per
-sentence, none shared with the first 20 or the Spanish session: 1,513 more
-reference words, 1,771 in all. Few unused sentences have a recording under
+sentence, none shared with the first 20 or the Spanish session: 1,509 more
+reference words, 1,767 in all. Few unused sentences have a recording under
 8 s, so their window is 3–10 s. Every arm hears the same clips, so this does
 not affect comparisons between arms. It does mean Spanish clips run longer
 than English ones. Adding them reproduced all 144 existing files byte for
 byte, so every earlier result still refers to the same audio.
+
+**English followed, for the same reason.** On 20 clips per source the bundled
+English models could not be ranked against each other (see
+[finding](#twenty-clips-could-not-tell-the-arms-apart)). Phase 3 added 80
+FLEURS English sentences (`fleurs-en-short-020` to `-099`, with their
+level-matched copies `fleurs-en-norm-short-020` to `-099`) and 80 LibriSpeech
+`test-other` utterances (`ls-other-short-020` to `-099`). As with Spanish,
+they are one recording per sentence, none shared with the originals or the
+English session, and drawn last. Unlike Spanish, enough unused FLEURS English
+sentences fit the original 3–8 s window. They add 1,390 reference words to
+each FLEURS source and 1,191 to LibriSpeech. Like the originals, 72 of the 80
+new FLEURS recordings are very quiet (below −45 dBFS). All 304 existing files
+rebuilt byte for byte.
 
 ## Reproducing
 
@@ -636,6 +651,9 @@ a phone that cannot be replaced (§11.5):
 .venv/Scripts/python scripts/run_bench.py --device physical     --push-models silero-vad,parakeet-tdt-v3-int8
 .venv/Scripts/python scripts/run_bench.py --device physical     --arms D:parakeet-tdt-v3-int8 --langs en,es --reps 4 --no-push
 #   --partial-ms 0 shows final text only; the default re-decodes every 500 ms
+#   --sources fleurs_en_norm,librispeech_other measures only those corpus sources
+
+.venv/Scripts/python scripts/compare.py --standard    # paired bootstrap: which gaps are real
 
 .venv/Scripts/python scripts/summarize.py             # score everything, on the PC
 ```
@@ -1236,12 +1254,25 @@ by half or more at every size. The numbers did, and the pattern is the one
 behind the two earlier findings: a scorer rule that looks neutral can
 quietly favour one output style.
 
-**Clock times, the same week.** Checking the new Spanish references for
-digits turned up a sibling. FLEURS writes "a las 12:00 GMT", and the digit
-expansion read it as "doce cero": a word nobody says and no arm produced, so
-every arm lost it. This one charged all arms alike, so it moved every Spanish
-WER by about −0.35 points and changed no ranking. On-the-hour times now read
-as the hour, and "p. m." as one token.
+**Five more formatting rules, the same week.** Scanning every new reference
+for digits and symbols before measuring on them turned up more of the same
+family:
+
+| Written | Was read as | Now | Who it hurt |
+|---|---|---|---|
+| "12:00 GMT" | "doce cero gmt" | "doce gmt" | every arm alike |
+| "20%" | "veinte" (the % stripped as punctuation) | "veinte por ciento" | **Arm A**, which writes "%" where FLEURS says "por ciento" |
+| "10,000" / "10.000" | "ten zero" | "ten thousand" | whoever writes the digits |
+| "M16" | "msixteen" | "m sixteen" | whoever writes "M sixteen" |
+| "U.S." | "u s" | "us" | whoever writes "US" |
+
+Each rule applies to reference and hypothesis alike, and the self-test covers
+each. The percent sign mattered most. Arm A lost two words on each of two
+Spanish clips, so its Spanish WER fell from 7.62% to 7.39% and Parakeet's from
+4.64% to 4.47%; the gap between them barely moved. Tokenising digits and
+letters apart also split Whisper base's "4x4, 3x3…" loop into more words,
+raising its very-quiet English WER from 20.62% to 21.88%. That is the rule
+counting a hallucination fully, not a new error.
 
 ### Twenty clips could not tell the arms apart
 
@@ -1250,8 +1281,8 @@ recognizer in Spanish, 6.98% against 8.14%. The numbers were right, but the
 data could not support the claim. The Spanish set was 20 clips, 258
 reference words. And these models give the same text on every repetition, so
 four repetitions are still 20 clips of evidence, not 80. A paired bootstrap
-over clips (`scripts/compare.py`) put the difference at +1.2 points, with a
-95% interval of −3.2 to +4.9. The two were indistinguishable.
+over clips (`scripts/compare.py`) put the difference at about +1.5 points,
+with a 95% interval of about −3 to +5. The two were indistinguishable.
 
 The set was thinner than it looked. FLEURS records each sentence by several
 speakers, so the 20 clips held 15 distinct sentences. Three were the same
@@ -1262,15 +1293,15 @@ In a 20-clip set, one recording like that is a twentieth of the evidence.
 Phase 3 added 80 Spanish clips, one recording each of 80 sentences not
 already used, and measured Arm A and Parakeet on all 100:
 
-| Spanish WER | Original 20 clips (257 words) | All 100 clips (1,766 words) |
+| Spanish WER | Original 20 clips (258 words) | All 100 clips (1,767 words) |
 |---|---|---|
-| Arm A | 7.78% | 7.62% |
-| Parakeet | 6.61% | 4.64% |
-| Difference, with 95% interval | +1.2 [−3.2, +4.9] | **+3.0 [+0.6, +5.9]** |
+| Arm A | 7.75% | 7.39% |
+| Parakeet | 6.20% | 4.47% |
+| Difference, with 95% interval | +1.55 [−2.70, +5.18] | **+2.91 [+0.55, +5.81]** |
 
 The 20-clip figures use the current scorer. The claim survives, now on
 evidence that can carry it. The original 20 turned out to be the harder
-clips for Parakeet: 6.61% there, 4.31% on the new 80.
+clips for Parakeet: 6.20% there, 4.17% on the new 80.
 
 Run over every other comparison the README makes, the same tool shows which
 English claims 20 clips can support:

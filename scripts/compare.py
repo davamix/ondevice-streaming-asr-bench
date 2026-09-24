@@ -42,7 +42,10 @@ STANDARD = [
     ("librispeech_other", "A", "B:moonshine-small-en"),
     ("librispeech_other", "B:moonshine-small-en", "D:parakeet-tdt-v3-int8"),
     ("librispeech_other", "B:moonshine-medium-en", "D:parakeet-tdt-v3-int8"),
+    ("librispeech_other", "B:moonshine-small-en", "B:moonshine-medium-en"),
     ("fleurs_en_norm", "B:moonshine-small-en", "D:parakeet-tdt-v3-int8"),
+    ("fleurs_en_norm", "B:moonshine-medium-en", "D:parakeet-tdt-v3-int8"),
+    ("fleurs_en_norm", "B:moonshine-small-en", "B:moonshine-medium-en"),
     ("fleurs_en_norm", "E:whisper-small-int8", "D:parakeet-tdt-v3-int8"),
     ("fleurs_en_norm", "A", "D:parakeet-tdt-v3-int8"),
 ]

@@ -115,7 +115,8 @@ def push_models(dev: Device, names: list[str]) -> None:
     print(f"[push-models] {total:.1f} MB total -> {dest_root}")
 
 
-def push_corpus(dev: Device, buckets: list[str]) -> None:
+def push_corpus(dev: Device, buckets: list[str],
+                sources: list[str] | None = None) -> None:
     """Push manifest + only the audio the requested buckets need."""
     manifest_path = CORPUS / "manifest.json"
     if not manifest_path.exists():
@@ -125,7 +126,8 @@ def push_corpus(dev: Device, buckets: list[str]) -> None:
     dest = f"{APP_FILES}/corpus"
     sh(dev, "push", str(manifest_path), f"{dest}/manifest.json")
 
-    wanted = [c for c in manifest["clips"] if c["bucket"] in buckets]
+    wanted = [c for c in manifest["clips"] if c["bucket"] in buckets
+              and (not sources or c.get("source") in sources)]
     total_mb = 0.0
     print(f"[push] {len(wanted)} clips in buckets {buckets}")
     for clip in wanted:
@@ -196,6 +198,9 @@ def main() -> int:
     ap.add_argument("--arms", default="A")
     ap.add_argument("--langs", default="en,es")
     ap.add_argument("--buckets", default="short")
+    ap.add_argument("--sources", default="",
+                    help="comma-separated corpus sources to include (default: all), "
+                         "e.g. fleurs_en_norm,librispeech_other")
     ap.add_argument("--reps", type=int, default=4)
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--label", default=None)
@@ -242,6 +247,7 @@ def main() -> int:
         install(dev)
 
     buckets = [b.strip() for b in args.buckets.split(",") if b.strip()]
+    sources = [x.strip() for x in args.sources.split(",") if x.strip()]
 
     if args.download_lang:
         prepare_dirs(dev)
@@ -279,7 +285,7 @@ def main() -> int:
 
     if not args.no_push:
         prepare_dirs(dev)
-        push_corpus(dev, buckets)
+        push_corpus(dev, buckets, sources)
 
     if args.plumbing:
         run_instrumentation(dev, "plumbing", {}, timeout_s=600)
@@ -300,6 +306,7 @@ def main() -> int:
         "arms": args.arms,
         "langs": args.langs,
         "buckets": args.buckets,
+        "sources": args.sources,
         "reps": str(args.reps),
         "threads": str(args.threads),
         "label": label,

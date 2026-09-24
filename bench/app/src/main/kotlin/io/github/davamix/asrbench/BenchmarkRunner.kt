@@ -30,6 +30,13 @@ class BenchmarkRunner(
         val arms: List<Arm>,
         val languages: List<String>,
         val buckets: List<String>,
+        /**
+         * Corpus sources to include, e.g. "fleurs_en_norm". Empty means all.
+         * Lets a re-measure skip sources it does not need: ranking the
+         * English models needs the level-matched and noisy clips, not the
+         * very quiet originals, which would add half again the phone time.
+         */
+        val sources: List<String> = emptyList(),
         val reps: Int = 4,
         val threads: Int = 4,
         val label: String = "run",
@@ -69,14 +76,17 @@ class BenchmarkRunner(
         writer.note("reps", config.reps)
         writer.note("threads", config.threads)
         writer.note("seed", config.seed)
+        writer.note("sources", config.sources.joinToString(",").ifEmpty { "all" })
         writer.note("thermal_enforced", config.enforceThermal)
 
         val clips = manifest.clips.filter {
-            it.language in config.languages && it.bucket in config.buckets
+            it.language in config.languages && it.bucket in config.buckets &&
+                (config.sources.isEmpty() || it.source in config.sources)
         }.sortedBy { it.clipId }
 
         check(clips.isNotEmpty()) {
-            "no clips matched languages=${config.languages} buckets=${config.buckets}"
+            "no clips matched languages=${config.languages} buckets=${config.buckets} " +
+                "sources=${config.sources.ifEmpty { listOf("all") }}"
         }
 
         Log.i(TAG, "matrix: ${config.arms.size} arms x ${clips.size} clips x ${config.reps} reps")

@@ -1,6 +1,6 @@
 # Handover — next phase to run
 
-**Currently: Phase 4, Arm C (Moonshine `base-es`). Not started.**
+**Currently: re-measure English on 100 clips per source (two phone sessions), then Phase 4, Arm C.**
 
 This file carries whatever phase is next. It is rewritten as each phase
 completes; finished phases are written up in [`summaries/`](summaries/).
@@ -22,9 +22,11 @@ language?*
 > and exact commands, and the three summaries in `summaries/` for what Phases
 > 1–3 established. `README.md` has the full results and findings.
 >
-> Phases 0–3 are complete. Phase 4 integrates Arm C (Moonshine `base-es`,
-> VAD-segmented), validates it on the emulator, and measures it on the phone
-> on the 100-clip Spanish set. Then compare Spanish across Arms A, C, D and E and answer the
+> Phases 0–3 are complete. First re-measure the English models on the
+> expanded 100-clip English sets ("Before Phase 4 — English" in HANDOVER.md).
+> Then Phase 4 integrates Arm C (Moonshine `base-es`, VAD-segmented),
+> validates it on the emulator, and measures it on the phone on the 100-clip
+> Spanish set. Then compare Spanish across Arms A, C, D and E and answer the
 > PLAN.md §1 question. Update the README results as numbers come in.
 >
 > The test device is the owner's only phone. `PLAN.md` §11 is a hard safety
@@ -42,7 +44,8 @@ language?*
 | Phase 2 (Arm B) | ✅ complete, revised in Phase 3 — [summary](summaries/phase-2-arm-b.md) |
 | Phase 3 (Arms D, E) | ✅ complete — [summary](summaries/phase-3-arms-d-e.md) |
 | Spanish on 100 clips (Arm A, Parakeet) | ✅ done 2026-09-24 |
-| Phase 4 (Arm C) | ⬜ **next** |
+| English on 100 clips (Moonshine small, medium, Parakeet, Arm A) | ⬜ **next**: corpus built, harness ready, two sessions |
+| Phase 4 (Arm C) | ⬜ after the English re-measure |
 | Phase 5 (analysis, sessions, mic check) | ⬜ not started |
 
 Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push after each phase)
@@ -51,37 +54,96 @@ Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push afte
 
 | | Arm A (0 MB) | Moonshine small (224 MB) | Whisper small (375 MB) | Parakeet (670 MB) |
 |---|---|---|---|---|
-| Spanish, 100 clips | 7.62% | — | — | **4.64%** |
-| Spanish, original 20 clips | 7.78% | — | 11.28% | **6.61%** |
+| Spanish, 100 clips | 7.39% | — | — | **4.47%** |
+| Spanish, original 20 clips | 7.75% | — | 11.24% | **6.20%** |
 | English noisy | 29.31% | 8.72% | 14.43% | **7.05%** |
 | English clean, level-matched | 12.60% | 7.71% | **5.31%** | 6.88% |
 | Final text, noisy / Spanish | **68 / 0 ms** | 442 / — | 2424 / 2750 ms | 353 / 0 ms |
 | First text, noisy / Spanish | **1.0 / 2.0 s** | 1.2 / — | 2.2 / 3.0 s | 1.6 / 2.4 s |
 
 Parakeet is the one-model-for-both candidate, and on 100 Spanish clips it
-beats Arm A measurably (3.0 points, 95% interval +0.6 to +5.9). The two-stack
+beats Arm A measurably (2.9 points, 95% interval +0.55 to +5.81). The two-stack
 alternative is Moonshine small (English) plus Arm A (Spanish). Arm C is
-interesting if it serves Spanish near Arm A's 7.62% at 65 MB, which would make
+interesting if it serves Spanish near Arm A's 7.39% at 65 MB, which would make
 a small two-stack option without depending on the platform's language pack.
 Judge it with `scripts/compare.py`, not by the two pooled numbers.
 
 ---
+
+## Before Phase 4 — English on 100 clips per source
+
+Twenty clips per English source could not rank the bundled English models.
+`compare.py --standard` shows every pair among Moonshine small, Moonshine
+medium and Parakeet as unresolved, except small vs medium on clean speech.
+The corpus now has 80 more FLEURS English clips (plus level-matched copies)
+and 80 more LibriSpeech clips. Every earlier file rebuilt byte for byte.
+
+**Only two English sources are re-measured:** `fleurs_en_norm` (clean) and
+`librispeech_other` (noisy). The very quiet FLEURS originals would add half
+again the phone time for a question the ranking does not need. The harness
+has a new `--sources` filter for this; it was validated on the emulator. That
+is 200 clips per repetition.
+
+**Repetitions follow determinism.** Parakeet and Whisper give identical text
+every rep, so 2 reps (rep 0 discarded) are plenty. Moonshine small and medium
+differ between reps on 3–6 of 20 clips, because their streaming output
+depends on timing, so they get 3. Arm A, nearly deterministic, gets 2.
+
+**Two sessions, because the whole plan is ~75 battery points:**
+
+| Session | Run | Clips | Estimate |
+|---|---|---|---|
+| 1 | Moonshine medium, 3 reps (runs hottest, so start it cool) | 600 | ~2 h, ~28 pts |
+| 1 | Parakeet, 2 reps | 400 | ~70 min, ~17 pts |
+| 2 | Moonshine small, 3 reps | 600 | ~1 h 50, ~25 pts |
+| 2 | Arm A, 2 reps | 400 | ~85 min, ~6 pts |
+
+```bash
+S=fleurs_en_norm,librispeech_other
+
+# Session 1. The first command installs the new APK (sources filter) and
+# pushes the filtered corpus.
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --arms B:moonshine-medium-en --langs en --buckets short --sources $S \
+    --reps 3 --label armB-medium-en100 --no-build --timeout 10800
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --arms D:parakeet-tdt-v3-int8 --langs en --buckets short --sources $S \
+    --reps 2 --label armD-en100 --no-build --no-install --no-push --timeout 10800
+
+# Session 2, after a recharge
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --arms B:moonshine-small-en --langs en --buckets short --sources $S \
+    --reps 3 --label armB-small-en100 --no-build --no-install --no-push --timeout 10800
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --arms A --langs en --buckets short --sources $S \
+    --reps 2 --label armA-en100 --no-build --no-install --no-push --timeout 10800
+
+.venv/Scripts/python scripts/compare.py --standard
+```
+
+Run the battery watchdog alongside each, started so that it waits for the app
+before checking (see Budget). Then update the English figures in the README,
+the Phase 2 and 3 summaries and this file. If English differences stay
+unresolved at 100 clips, that is the answer: the models are equivalent within
+the interval, and the choice falls to size, latency and memory.
 
 ## Done before Phase 4 — Spanish on 100 clips
 
 Twenty Spanish clips could not separate the arms, so the corpus gained 80
 Spanish clips (`fleurs-es-short-020` to `-099`, one recording per unused
 sentence, 3–10 s). Arm A (3 reps) and Parakeet (2 reps) were re-measured on
-all 100 on 2026-09-24: 7.62% and 4.64%. Results are in
+all 100 on 2026-09-24: 7.39% and 4.47%. Results are in
 `results/*-armA-es100` and `results/*-armD-es100`. Whisper was not
 re-measured: it is calibration, and Whisper small costs ~40 battery points a
 run. Comparisons involving it use the original 20 clips, which
 `compare.py` picks automatically as the shared set.
 
 Two scorer changes came with it, both PC-side and self-tested. Each clip now
-counts once however many rows it has (`score.score_clips`), and on-the-hour
-clock times read as the hour ("12:00" had been "doce cero"). Both are in the
-README findings.
+counts once however many rows it has (`score.score_clips`), and five
+formatting rules read text the way it is spoken: clock times, "%", thousands
+separators, letters glued to digits ("M16"), dotted acronyms ("U.S."). The
+percent rule mattered most: Arm A writes "%" and had been losing words for
+it. All are in the README findings.
 
 ## Phase 4 — Arm C (Moonshine `base-es`)
 
@@ -161,6 +223,13 @@ which is PLAN.md §10 step 18.
 | Whisper small | 320 | 156 min | 39 points | 35.5 °C | 15 |
 | Arm A, Spanish 100 clips | 300 | 61 min | 5 points | 30.2 °C | 0 |
 | Parakeet, Spanish 100 clips | 200 | 41 min | 11 points | 33.2 °C | 0 |
+
+A watchdog that exits if the app is not running yet will quit during a long
+corpus push. Wait for the process first:
+
+```bash
+for i in $(seq 1 60); do MSYS_NO_PATHCONV=1 $A -s $D shell pidof io.github.davamix.asrbench >/dev/null 2>&1 && break; sleep 5; done
+```
 
 The gate needs battery 30–80% and not charging, and it checks the level only
 at start. §11.3 asks for 30–80% *throughout*, so run this watchdog alongside

@@ -152,6 +152,26 @@ _WS = re.compile(r"\s+")
 _ON_THE_HOUR = re.compile(r"\b(\d{1,2}):00\b")
 _AM_PM = re.compile(r"\b([ap])\.\s?m\.")
 
+# Four more formatting rules, found by scanning the Phase 3 English and
+# Spanish references before measuring on them. Each is applied to reference
+# and hypothesis alike, so writing digits or words scores the same:
+#
+#   "20%"     -> "20 percent" / "20 por ciento". Arm A writes "%" where FLEURS
+#                says "por ciento", and stripping it as punctuation charged
+#                Arm A two words a clip.
+#   "10,000"  -> "10000" (English), "10.000" -> "10000" (Spanish). The
+#                separator split one number in two: "ten zero".
+#   "M16"     -> "M 16". Glued, it became "msixteen", so an arm writing
+#                "M sixteen" lost two words. Ordinal suffixes stay attached:
+#                "15th" must still read "fifteenth".
+#   "U.S."    -> "us", the way "US" normalises.
+_PERCENT = {"en": " percent", "es": " por ciento"}
+_THOUSANDS = {"en": re.compile(r"(?<=\d),(?=\d{3}\b)"),
+              "es": re.compile(r"(?<=\d)\.(?=\d{3}\b)")}
+_LETTER_DIGIT = re.compile(r"(?<=[^\W\d_])(?=\d)")
+_DIGIT_LETTER = re.compile(r"(?<=\d)(?=[^\W\d_])(?!(?:st|nd|rd|th)\b)")
+_DOTTED_ACRONYM = re.compile(r"\b(?:[^\W\d_]\.){2,}")
+
 
 def normalise(text: str, lang: str = "en", digits: bool = True) -> str:
     if text is None:
@@ -160,7 +180,12 @@ def normalise(text: str, lang: str = "en", digits: bool = True) -> str:
     text = unicodedata.normalize("NFC", str(text))
     text = text.lower()
     text = _AM_PM.sub(r"\1m", text)
+    text = _DOTTED_ACRONYM.sub(lambda m: m.group().replace(".", "") + " ", text)
+    text = text.replace("%", _PERCENT.get(lang, _PERCENT["en"]))
     if digits:
+        text = _THOUSANDS.get(lang, _THOUSANDS["en"]).sub("", text)
+        text = _LETTER_DIGIT.sub(" ", text)
+        text = _DIGIT_LETTER.sub(" ", text)
         text = _ON_THE_HOUR.sub(r"\1", text)
         text = _expand_digits(text, lang)
     text = _PUNCT.sub(" ", text)
@@ -294,6 +319,14 @@ def validate() -> int:
         ("entre las 10:00 y 11:00 p. m.", "es", "entre las diez y once pm"),
         ("a las 11:35 p.m.", "es", "a las once treinta y cinco pm"),
         ("at 10:00 a.m.", "en", "at ten am"),
+        ("a full 20% of it", "en", "a full twenty percent of it"),
+        ("el 20% del agua", "es", "el veinte por ciento del agua"),
+        ("roughly 10,000 years", "en", "roughly ten thousand years"),
+        ("unos 10.000 años", "es", "unos diez mil años"),
+        ("his M16 rifle", "en", "his m sixteen rifle"),
+        ("born January 15th", "en", "born january fifteenth"),
+        ("The U.S. Corps", "en", "the us corps"),
+        ("the US Corps", "en", "the us corps"),
     ]
     for raw, lang, want in cases:
         got = normalise(raw, lang)
