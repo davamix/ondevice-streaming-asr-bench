@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from score import score_corpus  # noqa: E402
+from score import score_clips  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "results"
@@ -96,10 +96,11 @@ def is_timing_clean(run: dict) -> bool:
     return (run.get("max_slip_ms") or 0) <= SLIP_BUDGET_MS
 
 
-def collect(paths: list[Path], keep_first: bool) -> dict:
-    refs = load_refs()
-    groups: dict[tuple, dict] = {}
+def iter_rows(paths: list[Path], keep_first: bool = False):
+    """Yield (row, single_rep) for every row that counts.
 
+    Shared with compare.py, so both tools drop the same rows.
+    """
     for path in paths:
         doc = json.loads(path.read_text(encoding="utf-8"))
         if doc.get("run_label") == "plumbing":
@@ -127,45 +128,58 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
         for run in doc.get("runs", []):
             if not keep_first and not single_rep and run.get("rep", 0) == 0:
                 continue
-            # Source is part of the key: FLEURS is clean read speech and
-            # LibriSpeech test-other is the noisy stress case. Averaging them
-            # into one WER would describe neither.
-            #
-            # So is the variant. Every Moonshine size reports arm "B", and
-            # without it tiny, small and medium would pool into one row -- the
-            # accuracy-vs-size curve Phase 2 exists to draw, averaged flat.
-            variant = (run.get("extra") or {}).get("variant") or ""
-            key = (run["arm"], variant, run["lang"], run.get("bucket", "?"),
-                   run.get("source", "?"))
-            g = groups.setdefault(key, {
-                "arm_label": run.get("arm_label", run["arm"]),
-                "runtime": run.get("runtime", "?"),
-                "disk_size_mb": run.get("disk_size_mb"),
-                "rows": [], "pairs": [], "errors": 0, "empty": 0,
-                "single_rep": single_rep,
-            })
-            g["rows"].append(run)
-            if run.get("error"):
-                g["errors"] += 1
-            # An empty hypothesis is scored, not skipped: it is every reference
-            # word deleted. Skipping it removed those words from the
-            # denominator instead, so an arm that silently heard nothing
-            # scored *better* for it -- Moonshine tiny returned no text at all
-            # on 2 of 20 clean FLEURS clips in its pilot, and dropping them
-            # moved its WER from 26.9% down to 19.3%.
-            ref = refs.get(run.get("clip_id"))
-            if ref:
-                hyp = run.get("hypothesis") or ""
-                if not hyp.strip():
-                    g["empty"] += 1
-                g["pairs"].append((ref["text"], hyp, ref["language"]))
+            yield run, single_rep
+
+
+def collect(paths: list[Path], keep_first: bool) -> dict:
+    refs = load_refs()
+    groups: dict[tuple, dict] = {}
+
+    for run, single_rep in iter_rows(paths, keep_first):
+        # Source is part of the key: FLEURS is clean read speech and
+        # LibriSpeech test-other is the noisy stress case. Averaging them
+        # into one WER would describe neither.
+        #
+        # So is the variant. Every Moonshine size reports arm "B", and
+        # without it tiny, small and medium would pool into one row -- the
+        # accuracy-vs-size curve Phase 2 exists to draw, averaged flat.
+        variant = (run.get("extra") or {}).get("variant") or ""
+        key = (run["arm"], variant, run["lang"], run.get("bucket", "?"),
+               run.get("source", "?"))
+        g = groups.setdefault(key, {
+            "arm_label": run.get("arm_label", run["arm"]),
+            "runtime": run.get("runtime", "?"),
+            "disk_size_mb": run.get("disk_size_mb"),
+            "rows": [], "by_clip": {}, "errors": 0, "empty": 0,
+            "single_rep": single_rep,
+        })
+        g["rows"].append(run)
+        if run.get("error"):
+            g["errors"] += 1
+        # An empty hypothesis is scored, not skipped: it is every reference
+        # word deleted. Skipping it removed those words from the
+        # denominator instead, so an arm that silently heard nothing
+        # scored *better* for it -- Moonshine tiny returned no text at all
+        # on 2 of 20 clean FLEURS clips in its pilot, and dropping them
+        # moved its WER from 26.9% down to 19.3%.
+        ref = refs.get(run.get("clip_id"))
+        if ref:
+            hyp = run.get("hypothesis") or ""
+            if not hyp.strip():
+                g["empty"] += 1
+            g["by_clip"].setdefault(run["clip_id"], []).append(
+                (ref["text"], hyp, ref["language"]))
 
     out = {}
     for key, g in sorted(groups.items()):
         rows = g["rows"]
         # Latency comes only from rows where pacing held; WER uses everything.
         timed = [r for r in rows if is_timing_clean(r)]
-        scored = score_corpus(g["pairs"]) if g["pairs"] else {}
+        # Each clip counts once, however many rows it has. Runs cover clips
+        # unevenly once the corpus grows (Phase 3 added Spanish clips that
+        # the older runs never saw), and row-pooling would weight each clip
+        # by how often it happened to be measured.
+        scored = score_clips(g["by_clip"]) if g["by_clip"] else {}
         temps = [r.get("battery_temp_c_after") for r in rows]
         # Final latency against when the audio actually ended, not when the
         # feeder returned. Only rows from the Phase 2 harness onward carry it.
@@ -224,6 +238,7 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
             "wer": scored.get("wer"),
             "cer": scored.get("cer"),
             "ref_words": scored.get("ref_words"),
+            "clips": scored.get("clips"),
         }
     return out
 
@@ -295,7 +310,7 @@ def print_detail(summary: dict) -> None:
         print(f"  temp_max_c               {fmt(s['temp_max_c'], '.1f')}")
         if s["wer"] is not None:
             print(f"  WER                      {s['wer'] * 100:.2f}%  "
-                  f"({s['ref_words']} ref words)")
+                  f"({s['clips']} clips, {s['ref_words']} ref words)")
             print(f"  CER                      {s['cer'] * 100:.2f}%")
 
 
@@ -308,7 +323,26 @@ def main() -> int:
                     help="include repetition 0 (cold start / empty page cache)")
     args = ap.parse_args()
 
-    roots = args.dirs or [RESULTS]
+    paths = result_paths(args.dirs or [RESULTS])
+    if not paths:
+        print("no result files found", file=sys.stderr)
+        return 1
+
+    summary = collect(paths, args.keep_first)
+    if not summary:
+        print("no usable rows (emulator-only results are excluded by design)",
+              file=sys.stderr)
+        return 1
+
+    if args.markdown:
+        print_markdown(summary)
+    else:
+        print_detail(summary)
+    return 0
+
+
+def result_paths(roots: list[Path]) -> list[Path]:
+    """Every result file under `roots` that belongs in an aggregate."""
     paths: list[Path] = []
     for r in roots:
         paths.extend(sorted(r.rglob("*.json")) if r.is_dir() else [r])
@@ -326,10 +360,6 @@ def main() -> int:
     paths = [p for p in paths
              if "superseded" not in p.parts and p.name not in superseded]
 
-    if not paths:
-        print("no result files found", file=sys.stderr)
-        return 1
-
     # The device keeps every result file until it is cleaned, so consecutive
     # pulls copy earlier runs into later directories. Counting the same file
     # twice would silently double the weight of whichever run was pulled most
@@ -345,19 +375,7 @@ def main() -> int:
     if dropped:
         print(f"[summarize] ignored {dropped} duplicate result file(s)",
               file=sys.stderr)
-    paths = unique
-
-    summary = collect(paths, args.keep_first)
-    if not summary:
-        print("no usable rows (emulator-only results are excluded by design)",
-              file=sys.stderr)
-        return 1
-
-    if args.markdown:
-        print_markdown(summary)
-    else:
-        print_detail(summary)
-    return 0
+    return unique
 
 
 if __name__ == "__main__":

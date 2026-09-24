@@ -1,0 +1,1 @@
+Es un método clave para diferenciar entre ciertos verbos y objetos.

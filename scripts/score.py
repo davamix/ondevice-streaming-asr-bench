@@ -33,6 +33,7 @@ import json
 import re
 import sys
 import unicodedata
+from fractions import Fraction
 from pathlib import Path
 
 import jiwer
@@ -141,6 +142,16 @@ def _expand_digits(text: str, lang: str) -> str:
 _PUNCT = re.compile(r"[^\w\s']|_", flags=re.UNICODE)
 _WS = re.compile(r"\s+")
 
+# Clock times, found in Phase 3 the same way as years: FLEURS writes "12:00"
+# and "10:00 p. m.", speakers say "doce" and "diez pe eme", and the digit
+# expansion turned ":00" into a spoken "cero" that no arm ever produces. Every
+# arm lost a word to it on fleurs-es-short-005. On-the-hour times are read as
+# the hour alone; "p. m." / "p.m." / "pm" all become one token. Both sides of
+# the comparison get the same rule, so an arm that writes digits and one that
+# writes words are scored alike.
+_ON_THE_HOUR = re.compile(r"\b(\d{1,2}):00\b")
+_AM_PM = re.compile(r"\b([ap])\.\s?m\.")
+
 
 def normalise(text: str, lang: str = "en", digits: bool = True) -> str:
     if text is None:
@@ -148,7 +159,9 @@ def normalise(text: str, lang: str = "en", digits: bool = True) -> str:
     # NFC so that "é" as one codepoint and "e"+combining-accent compare equal.
     text = unicodedata.normalize("NFC", str(text))
     text = text.lower()
+    text = _AM_PM.sub(r"\1m", text)
     if digits:
+        text = _ON_THE_HOUR.sub(r"\1", text)
         text = _expand_digits(text, lang)
     text = _PUNCT.sub(" ", text)
     text = text.replace("'", "")
@@ -206,6 +219,53 @@ def score_corpus(pairs: list[tuple[str, str, str]], digits: bool = True) -> dict
     }
 
 
+def score_clips(by_clip: dict[str, list[tuple[str, str, str]]],
+                digits: bool = True) -> dict:
+    """Corpus WER with every clip counted once, however many rows it has.
+
+    Each clip's edits are averaged over its rows, then summed like
+    `score_corpus`. When every clip has the same number of rows this is
+    exactly `score_corpus` over all rows. It differs when coverage is uneven:
+    a clip measured in three runs would otherwise weigh three times as much as
+    one measured once, and pooling an old 20-clip run with a newer 100-clip
+    run would describe mostly the 20.
+    """
+    # Exact fractions, not floats: averaging over three rows in floating point
+    # nudged an exact 11.875% to 11.87 in the printed table.
+    agg = {k: Fraction(0) for k in ("hits", "substitutions", "deletions", "insertions")}
+    ref_chars = 0
+    cer_edits = 0.0
+    n_clips = 0
+    n_rows = 0
+    for pairs in by_clip.values():
+        rows = []
+        for ref, hyp, lang in pairs:
+            r = normalise(ref, lang, digits)
+            if r:
+                rows.append((r, normalise(hyp, lang, digits)))
+        if not rows:
+            continue
+        k = len(rows)
+        for r, h in rows:
+            out = jiwer.process_words(r, h)
+            for key in agg:
+                agg[key] += Fraction(getattr(out, key), k)
+            cer_edits += jiwer.cer(r, h) * len(r) / k
+        ref_chars += len(rows[0][0])
+        n_clips += 1
+        n_rows += k
+    ref_words = agg["hits"] + agg["substitutions"] + agg["deletions"]
+    errors = agg["substitutions"] + agg["deletions"] + agg["insertions"]
+    return {
+        "clips": n_clips,
+        "rows": n_rows,
+        "ref_words": round(ref_words),
+        "wer": float(errors / ref_words) if ref_words else None,
+        "cer": (cer_edits / ref_chars) if ref_chars else None,
+        **{k: float(v) for k, v in agg.items()},
+    }
+
+
 # ── self-test ────────────────────────────────────────────────────────────
 
 def validate() -> int:
@@ -230,6 +290,10 @@ def validate() -> int:
         ("in 1900 and 1905", "en", "in nineteen hundred and nineteen oh five"),
         ("bus 403, 2005", "en", "bus four hundred three two thousand five"),
         ("en 1848", "es", "en mil ochocientos cuarenta y ocho"),
+        ("a las 12:00 GMT", "es", "a las doce gmt"),
+        ("entre las 10:00 y 11:00 p. m.", "es", "entre las diez y once pm"),
+        ("a las 11:35 p.m.", "es", "a las once treinta y cinco pm"),
+        ("at 10:00 a.m.", "en", "at ten am"),
     ]
     for raw, lang, want in cases:
         got = normalise(raw, lang)
@@ -273,6 +337,15 @@ def validate() -> int:
                                     "one two three four five six seven eight nine", "en")]
     c = score_corpus(pairs, digits=False)
     check("corpus wer", c["wer"], 0.1)
+
+    print("\nClip-weighted WER counts each clip once, however many rows it has:")
+    # Clip "a" measured three times (always wrong), clip "b" once (right).
+    # Row-pooled that is 3/12 = 0.25; clip-weighted it is 1/10 = 0.1.
+    nine = "one two three four five six seven eight nine"
+    by_clip = {"a": [("yes", "no", "en")] * 3, "b": [(nine, nine, "en")]}
+    check("clip-weighted wer", score_clips(by_clip, digits=False)["wer"], 0.1)
+    check("row-pooled wer", score_corpus(by_clip["a"] + by_clip["b"], digits=False)["wer"],
+          3 / 12)
 
     print()
     if failures:

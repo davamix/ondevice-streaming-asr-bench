@@ -9,7 +9,12 @@
         3.0,
         8.0
       ],
-      "count_per_source": 20,
+      "count_per_source": {
+        "fleurs_en": 20,
+        "fleurs_en_norm": 20,
+        "fleurs_es": 100,
+        "librispeech_other": 20
+      },
       "purpose": "latency per utterance"
     },
     "session": {
@@ -1360,6 +1365,806 @@
           "text": "La profesora Pamela Ferguson de la Universidad de Dundee señaló: «al parecer, los periodistas caminan sobre terreno peligroso cuando publican fotos u otra información de los sospechosos»."
         }
       ]
+    },
+    {
+      "clip_id": "fleurs-es-short-020",
+      "audio": "audio/short/fleurs-es-short-020.wav",
+      "ref": "refs/fleurs-es-short-020.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.64,
+      "source": "fleurs_es",
+      "source_id": "1828"
+    },
+    {
+      "clip_id": "fleurs-es-short-021",
+      "audio": "audio/short/fleurs-es-short-021.wav",
+      "ref": "refs/fleurs-es-short-021.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.76,
+      "source": "fleurs_es",
+      "source_id": "1958"
+    },
+    {
+      "clip_id": "fleurs-es-short-022",
+      "audio": "audio/short/fleurs-es-short-022.wav",
+      "ref": "refs/fleurs-es-short-022.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.76,
+      "source": "fleurs_es",
+      "source_id": "1746"
+    },
+    {
+      "clip_id": "fleurs-es-short-023",
+      "audio": "audio/short/fleurs-es-short-023.wav",
+      "ref": "refs/fleurs-es-short-023.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.84,
+      "source": "fleurs_es",
+      "source_id": "1739"
+    },
+    {
+      "clip_id": "fleurs-es-short-024",
+      "audio": "audio/short/fleurs-es-short-024.wav",
+      "ref": "refs/fleurs-es-short-024.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.32,
+      "source": "fleurs_es",
+      "source_id": "1991"
+    },
+    {
+      "clip_id": "fleurs-es-short-025",
+      "audio": "audio/short/fleurs-es-short-025.wav",
+      "ref": "refs/fleurs-es-short-025.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.54,
+      "source": "fleurs_es",
+      "source_id": "1662"
+    },
+    {
+      "clip_id": "fleurs-es-short-026",
+      "audio": "audio/short/fleurs-es-short-026.wav",
+      "ref": "refs/fleurs-es-short-026.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.36,
+      "source": "fleurs_es",
+      "source_id": "1767"
+    },
+    {
+      "clip_id": "fleurs-es-short-027",
+      "audio": "audio/short/fleurs-es-short-027.wav",
+      "ref": "refs/fleurs-es-short-027.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.82,
+      "source": "fleurs_es",
+      "source_id": "1661"
+    },
+    {
+      "clip_id": "fleurs-es-short-028",
+      "audio": "audio/short/fleurs-es-short-028.wav",
+      "ref": "refs/fleurs-es-short-028.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.84,
+      "source": "fleurs_es",
+      "source_id": "1818"
+    },
+    {
+      "clip_id": "fleurs-es-short-029",
+      "audio": "audio/short/fleurs-es-short-029.wav",
+      "ref": "refs/fleurs-es-short-029.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.08,
+      "source": "fleurs_es",
+      "source_id": "1778"
+    },
+    {
+      "clip_id": "fleurs-es-short-030",
+      "audio": "audio/short/fleurs-es-short-030.wav",
+      "ref": "refs/fleurs-es-short-030.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.42,
+      "source": "fleurs_es",
+      "source_id": "1772"
+    },
+    {
+      "clip_id": "fleurs-es-short-031",
+      "audio": "audio/short/fleurs-es-short-031.wav",
+      "ref": "refs/fleurs-es-short-031.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.68,
+      "source": "fleurs_es",
+      "source_id": "1894"
+    },
+    {
+      "clip_id": "fleurs-es-short-032",
+      "audio": "audio/short/fleurs-es-short-032.wav",
+      "ref": "refs/fleurs-es-short-032.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.76,
+      "source": "fleurs_es",
+      "source_id": "1905"
+    },
+    {
+      "clip_id": "fleurs-es-short-033",
+      "audio": "audio/short/fleurs-es-short-033.wav",
+      "ref": "refs/fleurs-es-short-033.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.72,
+      "source": "fleurs_es",
+      "source_id": "1720"
+    },
+    {
+      "clip_id": "fleurs-es-short-034",
+      "audio": "audio/short/fleurs-es-short-034.wav",
+      "ref": "refs/fleurs-es-short-034.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.9,
+      "source": "fleurs_es",
+      "source_id": "1875"
+    },
+    {
+      "clip_id": "fleurs-es-short-035",
+      "audio": "audio/short/fleurs-es-short-035.wav",
+      "ref": "refs/fleurs-es-short-035.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.58,
+      "source": "fleurs_es",
+      "source_id": "1781"
+    },
+    {
+      "clip_id": "fleurs-es-short-036",
+      "audio": "audio/short/fleurs-es-short-036.wav",
+      "ref": "refs/fleurs-es-short-036.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.06,
+      "source": "fleurs_es",
+      "source_id": "2005"
+    },
+    {
+      "clip_id": "fleurs-es-short-037",
+      "audio": "audio/short/fleurs-es-short-037.wav",
+      "ref": "refs/fleurs-es-short-037.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.82,
+      "source": "fleurs_es",
+      "source_id": "1783"
+    },
+    {
+      "clip_id": "fleurs-es-short-038",
+      "audio": "audio/short/fleurs-es-short-038.wav",
+      "ref": "refs/fleurs-es-short-038.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.64,
+      "source": "fleurs_es",
+      "source_id": "1805"
+    },
+    {
+      "clip_id": "fleurs-es-short-039",
+      "audio": "audio/short/fleurs-es-short-039.wav",
+      "ref": "refs/fleurs-es-short-039.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.96,
+      "source": "fleurs_es",
+      "source_id": "2002"
+    },
+    {
+      "clip_id": "fleurs-es-short-040",
+      "audio": "audio/short/fleurs-es-short-040.wav",
+      "ref": "refs/fleurs-es-short-040.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.24,
+      "source": "fleurs_es",
+      "source_id": "1879"
+    },
+    {
+      "clip_id": "fleurs-es-short-041",
+      "audio": "audio/short/fleurs-es-short-041.wav",
+      "ref": "refs/fleurs-es-short-041.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.84,
+      "source": "fleurs_es",
+      "source_id": "2003"
+    },
+    {
+      "clip_id": "fleurs-es-short-042",
+      "audio": "audio/short/fleurs-es-short-042.wav",
+      "ref": "refs/fleurs-es-short-042.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.08,
+      "source": "fleurs_es",
+      "source_id": "1808"
+    },
+    {
+      "clip_id": "fleurs-es-short-043",
+      "audio": "audio/short/fleurs-es-short-043.wav",
+      "ref": "refs/fleurs-es-short-043.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.3,
+      "source": "fleurs_es",
+      "source_id": "1885"
+    },
+    {
+      "clip_id": "fleurs-es-short-044",
+      "audio": "audio/short/fleurs-es-short-044.wav",
+      "ref": "refs/fleurs-es-short-044.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.12,
+      "source": "fleurs_es",
+      "source_id": "1935"
+    },
+    {
+      "clip_id": "fleurs-es-short-045",
+      "audio": "audio/short/fleurs-es-short-045.wav",
+      "ref": "refs/fleurs-es-short-045.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.36,
+      "source": "fleurs_es",
+      "source_id": "1861"
+    },
+    {
+      "clip_id": "fleurs-es-short-046",
+      "audio": "audio/short/fleurs-es-short-046.wav",
+      "ref": "refs/fleurs-es-short-046.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.96,
+      "source": "fleurs_es",
+      "source_id": "1849"
+    },
+    {
+      "clip_id": "fleurs-es-short-047",
+      "audio": "audio/short/fleurs-es-short-047.wav",
+      "ref": "refs/fleurs-es-short-047.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.64,
+      "source": "fleurs_es",
+      "source_id": "1734"
+    },
+    {
+      "clip_id": "fleurs-es-short-048",
+      "audio": "audio/short/fleurs-es-short-048.wav",
+      "ref": "refs/fleurs-es-short-048.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.44,
+      "source": "fleurs_es",
+      "source_id": "1762"
+    },
+    {
+      "clip_id": "fleurs-es-short-049",
+      "audio": "audio/short/fleurs-es-short-049.wav",
+      "ref": "refs/fleurs-es-short-049.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.48,
+      "source": "fleurs_es",
+      "source_id": "1691"
+    },
+    {
+      "clip_id": "fleurs-es-short-050",
+      "audio": "audio/short/fleurs-es-short-050.wav",
+      "ref": "refs/fleurs-es-short-050.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.36,
+      "source": "fleurs_es",
+      "source_id": "1930"
+    },
+    {
+      "clip_id": "fleurs-es-short-051",
+      "audio": "audio/short/fleurs-es-short-051.wav",
+      "ref": "refs/fleurs-es-short-051.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.3,
+      "source": "fleurs_es",
+      "source_id": "1921"
+    },
+    {
+      "clip_id": "fleurs-es-short-052",
+      "audio": "audio/short/fleurs-es-short-052.wav",
+      "ref": "refs/fleurs-es-short-052.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.84,
+      "source": "fleurs_es",
+      "source_id": "1779"
+    },
+    {
+      "clip_id": "fleurs-es-short-053",
+      "audio": "audio/short/fleurs-es-short-053.wav",
+      "ref": "refs/fleurs-es-short-053.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.56,
+      "source": "fleurs_es",
+      "source_id": "1731"
+    },
+    {
+      "clip_id": "fleurs-es-short-054",
+      "audio": "audio/short/fleurs-es-short-054.wav",
+      "ref": "refs/fleurs-es-short-054.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.28,
+      "source": "fleurs_es",
+      "source_id": "1744"
+    },
+    {
+      "clip_id": "fleurs-es-short-055",
+      "audio": "audio/short/fleurs-es-short-055.wav",
+      "ref": "refs/fleurs-es-short-055.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.12,
+      "source": "fleurs_es",
+      "source_id": "1800"
+    },
+    {
+      "clip_id": "fleurs-es-short-056",
+      "audio": "audio/short/fleurs-es-short-056.wav",
+      "ref": "refs/fleurs-es-short-056.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.52,
+      "source": "fleurs_es",
+      "source_id": "1674"
+    },
+    {
+      "clip_id": "fleurs-es-short-057",
+      "audio": "audio/short/fleurs-es-short-057.wav",
+      "ref": "refs/fleurs-es-short-057.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.44,
+      "source": "fleurs_es",
+      "source_id": "1750"
+    },
+    {
+      "clip_id": "fleurs-es-short-058",
+      "audio": "audio/short/fleurs-es-short-058.wav",
+      "ref": "refs/fleurs-es-short-058.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 5.64,
+      "source": "fleurs_es",
+      "source_id": "1941"
+    },
+    {
+      "clip_id": "fleurs-es-short-059",
+      "audio": "audio/short/fleurs-es-short-059.wav",
+      "ref": "refs/fleurs-es-short-059.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.2,
+      "source": "fleurs_es",
+      "source_id": "1972"
+    },
+    {
+      "clip_id": "fleurs-es-short-060",
+      "audio": "audio/short/fleurs-es-short-060.wav",
+      "ref": "refs/fleurs-es-short-060.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.3,
+      "source": "fleurs_es",
+      "source_id": "1760"
+    },
+    {
+      "clip_id": "fleurs-es-short-061",
+      "audio": "audio/short/fleurs-es-short-061.wav",
+      "ref": "refs/fleurs-es-short-061.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.42,
+      "source": "fleurs_es",
+      "source_id": "1978"
+    },
+    {
+      "clip_id": "fleurs-es-short-062",
+      "audio": "audio/short/fleurs-es-short-062.wav",
+      "ref": "refs/fleurs-es-short-062.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.58,
+      "source": "fleurs_es",
+      "source_id": "1696"
+    },
+    {
+      "clip_id": "fleurs-es-short-063",
+      "audio": "audio/short/fleurs-es-short-063.wav",
+      "ref": "refs/fleurs-es-short-063.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.0,
+      "source": "fleurs_es",
+      "source_id": "1975"
+    },
+    {
+      "clip_id": "fleurs-es-short-064",
+      "audio": "audio/short/fleurs-es-short-064.wav",
+      "ref": "refs/fleurs-es-short-064.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.96,
+      "source": "fleurs_es",
+      "source_id": "1737"
+    },
+    {
+      "clip_id": "fleurs-es-short-065",
+      "audio": "audio/short/fleurs-es-short-065.wav",
+      "ref": "refs/fleurs-es-short-065.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.36,
+      "source": "fleurs_es",
+      "source_id": "1981"
+    },
+    {
+      "clip_id": "fleurs-es-short-066",
+      "audio": "audio/short/fleurs-es-short-066.wav",
+      "ref": "refs/fleurs-es-short-066.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.9,
+      "source": "fleurs_es",
+      "source_id": "1752"
+    },
+    {
+      "clip_id": "fleurs-es-short-067",
+      "audio": "audio/short/fleurs-es-short-067.wav",
+      "ref": "refs/fleurs-es-short-067.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.96,
+      "source": "fleurs_es",
+      "source_id": "1962"
+    },
+    {
+      "clip_id": "fleurs-es-short-068",
+      "audio": "audio/short/fleurs-es-short-068.wav",
+      "ref": "refs/fleurs-es-short-068.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.48,
+      "source": "fleurs_es",
+      "source_id": "1949"
+    },
+    {
+      "clip_id": "fleurs-es-short-069",
+      "audio": "audio/short/fleurs-es-short-069.wav",
+      "ref": "refs/fleurs-es-short-069.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.48,
+      "source": "fleurs_es",
+      "source_id": "1766"
+    },
+    {
+      "clip_id": "fleurs-es-short-070",
+      "audio": "audio/short/fleurs-es-short-070.wav",
+      "ref": "refs/fleurs-es-short-070.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.48,
+      "source": "fleurs_es",
+      "source_id": "1761"
+    },
+    {
+      "clip_id": "fleurs-es-short-071",
+      "audio": "audio/short/fleurs-es-short-071.wav",
+      "ref": "refs/fleurs-es-short-071.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.72,
+      "source": "fleurs_es",
+      "source_id": "1764"
+    },
+    {
+      "clip_id": "fleurs-es-short-072",
+      "audio": "audio/short/fleurs-es-short-072.wav",
+      "ref": "refs/fleurs-es-short-072.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 5.82,
+      "source": "fleurs_es",
+      "source_id": "1880"
+    },
+    {
+      "clip_id": "fleurs-es-short-073",
+      "audio": "audio/short/fleurs-es-short-073.wav",
+      "ref": "refs/fleurs-es-short-073.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.76,
+      "source": "fleurs_es",
+      "source_id": "1987"
+    },
+    {
+      "clip_id": "fleurs-es-short-074",
+      "audio": "audio/short/fleurs-es-short-074.wav",
+      "ref": "refs/fleurs-es-short-074.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.18,
+      "source": "fleurs_es",
+      "source_id": "1955"
+    },
+    {
+      "clip_id": "fleurs-es-short-075",
+      "audio": "audio/short/fleurs-es-short-075.wav",
+      "ref": "refs/fleurs-es-short-075.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.68,
+      "source": "fleurs_es",
+      "source_id": "1770"
+    },
+    {
+      "clip_id": "fleurs-es-short-076",
+      "audio": "audio/short/fleurs-es-short-076.wav",
+      "ref": "refs/fleurs-es-short-076.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.66,
+      "source": "fleurs_es",
+      "source_id": "1745"
+    },
+    {
+      "clip_id": "fleurs-es-short-077",
+      "audio": "audio/short/fleurs-es-short-077.wav",
+      "ref": "refs/fleurs-es-short-077.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.04,
+      "source": "fleurs_es",
+      "source_id": "1700"
+    },
+    {
+      "clip_id": "fleurs-es-short-078",
+      "audio": "audio/short/fleurs-es-short-078.wav",
+      "ref": "refs/fleurs-es-short-078.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.78,
+      "source": "fleurs_es",
+      "source_id": "1884"
+    },
+    {
+      "clip_id": "fleurs-es-short-079",
+      "audio": "audio/short/fleurs-es-short-079.wav",
+      "ref": "refs/fleurs-es-short-079.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.24,
+      "source": "fleurs_es",
+      "source_id": "1747"
+    },
+    {
+      "clip_id": "fleurs-es-short-080",
+      "audio": "audio/short/fleurs-es-short-080.wav",
+      "ref": "refs/fleurs-es-short-080.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.28,
+      "source": "fleurs_es",
+      "source_id": "1676"
+    },
+    {
+      "clip_id": "fleurs-es-short-081",
+      "audio": "audio/short/fleurs-es-short-081.wav",
+      "ref": "refs/fleurs-es-short-081.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.46,
+      "source": "fleurs_es",
+      "source_id": "1844"
+    },
+    {
+      "clip_id": "fleurs-es-short-082",
+      "audio": "audio/short/fleurs-es-short-082.wav",
+      "ref": "refs/fleurs-es-short-082.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 6.96,
+      "source": "fleurs_es",
+      "source_id": "1870"
+    },
+    {
+      "clip_id": "fleurs-es-short-083",
+      "audio": "audio/short/fleurs-es-short-083.wav",
+      "ref": "refs/fleurs-es-short-083.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.4,
+      "source": "fleurs_es",
+      "source_id": "1902"
+    },
+    {
+      "clip_id": "fleurs-es-short-084",
+      "audio": "audio/short/fleurs-es-short-084.wav",
+      "ref": "refs/fleurs-es-short-084.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.88,
+      "source": "fleurs_es",
+      "source_id": "1876"
+    },
+    {
+      "clip_id": "fleurs-es-short-085",
+      "audio": "audio/short/fleurs-es-short-085.wav",
+      "ref": "refs/fleurs-es-short-085.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 5.76,
+      "source": "fleurs_es",
+      "source_id": "1908"
+    },
+    {
+      "clip_id": "fleurs-es-short-086",
+      "audio": "audio/short/fleurs-es-short-086.wav",
+      "ref": "refs/fleurs-es-short-086.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.64,
+      "source": "fleurs_es",
+      "source_id": "1748"
+    },
+    {
+      "clip_id": "fleurs-es-short-087",
+      "audio": "audio/short/fleurs-es-short-087.wav",
+      "ref": "refs/fleurs-es-short-087.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.36,
+      "source": "fleurs_es",
+      "source_id": "1928"
+    },
+    {
+      "clip_id": "fleurs-es-short-088",
+      "audio": "audio/short/fleurs-es-short-088.wav",
+      "ref": "refs/fleurs-es-short-088.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.4,
+      "source": "fleurs_es",
+      "source_id": "1826"
+    },
+    {
+      "clip_id": "fleurs-es-short-089",
+      "audio": "audio/short/fleurs-es-short-089.wav",
+      "ref": "refs/fleurs-es-short-089.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.06,
+      "source": "fleurs_es",
+      "source_id": "1851"
+    },
+    {
+      "clip_id": "fleurs-es-short-090",
+      "audio": "audio/short/fleurs-es-short-090.wav",
+      "ref": "refs/fleurs-es-short-090.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.48,
+      "source": "fleurs_es",
+      "source_id": "1895"
+    },
+    {
+      "clip_id": "fleurs-es-short-091",
+      "audio": "audio/short/fleurs-es-short-091.wav",
+      "ref": "refs/fleurs-es-short-091.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.7,
+      "source": "fleurs_es",
+      "source_id": "1994"
+    },
+    {
+      "clip_id": "fleurs-es-short-092",
+      "audio": "audio/short/fleurs-es-short-092.wav",
+      "ref": "refs/fleurs-es-short-092.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.0,
+      "source": "fleurs_es",
+      "source_id": "1917"
+    },
+    {
+      "clip_id": "fleurs-es-short-093",
+      "audio": "audio/short/fleurs-es-short-093.wav",
+      "ref": "refs/fleurs-es-short-093.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.68,
+      "source": "fleurs_es",
+      "source_id": "1687"
+    },
+    {
+      "clip_id": "fleurs-es-short-094",
+      "audio": "audio/short/fleurs-es-short-094.wav",
+      "ref": "refs/fleurs-es-short-094.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.72,
+      "source": "fleurs_es",
+      "source_id": "1966"
+    },
+    {
+      "clip_id": "fleurs-es-short-095",
+      "audio": "audio/short/fleurs-es-short-095.wav",
+      "ref": "refs/fleurs-es-short-095.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.48,
+      "source": "fleurs_es",
+      "source_id": "1943"
+    },
+    {
+      "clip_id": "fleurs-es-short-096",
+      "audio": "audio/short/fleurs-es-short-096.wav",
+      "ref": "refs/fleurs-es-short-096.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.96,
+      "source": "fleurs_es",
+      "source_id": "1853"
+    },
+    {
+      "clip_id": "fleurs-es-short-097",
+      "audio": "audio/short/fleurs-es-short-097.wav",
+      "ref": "refs/fleurs-es-short-097.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 9.66,
+      "source": "fleurs_es",
+      "source_id": "1825"
+    },
+    {
+      "clip_id": "fleurs-es-short-098",
+      "audio": "audio/short/fleurs-es-short-098.wav",
+      "ref": "refs/fleurs-es-short-098.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 7.08,
+      "source": "fleurs_es",
+      "source_id": "1906"
+    },
+    {
+      "clip_id": "fleurs-es-short-099",
+      "audio": "audio/short/fleurs-es-short-099.wav",
+      "ref": "refs/fleurs-es-short-099.txt",
+      "language": "es",
+      "bucket": "short",
+      "duration_s": 8.88,
+      "source": "fleurs_es",
+      "source_id": "1816"
     }
   ]
 }

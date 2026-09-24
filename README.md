@@ -545,7 +545,7 @@ Built by `scripts/build_corpus.py` from pinned dataset revisions
 
 | Bucket | Content | Purpose |
 |---|---|---|
-| `short` | 20 clips × 3 sources, 3–8 s (mean 5.5–6.7 s), plus a level-matched copy of the English FLEURS clips | latency per utterance |
+| `short` | 20 clips × 3 sources, 3–8 s (mean 5.5–6.7 s), plus a level-matched copy of the English FLEURS clips, plus 80 more Spanish clips (3–10 s, mean 8.6 s) | latency per utterance; accuracy |
 | `session` | 1 per language, ~6 min, 0.5–1.5 s gaps | sustained RTF, thermals |
 
 Sources are deliberately symmetric: FLEURS `en_us` and `es_419` are the same
@@ -554,7 +554,7 @@ comparison is not confounded by domain or recording conditions. LibriSpeech
 `test-other` adds the noisy-English stress case that FLEURS's clean read
 speech does not cover.
 
-Current build: 82 clips, 20.5 minutes total (en 723.3 s, es 505.1 s), all
+Current build: 162 clips, 32.0 minutes total (en 723.3 s, es 1193.9 s), all
 16 kHz mono PCM16. Twenty of them are `fleurs_en_norm`: the English FLEURS
 clips lifted by a static gain to −23 dBFS RMS, because the originals are
 recorded ~40 dB quieter than the other sources
@@ -562,6 +562,19 @@ recorded ~40 dB quieter than the other sources
 The build is deterministic: adding them reproduced every existing file byte
 for byte. Session clips are disjoint from short clips, so
 sustained-RTF audio is not audio the latency measurement already warmed.
+
+**Spanish has 100 short clips, not 20.** Twenty could not separate the arms
+that matter for the one-model-or-two question: on them, Arm A and Parakeet
+differ by about one WER point with a 95% interval four points wide on either
+side (`scripts/compare.py`). The first 20 also hold only 15 distinct
+sentences, because FLEURS records each sentence by several speakers. The 80
+added in Phase 3 (`fleurs-es-short-020` to `-099`) are one recording per
+sentence, none shared with the first 20 or the Spanish session: 1,513 more
+reference words, 1,771 in all. Few unused sentences have a recording under
+8 s, so their window is 3–10 s. Every arm hears the same clips, so this does
+not affect comparisons between arms. It does mean Spanish clips run longer
+than English ones. Adding them reproduced all 144 existing files byte for
+byte, so every earlier result still refers to the same audio.
 
 ## Reproducing
 

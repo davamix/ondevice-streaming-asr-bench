@@ -51,6 +51,21 @@ SAMPLE_RATE = 16000
 SHORT_MIN_S, SHORT_MAX_S = 3.0, 8.0
 SHORT_COUNT = 20
 
+# Spanish gets 80 more short clips, added in Phase 3. Twenty clips could not
+# tell arms apart: Arm A and Parakeet differed by 1.2 WER points on Spanish
+# with a 95% interval of -3.2 to +4.9 (scripts/compare.py). The originals
+# also hold only 15 distinct sentences, because FLEURS records each sentence
+# by several speakers. The extra clips are one recording per sentence, none
+# already in the Spanish shorts or session, and are drawn after everything
+# else so every existing file rebuilds byte for byte.
+#
+# Their window is 3-10 s, not 3-8. FLEURS sentences mostly run longer than 8 s:
+# of the 306 unused Spanish test sentences, only 29 have a recording under
+# 8 s, and 103 under 10 s. Every arm hears the same clips, so comparisons
+# between arms are unaffected; Spanish clips are simply a little longer.
+ES_EXTRA_COUNT = 80
+ES_EXTRA_MAX_S = 10.0
+
 # Sessions: long enough to expose thermal drift, short enough to stay inside
 # the 10-minute continuous-inference cap in PLAN.md §11.3.
 SESSION_TARGET_S = 360.0  # 6 minutes
@@ -156,19 +171,32 @@ def write_ref(clip_id: str, text: str) -> str:
     return rel
 
 
-def build_shorts(key: str, rng: random.Random, clips: list[dict]) -> list[dict]:
-    """Decode candidates until SHORT_COUNT land in the duration window."""
+def build_shorts(key: str, rng: random.Random, clips: list[dict],
+                 count: int = SHORT_COUNT, first_index: int = 0,
+                 exclude: frozenset[str] = frozenset(),
+                 distinct: bool = False,
+                 max_s: float = SHORT_MAX_S) -> list[dict]:
+    """Decode candidates until `count` land in the duration window.
+
+    The defaults are the original selection and must stay exactly as they
+    are: changing the candidate order would change which clips are picked.
+    `exclude` drops sentences already used; `distinct` keeps one recording
+    per sentence (FLEURS ids are per sentence, not per recording).
+    """
     spec = SOURCES[key]
-    rows = load_rows(key)
+    rows = [r for r in load_rows(key) if r["source_id"] not in exclude]
     rng.shuffle(rows)
     out = []
+    taken: set[str] = set()
     scratch = AUDIO / "_scratch"
     scratch.mkdir(parents=True, exist_ok=True)
-    print(f"[short] {key}: scanning {len(rows)} candidates for {SHORT_COUNT} "
-          f"clips in {SHORT_MIN_S}-{SHORT_MAX_S}s")
+    print(f"[short] {key}: scanning {len(rows)} candidates for {count} "
+          f"clips in {SHORT_MIN_S}-{max_s}s")
     for row in rows:
-        if len(out) >= SHORT_COUNT:
+        if len(out) >= count:
             break
+        if distinct and row["source_id"] in taken:
+            continue
         probe = scratch / f"probe_{key}_{row['source_id']}.wav"
         try:
             dur = decode_to_wav(row["bytes"], probe)
@@ -176,10 +204,10 @@ def build_shorts(key: str, rng: random.Random, clips: list[dict]) -> list[dict]:
             print(f"  skip {row['source_id']}: {e}", file=sys.stderr)
             probe.unlink(missing_ok=True)
             continue
-        if not (SHORT_MIN_S <= dur <= SHORT_MAX_S):
+        if not (SHORT_MIN_S <= dur <= max_s):
             probe.unlink(missing_ok=True)
             continue
-        idx = len(out)
+        idx = first_index + len(out)
         clip_id = f"{spec['tag']}-short-{idx:03d}"
         dest = AUDIO / "short" / f"{clip_id}.wav"
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -196,7 +224,10 @@ def build_shorts(key: str, rng: random.Random, clips: list[dict]) -> list[dict]:
         }
         out.append(entry)
         clips.append(entry)
+        taken.add(row["source_id"])
     shutil.rmtree(scratch, ignore_errors=True)
+    if len(out) < count:
+        raise SystemExit(f"[short] {key}: only {len(out)} of {count} clips found")
     total = sum(c["duration_s"] for c in out)
     print(f"[short] {key}: {len(out)} clips, {total:.1f}s total, "
           f"mean {total / max(len(out), 1):.1f}s")
@@ -369,8 +400,16 @@ def main() -> int:
     # audio the latency measurement already warmed.
     build_session("fleurs_en", random.Random(SEED + 11),
                   {c["source_id"] for c in shorts_en}, clips)
-    build_session("fleurs_es", random.Random(SEED + 12),
-                  {c["source_id"] for c in shorts_es}, clips)
+    session_es = build_session("fleurs_es", random.Random(SEED + 12),
+                               {c["source_id"] for c in shorts_es}, clips)
+
+    # Last, so nothing above changes (see ES_EXTRA_COUNT).
+    used_es = ({c["source_id"] for c in shorts_es}
+               | {s["source_id"] for s in session_es["segments"]})
+    build_shorts("fleurs_es", random.Random(SEED + 4), clips,
+                 count=ES_EXTRA_COUNT, first_index=len(shorts_es),
+                 exclude=frozenset(used_es), distinct=True,
+                 max_s=ES_EXTRA_MAX_S)
 
     manifest = {
         "schema": 1,
@@ -380,7 +419,12 @@ def main() -> int:
         "buckets": {
             "short": {
                 "target_s": [SHORT_MIN_S, SHORT_MAX_S],
-                "count_per_source": SHORT_COUNT,
+                "count_per_source": {
+                    "fleurs_en": SHORT_COUNT,
+                    "fleurs_en_norm": SHORT_COUNT,
+                    "fleurs_es": SHORT_COUNT + ES_EXTRA_COUNT,
+                    "librispeech_other": SHORT_COUNT,
+                },
                 "purpose": "latency per utterance",
             },
             "session": {

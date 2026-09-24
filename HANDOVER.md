@@ -1,6 +1,6 @@
 # Handover — next phase to run
 
-**Currently: Phase 4, Arm C (Moonshine `base-es`). Not started.**
+**Currently: re-measure Spanish on 100 clips (Arm A, Parakeet), then Phase 4, Arm C. Not started.**
 
 This file carries whatever phase is next. It is rewritten as each phase
 completes; finished phases are written up in [`summaries/`](summaries/).
@@ -22,9 +22,10 @@ language?*
 > and exact commands, and the three summaries in `summaries/` for what Phases
 > 1–3 established. `README.md` has the full results and findings.
 >
-> Phases 0–3 are complete. Phase 4 integrates Arm C (Moonshine `base-es`,
-> VAD-segmented), validates it on the emulator, and measures it on the phone
-> in Spanish. Then compare Spanish across Arms A, C, D and E and answer the
+> Phases 0–3 are complete. First re-measure Arm A and Parakeet on the
+> expanded 100-clip Spanish set ("Before Phase 4" in HANDOVER.md). Then
+> Phase 4 integrates Arm C (Moonshine `base-es`, VAD-segmented), validates it
+> on the emulator, and measures it on the phone in Spanish. Then compare Spanish across Arms A, C, D and E and answer the
 > PLAN.md §1 question. Update the README results as numbers come in.
 >
 > The test device is the owner's only phone. `PLAN.md` §11 is a hard safety
@@ -41,7 +42,8 @@ language?*
 | Phase 1 (Arm A) | ✅ complete, revised in Phases 2 and 3 — [summary](summaries/phase-1-arm-a.md) |
 | Phase 2 (Arm B) | ✅ complete, revised in Phase 3 — [summary](summaries/phase-2-arm-b.md) |
 | Phase 3 (Arms D, E) | ✅ complete — [summary](summaries/phase-3-arms-d-e.md) |
-| Phase 4 (Arm C) | ⬜ **next** |
+| Spanish re-measure (100 clips) | ⬜ **next**, corpus built and commands ready |
+| Phase 4 (Arm C) | ⬜ after the re-measure |
 | Phase 5 (analysis, sessions, mic check) | ⬜ not started |
 
 Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push after each phase)
@@ -62,6 +64,47 @@ serves Spanish near 7–8% at 65 MB, which would make a small two-stack option
 without depending on the platform's language pack.
 
 ---
+
+## Before Phase 4 — re-measure Spanish on 100 clips
+
+Twenty Spanish clips could not separate the arms. On them, Arm A and Parakeet
+differ by ~1 WER point with a 95% interval of about −3 to +5
+(`scripts/compare.py --standard`). The corpus now has 80 more Spanish clips
+(`fleurs-es-short-020` to `-099`, distinct sentences, 1,513 more words). The
+build reproduced all earlier files byte for byte. Arm A and Parakeet need
+measuring on them before Arm C, so all three share one 100-clip Spanish set:
+
+```bash
+# Arm A: pushes the expanded corpus. Three reps, because Arm A's text varies
+# a little between runs; ~65 min, ~4 battery points.
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --arms A --langs es --buckets short --reps 3 --label armA-es100 \
+    --no-build --no-install --timeout 7200
+
+# Parakeet: identical text every rep, so two reps (rep 0 is discarded);
+# ~45 min, ~10 battery points.
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --arms D:parakeet-tdt-v3-int8 --langs es --buckets short --reps 2 \
+    --label armD-es100 --no-build --no-install --no-push --timeout 7200
+
+.venv/Scripts/python scripts/compare.py --standard
+```
+
+Run the battery watchdog alongside each. Then update the Spanish figures in
+the README, the Phase 3 summary and this file. The pushed Phase 3 text says
+Parakeet *beats* Arm A in Spanish; the 20 clips do not support that, and the
+new figures decide what replaces it.
+
+Two scorer changes land with this, both PC-side:
+
+- **Clip-weighted pooling** (`score.score_clips`). Each clip counts once,
+  however many rows it has, so the old 20-clip runs do not outweigh the new
+  100-clip ones. It changed none of the 27 existing WER/CER figures.
+- **Clock times.** "12:00" was read as "doce cero", a word nobody says, and
+  every arm lost it on `fleurs-es-short-005`. On-the-hour times now read as
+  the hour, and "p. m." as one token. This moved every Spanish WER by about
+  −0.35 points, uniformly (Arm A 8.14 → 7.78%, Parakeet 6.98 → 6.61%). It
+  needs a revision note when the Spanish figures are rewritten.
 
 ## Phase 4 — Arm C (Moonshine `base-es`)
 
@@ -87,7 +130,8 @@ like Arms D and E. The integration is an open design choice:
 
 Either way, keep what Phase 3 established: decode off the feed thread, 500 ms
 partials, record `last_final_wait_ms` and `final_after_audio_end_ms`.
-Spanish only (20 clips × 4 reps). Then compare Spanish across A / C / D / E,
+Spanish only, on all 100 Spanish clips (4 reps: 400 clips). Then compare
+Spanish across A / C / D / E with `scripts/compare.py`,
 which is PLAN.md §10 step 18.
 
 ---
