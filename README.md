@@ -10,7 +10,7 @@ This repo is the lab notebook, not the final report. It was made public before
 any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
-**Status:** Phases 0–2 complete; Phase 3 measured except Whisper small. Arm D
+**Status:** Phases 0–3 complete. Arm D
 (Parakeet) is the first model to serve **both** languages well: 6.98% WER in
 Spanish, better than the platform recognizer, and 7.05% on noisy English. See
 the [Phase 3 summary](summaries/phase-3-arms-d-e.md). A scoring fix in Phase 3
@@ -63,7 +63,7 @@ anywhere else.
 | 16 | [Filtering out "bad" measurement rows can flatter what you measure](#filtering-out-bad-measurement-rows-can-flatter-the-thing-you-are-measuring) | Measurement integrity |
 | 17 | ["End of speech" was stamped up to one frame early](#end-of-speech-was-stamped-up-to-one-frame-early) | Measurement integrity |
 | 18 | [An empty transcript is every word missed, not a row to skip](#an-empty-transcript-is-every-word-missed-not-a-row-to-skip) | Measurement integrity |
-| 19 | [Live partials from an offline model triple its compute](#live-partials-from-an-offline-model-triple-its-compute) | Measured |
+| 19 | [Live partials from an offline model multiply its compute](#live-partials-from-an-offline-model-multiply-its-compute) | Measured |
 | 20 | [Silero VAD hears quiet speech, but late](#silero-vad-hears-quiet-speech-but-late) | Model behaviour |
 | 21 | [Years written as digits cost four WER points](#years-written-as-digits-cost-four-wer-points) | Measurement integrity |
 | 22 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
@@ -126,7 +126,7 @@ the quantity of interest.
 | B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ✅ **measured, all three sizes** |
 | C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ⬜ not started |
 | D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ✅ **measured, both** |
-| E | Whisper small + base int8 (VAD-segmented) | no | ✅ | ✅ | 375 / 161 MB | sherpa-onnx | Known baseline / calibration | ✅ base measured, both · ⏳ small pending |
+| E | Whisper small + base int8 (VAD-segmented) | no | ✅ | ✅ | 375 / 161 MB | sherpa-onnx | Known baseline / calibration | ✅ **measured, both sizes, both languages** |
 
 Arm A decides whether bundling a model is justified at all. If the platform
 recognizer is good enough on this audio, that is a legitimate and
@@ -410,29 +410,32 @@ it. Same corpus, paced feeder and phone as Arms A and B.
 | E Whisper base | FLEURS `en_us` | clean, level-matched | 11.88% | 6.64% | 618 ms | 1717 ms | 9 | 0.88 (0.28) | |
 | E Whisper base | FLEURS `en_us` | clean, original (**very quiet**) | 20.62% | 13.28% | 518 ms | 1835 ms | 26 | 0.76 (0.28) | |
 | E Whisper base | LibriSpeech `test-other` | **noisy** | 22.82% | 9.62% | 678 ms | 1522 ms | 16 | 0.83 (0.30) | |
-| E Whisper small | — | — | *not yet measured* | | | | | | |
+| E Whisper small | FLEURS `es_419` | clean | 11.63% | 4.54% | 2750 ms | 2990 ms | 2 | 1.24 (0.52) | 997 |
+| E Whisper small | FLEURS `en_us` | clean, level-matched | **5.31%** | 2.39% | 2683 ms | 2306 ms | 4 | 1.36 (0.53) | |
+| E Whisper small | FLEURS `en_us` | clean, original (**very quiet**) | 10.31% | 5.69% | 2659 ms | 2400 ms | 8 | 1.31 (0.53) | |
+| E Whisper small | LibriSpeech `test-other` | **noisy** | 14.43% | 6.19% | 2424 ms | 2180 ms | 5 | 1.35 (0.59) | |
 
 One 4-repetition run per model, 80 clips per repetition, repetition 0
 discarded. WER was identical to the hundredth in every repetition: greedy
 decoding behind a deterministic VAD, fed identical audio, gives identical text.
-Disk: Parakeet 670.5 MB, Whisper base 160.6 MB, plus 2.2 MB for Silero VAD.
-Whisper small (375 MB) is fetched and validated on the emulator but not
-measured: the battery budget ran out after the two runs above.
+Disk: Parakeet 670.5 MB, Whisper small 375.4 MB, Whisper base 160.6 MB, plus
+2.2 MB for Silero VAD. Parakeet and Whisper base were measured on 2026-09-23,
+Whisper small the next morning after a recharge.
 
 **Against the bar, both languages:**
 
-| | Arm A (0 MB) | Moonshine small (224 MB) | Moonshine medium (416 MB) | Whisper base (161 MB) | **Parakeet (670 MB)** |
-|---|---|---|---|---|---|
-| WER, **Spanish** | 8.14% | — | — | 15.12% | **6.98%** |
-| WER, English **noisy** | 29.31% | 8.72% | **6.26%** | 22.82% | 7.05% |
-| WER, English clean, level-matched | 12.60% | 7.71% | **5.62%** | 11.88% | 6.88% |
-| WER, English clean, **very quiet** | **9.69%** | 27.29% | 25.31% | 20.62% | 14.69% |
-| First text, noisy / clean / es | 1012 / 1259 / 2009 ms | 1191 / 1655 / — | 1241 / 1285 / — | 1522 / 1717 / 2322 | 1556 / 1797 / 2373 |
-| Final text, noisy / clean / es | **68 / 76 / 0 ms** | 442 / 144 / — | 662 / 414 / — | 678 / 618 / 471 | 353 / 186 / 0 |
-| Compute, share of real time | — | 0.72 | 0.80 | 0.76–0.88 | 0.52–0.60 |
-| Peak RSS | 118 MB² | 605 MB | 933 MB | 572 MB | 1027 MB |
-| Battery per 240 clips | 3 pts | 10 pts | 11 pts | 15 pts | 10.5 pts |
-| Cooling pauses at the 35 °C gate | 0 | 0 | 1 | **7** | 0 |
+| | Arm A (0 MB) | Moonshine small (224 MB) | Moonshine medium (416 MB) | Whisper base (161 MB) | Whisper small (375 MB) | **Parakeet (670 MB)** |
+|---|---|---|---|---|---|---|
+| WER, **Spanish** | 8.14% | — | — | 15.12% | 11.63% | **6.98%** |
+| WER, English **noisy** | 29.31% | 8.72% | **6.26%** | 22.82% | 14.43% | 7.05% |
+| WER, English clean, level-matched | 12.60% | 7.71% | 5.62% | 11.88% | **5.31%** | 6.88% |
+| WER, English clean, **very quiet** | **9.69%** | 27.29% | 25.31% | 20.62% | 10.31% | 14.69% |
+| First text, noisy / clean / es | 1012 / 1259 / 2009 ms | 1191 / 1655 / — | 1241 / 1285 / — | 1522 / 1717 / 2322 | 2180 / 2306 / 2990 | 1556 / 1797 / 2373 |
+| Final text, noisy / clean / es | **68 / 76 / 0 ms** | 442 / 144 / — | 662 / 414 / — | 678 / 618 / 471 | 2424 / 2683 / 2750 | 353 / 186 / 0 |
+| Compute, share of real time | — | 0.72 | 0.80 | 0.76–0.88 | **1.24–1.36** | 0.52–0.60 |
+| Peak RSS | 118 MB² | 605 MB | 933 MB | 572 MB | 997 MB | 1027 MB |
+| Battery per 240 clips | 3 pts | 10 pts | 11 pts | 15 pts | 29 pts | 10.5 pts |
+| Cooling pauses at the 35 °C gate | 0 | 0 | 1 | 7 | **15** | 0 |
 
 ² Our harness only; the recognizer's own memory is in Google's process.
 
@@ -453,35 +456,40 @@ measured: the battery budget ran out after the two runs above.
    finals 310–460 ms against 540–840 ms (medians by source). It needs 0.52–0.60 of real time with
    partials, where Whisper base needs 0.76–0.88. So it ran cooler: no cooling
    pauses, against seven for Whisper base, and a third less battery.
-4. **Whisper base calibrates as expected, and is not a contender.** Its
-   Spanish is nearly twice Arm A's error (15.12%), and its English is level
-   with Arm A on clean speech and well behind every bundled model on noisy.
-   On one quiet clip it produced a repetition loop ("4x4, 3x3, 3x4, 3x4…")
-   instead of the sentence, identically in every repetition.
+4. **Whisper calibrates as expected, and neither size is a contender.**
+   Base's Spanish is nearly twice Arm A's error (15.12%), and its English is
+   level with Arm A on clean speech and well behind every bundled model on
+   noisy. On one quiet clip it produced a repetition loop ("4x4, 3x3, 3x4,
+   3x4…") instead of the sentence, in every repetition. Small is the most
+   accurate model in the matrix on clean English (5.31%), and the most robust
+   bundled model on very quiet audio (10.31%, close to Arm A's 9.69%). But its
+   Spanish (11.63%) still trails Arm A, and it is far too slow to be live:
+   final text 2.4–2.8 s after the speaker stops, each final decode ~2 s.
 5. **Final text is quick; first text is not.** Final text arrives 0–350 ms
    after the audio ends for Parakeet, because the VAD closes most segments on
    the clip's own trailing silence and the decode is fast. First text is the
-   weak spot. At 1.5–2.4 s the two VAD arms are the slowest in the matrix. A
+   weak spot. At 1.5–3.0 s the VAD arms are the slowest in the matrix. A
    partial waits for the VAD to declare speech (at least 0.25 s of it), then
    one 500 ms interval, then a decode. In Spanish every arm is slow
-   (2.0–2.4 s), and there Parakeet matches Arm A's final text (0 ms).
-6. **Partials cost more than the model.** Showing live text roughly triples
-   the compute: finals alone need 0.20–0.30 of real time, and re-decoding
-   open speech every 500 ms brings that to 0.52–0.88
-   ([finding](#live-partials-from-an-offline-model-triple-its-compute)).
+   (2.0–3.0 s), and there Parakeet matches Arm A's final text (0 ms).
+6. **Partials cost more than the model.** Showing live text roughly doubles
+   or triples the compute: finals alone need 0.20–0.59 of real time, and
+   re-decoding open speech every 500 ms brings that to 0.52–1.36
+   ([finding](#live-partials-from-an-offline-model-multiply-its-compute)).
+   Whisper small goes past 1.0: its decode thread never idles while someone
+   is speaking, partials are skipped, and finals queue behind them.
 7. **Quiet audio costs the first word, and that is the VAD.** Unlike
    Moonshine, the VAD found speech in every very quiet clip: no blank rows.
-   But it starts late, and both models miss the first word of the sentence on
-   11–12 of those 20 clips, against 3–4 at normal level
+   But it starts late, and all three models miss the first word of the
+   sentence on 8–12 of those 20 clips, against 3–4 at normal level
    ([finding](#silero-vad-hears-quiet-speech-but-late)).
 
 **Known limits of these numbers:**
 
-- **Whisper small is not measured yet.** It is the one Arm E variant left.
 - **"Partials off" figures are derived, not measured.** Each row records how
   long the final waited behind a running partial. Subtracting that wait
   estimates final latency without partials: 0–250 ms for Parakeet, 90–480 ms
-  for Whisper base. A run with `--partial-ms 0` would measure it.
+  for Whisper base, 1.5–1.8 s for Whisper small. A run with `--partial-ms 0` would measure it.
 - **The partial cadence is a choice.** 500 ms matches Moonshine. The first
   partial is attempted one interval after the VAD declares speech, as in
   sherpa-onnx's own example, which uses 200 ms. A shorter interval would bring
@@ -490,7 +498,7 @@ measured: the battery budget ran out after the two runs above.
   0.85 of real time with partials, so a longer, hotter session is a fair
   question.
 - **Temperatures lag** ([finding](#the-battery-temperature-an-app-can-read-can-be-minutes-old)).
-  Whisper base's seven pauses are counted from the gate's own log.
+  The cooling pauses are counted from the gate's own log.
 
 ## Metrics
 
@@ -1073,7 +1081,7 @@ It had also touched a published number. One Arm A Spanish utterance ended in
 reports the count of blank rows next to the error count, so a blank row is
 visible instead of silently vanishing.
 
-### Live partials from an offline model triple its compute
+### Live partials from an offline model multiply its compute
 
 An offline model can look live by re-decoding the open utterance every few
 hundred milliseconds and showing each result as partial text. This is
@@ -1085,6 +1093,7 @@ row records partial and final decode time separately:
 |---|---|---|
 | Parakeet | 0.20–0.23 | 0.52–0.60 |
 | Whisper base | 0.27–0.30 | 0.76–0.88 |
+| Whisper small | 0.52–0.59 | 1.24–1.36 |
 
 Every partial decodes the whole utterance so far, from its start. A 6-second
 sentence gets seven or eight partial decodes that grow toward its full
@@ -1095,11 +1104,19 @@ decoder finds its end-of-text token, so even a half-second partial costs a
 
 The phone felt it. Whisper base reached the 35 °C gate six minutes into its
 run, from 30.5 °C, and paused to cool seven times in 87 minutes, 29 minutes of
-pauses in all. Parakeet, doing less work per partial, never reached the gate.
+pauses in all. Whisper small reached it in four minutes and paused fifteen
+times: about 78 of its 156 minutes were spent cooling, and it used 39 battery
+points for 320 clips. Parakeet, doing less work per partial, never reached the
+gate.
+
+Above 1.0, as with Whisper small, partials stop being merely expensive. One
+partial decode takes ~1.4 s, longer than the 500 ms interval, so the decode
+thread never idles while someone speaks.
 
 There is a latency cost too. A decode cannot be interrupted, so a final that
 arrives while a partial is running waits for it: a median of 44–134 ms for
-Parakeet and 152–376 ms for Whisper base, and at worst 0.6 s and 1.0 s.
+Parakeet, 152–376 ms for Whisper base and 790–1112 ms for Whisper small, and
+at worst 0.6 s, 1.0 s and 3.6 s.
 
 For a product, the partial cadence is a dial between how live the text looks
 and how hot the phone gets. It deserves to be tuned per model, not left at a
@@ -1120,6 +1137,7 @@ the sentence far more often than on the same clips at normal level:
 |---|---|---|
 | Parakeet | 11 / 20 | 3 / 20 |
 | Whisper base | 12 / 20 | 4 / 20 |
+| Whisper small | 8 / 20 | 3 / 20 |
 
 ```
 reference:            It is thinner under the maria and thicker under the highlands.
@@ -1129,8 +1147,8 @@ Whisper, very quiet:               under the maria and thicker under the highlan
 
 (Counts are per repetition; every repetition gave the same text.)
 
-Two unrelated models failing the same way, and only on quiet audio, point at
-the stage they share. The VAD dates a segment's start about 0.3 s before the
+Three models failing the same way, and only on quiet audio, point at the
+stage they share. The VAD dates a segment's start about 0.3 s before the
 point where it declares speech. When a soft onset takes longer than that to
 cross its threshold, the first syllables fall outside the segment and no
 model ever hears them. That is part of the gap between Parakeet's quiet-clip

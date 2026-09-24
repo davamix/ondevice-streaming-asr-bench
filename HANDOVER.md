@@ -1,17 +1,16 @@
 # Handover — next phase to run
 
-**Currently: finish Phase 3 (Whisper small), then Phase 4 (Arm C). Not started.**
+**Currently: Phase 4, Arm C (Moonshine `base-es`). Not started.**
 
 This file carries whatever phase is next. It is rewritten as each phase
 completes; finished phases are written up in [`summaries/`](summaries/).
 
 **For:** a fresh session picking this up with no prior context.
 
-Phase 3 measured Parakeet (Arm D) and Whisper base (Arm E). Whisper small, the
-last Arm E variant, is fetched and validated on the emulator but not measured,
-because the phone's battery budget ran out. Phase 4 then prices the cheap
-Spanish option, Arm C, before the final call on PLAN.md §1: *one model for
-both languages, or one per language?*
+Phases 0–3 are complete and pushed. Phase 3 found that Parakeet (Arm D)
+serves both languages well. Phase 4 prices the cheap Spanish option, Arm C,
+before the final call on PLAN.md §1: *one model for both languages, or one per
+language?*
 
 ---
 
@@ -23,11 +22,10 @@ both languages, or one per language?*
 > and exact commands, and the three summaries in `summaries/` for what Phases
 > 1–3 established. `README.md` has the full results and findings.
 >
-> Phase 3 is measured except Whisper small. First measure Arm E Whisper small
-> (int8) on the physical device in English and Spanish, and add it to the
-> README and the Phase 3 summary. Then start Phase 4: integrate Arm C
-> (Moonshine `base-es`, VAD-segmented), validate on the emulator, and measure
-> it on the phone in Spanish. Update the README results as numbers come in.
+> Phases 0–3 are complete. Phase 4 integrates Arm C (Moonshine `base-es`,
+> VAD-segmented), validates it on the emulator, and measures it on the phone
+> in Spanish. Then compare Spanish across Arms A, C, D and E and answer the
+> PLAN.md §1 question. Update the README results as numbers come in.
 >
 > The test device is the owner's only phone. `PLAN.md` §11 is a hard safety
 > policy — read it before touching the device. The pre-flight gate in
@@ -42,21 +40,21 @@ both languages, or one per language?*
 | Phase 0 (corpus, scorer) | ✅ complete; scorer now reads English years as years |
 | Phase 1 (Arm A) | ✅ complete, revised in Phases 2 and 3 — [summary](summaries/phase-1-arm-a.md) |
 | Phase 2 (Arm B) | ✅ complete, revised in Phase 3 — [summary](summaries/phase-2-arm-b.md) |
-| Phase 3 (Arms D, E) | 🟡 Parakeet and Whisper base measured; **Whisper small pending** — [summary](summaries/phase-3-arms-d-e.md) |
-| Phase 4 (Arm C) | ⬜ **next, after Whisper small** |
+| Phase 3 (Arms D, E) | ✅ complete — [summary](summaries/phase-3-arms-d-e.md) |
+| Phase 4 (Arm C) | ⬜ **next** |
 | Phase 5 (analysis, sessions, mic check) | ⬜ not started |
 
 Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push after each phase)
 
 **The bar, after Phase 3** (WER; latency is time to final text after the audio ends):
 
-| | Arm A (0 MB) | Moonshine small (224 MB) | Parakeet (670 MB) |
-|---|---|---|---|
-| Spanish | 8.14% | — | **6.98%** |
-| English noisy | 29.31% | 8.72% | **7.05%** |
-| English clean, level-matched | 12.60% | 7.71% | **6.88%** |
-| Final text, noisy / Spanish | **68 / 0 ms** | 442 / — | 353 / 0 ms |
-| First text, noisy / Spanish | **1.0 / 2.0 s** | 1.2 / — | 1.6 / 2.4 s |
+| | Arm A (0 MB) | Moonshine small (224 MB) | Whisper small (375 MB) | Parakeet (670 MB) |
+|---|---|---|---|---|
+| Spanish | 8.14% | — | 11.63% | **6.98%** |
+| English noisy | 29.31% | 8.72% | 14.43% | **7.05%** |
+| English clean, level-matched | 12.60% | 7.71% | **5.31%** | 6.88% |
+| Final text, noisy / Spanish | **68 / 0 ms** | 442 / — | 2424 / 2750 ms | 353 / 0 ms |
+| First text, noisy / Spanish | **1.0 / 2.0 s** | 1.2 / — | 2.2 / 3.0 s | 1.6 / 2.4 s |
 
 Parakeet is the one-model-for-both candidate. The two-stack alternative is
 Moonshine small (English) plus Arm A (Spanish). Arm C is interesting if it
@@ -65,34 +63,7 @@ without depending on the platform's language pack.
 
 ---
 
-## Step 1 — Whisper small (Arm E)
-
-Already done: fetched (`models/whisper-small-int8`, 375.4 MB, pinned), and run
-on the emulator (80 rows, 0 errors, Spanish correct). Not yet pushed to the
-phone.
-
-```bash
-.venv/Scripts/python scripts/run_bench.py --device physical \
-    --push-models whisper-small-int8
-.venv/Scripts/python scripts/run_bench.py --device physical \
-    --arms E:whisper-small-int8 --langs en,es --buckets short --reps 4 \
-    --label armE-small --no-build --no-install --no-push --timeout 10800
-```
-
-**Expect heat.** Whisper base hit the 35 °C gate six minutes in and paused
-seven times (29 minutes of cooling in an 87-minute run). Small has about 3× the
-parameters. Its decodes will be slower, so it will show fewer partials, but its
-decode thread will be busy most of the time. Start cool (under ~32 °C), with
-the battery near 80%.
-
-**Battery.** Whisper base cost 20 points per 320 clips; Parakeet 14. Budget
-~25 for small. Run the battery watchdog below alongside it.
-
-Then add it to the Arms D/E table and the "against the bar" table in the
-README, and to the Phase 3 summary. `summarize.py` already reports it under
-`E / whisper-small-int8`.
-
-## Step 2 — Phase 4, Arm C (Moonshine `base-es`)
+## Phase 4 — Arm C (Moonshine `base-es`)
 
 `fetch_models.py moonshine-base-es` (64.8 MB). ⚠️ **Non-commercial licence**,
 experiment only; do not redistribute (models/MODELS.md).
@@ -124,9 +95,10 @@ which is PLAN.md §10 step 18.
 ## Lessons from Phase 3 that apply directly
 
 - **Partials cost more than the model.** Re-decoding open speech every 500 ms
-  roughly triples compute and heat. Whisper base needed 0.28 of real time
-  for finals and 0.8 with partials. Report both; `summarize.py` prints
-  `rtf, finals only`.
+  multiplies compute and heat two to three times. Whisper small needed 0.53 of
+  real time for finals and 1.3 with partials. Report both; `summarize.py`
+  prints `rtf, finals only`. For a slow model, finals also queue behind a
+  running partial (up to 3.6 s for Whisper small).
 - **Check claims against the library source before writing them down.** Two
   first-draft statements were wrong: the Kotlin VAD's 5 s
   `maxSpeechDuration` does not hard-cut (it tightens the VAD), and the stale
@@ -159,6 +131,7 @@ which is PLAN.md §10 step 18.
 | Moonshine medium | 240 | 44 min | 11 points | 35.0 °C | 1 |
 | Whisper base | 320 | 87 min | 20 points | 35.2 °C | 7 |
 | Parakeet | 320 | 53 min | 14 points | 34.5 °C | 0 |
+| Whisper small | 320 | 156 min | 39 points | 35.5 °C | 15 |
 
 The gate needs battery 30–80% and not charging, and it checks the level only
 at start. §11.3 asks for 30–80% *throughout*, so run this watchdog alongside
@@ -180,8 +153,9 @@ old (README finding). A cooling pause can therefore run long, and a clip can
 start slightly above 35 °C. `dumpsys battery` has the same lag. The thermal
 HAL exposes no sensors on this phone, and the sysfs node is denied to shell.
 
-The phone ended this session at 41% and ~33 °C. It needs charging before
-Whisper small, then must drift below 80% and cool below ~32 °C.
+The phone ended Phase 3 at 41%. Arm C is Spanish only (80 clips for 4 reps)
+and `base-es` is small, so a run should cost far less than Phase 3's, but it
+still needs 30–80% at the start.
 
 ---
 
@@ -224,7 +198,8 @@ D:/Android/Sdk/emulator/emulator.exe -avd Medium_Phone_API_36.0 &
 ```
 
 Emulator results are gitignored and never published. The emulator currently
-holds `silero-vad` and `whisper-small-int8`.
+holds `silero-vad` and `whisper-small-int8`; remove the latter before pushing
+anything large.
 
 ### Measure, score, write up
 
@@ -283,8 +258,8 @@ last checkpoint is in the device's results dir, marked `complete: false`.
 
 - **Nothing is bundled in the APK.** Models are pushed to
   `/sdcard/Android/data/io.github.davamix.asrbench/files/models/`. On the phone
-  now: all three Moonshine variants, `silero-vad`, `whisper-base-int8` and
-  `parakeet-tdt-v3-int8` (~1.5 GB). ~74 GB free, so no need to remove any.
+  now: all three Moonshine variants, `silero-vad`, both Whisper variants and
+  `parakeet-tdt-v3-int8` (~1.9 GB). ~73 GB free, so no need to remove any.
 - **The app must create its own directories** before anything is pushed into
   them (`prepareDirs`, with `model_dirs`). `run_bench.py` handles this.
 - **Two ONNX Runtimes live in the APK**, Moonshine's and sherpa-onnx's
