@@ -184,6 +184,89 @@ def pull_results(dev: Device, tag: str) -> Path:
     return out_dir
 
 
+SELF_RECORDED = CORPUS / "self-recorded"
+
+
+def mic_prompt(lang: str, count: int) -> str:
+    """Sentences for the owner to read: FLEURS references, public text.
+
+    The first `count` distinct sentences of the language's original FLEURS
+    short clips, in clip order, so every take of a language reads the same
+    script and a live take can be scored against it (qualitatively, §8).
+    """
+    manifest = json.loads((CORPUS / "manifest.json").read_text(encoding="utf-8"))
+    source = {"en": "fleurs_en", "es": "fleurs_es"}[lang]
+    seen: list[str] = []
+    for c in sorted(manifest["clips"], key=lambda c: c["clip_id"]):
+        if c["bucket"] != "short" or c.get("source") != source:
+            continue
+        text = (CORPUS / c["ref"]).read_text(encoding="utf-8").strip()
+        if text not in seen:
+            seen.append(text)
+        if len(seen) == count:
+            break
+    return "\n\n".join(seen) + "\n"
+
+
+def run_mic_check(dev: Device, arm: str, lang: str, seconds: int,
+                  sentences: int, timeout_s: int) -> None:
+    """The single real-microphone check (PLAN.md §7, §10 step 20).
+
+    Needs the owner at the phone: it asks for microphone access on screen,
+    then shows the sentences to read and a countdown. This echoes the
+    harness's `MIC:` log lines so the reader can follow along here too.
+
+    Everything it produces is the owner's voice, so it is pulled into
+    corpus/self-recorded/, which is gitignored, never into results/ (§11.7).
+    """
+    prompt = mic_prompt(lang, sentences)
+    local = SELF_RECORDED / f"prompt-{lang}.txt"
+    local.parent.mkdir(parents=True, exist_ok=True)
+    local.write_text(prompt, encoding="utf-8")
+    sh(dev, "push", str(local), f"{APP_FILES}/mic/prompt-{lang}.txt")
+    print(f"\n[mic] the phone will show {sentences} sentences to read "
+          f"({len(prompt.split())} words) and a {seconds}s countdown.")
+    print("[mic] unlock the phone and keep it in hand; tap Allow if it asks "
+          "for the microphone.\n")
+
+    # Only lines from now on: -T 1 prints the last line and follows. The
+    # device's log buffer is left alone (no logcat -c on the owner's phone).
+    log = subprocess.Popen(
+        [adb_path(), "-s", dev.serial, "logcat", "-T", "1", "-v", "time",
+         "-s", "AsrBench:*"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True,
+        encoding="utf-8", errors="replace",
+    )
+    import threading
+
+    def echo() -> None:
+        for line in log.stdout:  # type: ignore[union-attr]
+            if "MIC:" in line or "ABORT" in line or "E/AsrBench" in line:
+                print("  " + line.split("AsrBench", 1)[-1].lstrip(":( 0123456789)").strip(),
+                      flush=True)
+
+    t = threading.Thread(target=echo, daemon=True)
+    t.start()
+    try:
+        run_instrumentation(dev, "micCheck", {
+            "arm": arm, "lang": lang, "seconds": str(seconds), "label": "mic",
+        }, timeout_s=timeout_s)
+    finally:
+        log.terminate()
+
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    out_dir = SELF_RECORDED / f"{stamp}-{lang}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    listing = shell(dev, f"ls {APP_FILES}/mic/ 2>/dev/null", check=False).split()
+    have = {p.name for p in SELF_RECORDED.rglob("*") if p.is_file()}
+    for name in listing:
+        name = name.strip()
+        if not name or name.startswith("prompt-") or name in have:
+            continue
+        sh(dev, "pull", f"{APP_FILES}/mic/{name}", str(out_dir / name))
+        print(f"[mic] pulled {name} -> {out_dir.relative_to(ROOT)} (gitignored)")
+
+
 def clean_device(dev: Device) -> None:
     """Remove pushed corpus and results. Scoped to §11.2 paths only."""
     print(f"[clean] removing {APP_FILES}/corpus and {APP_FILES}/results")
@@ -232,6 +315,13 @@ def main() -> int:
     ap.add_argument("--moonshine-options", metavar="K=V,...",
                     help="arm C: Moonshine option overrides for an ablation, e.g. "
                          "max_tokens_per_second=13; rows get a distinct variant")
+    ap.add_argument("--mic", metavar="ARM",
+                    help="the real-microphone check with this arm, e.g. "
+                         "D:parakeet-tdt-v3-int8, in the first of --langs; needs "
+                         "the owner at the phone (PLAN.md §7), then exits")
+    ap.add_argument("--mic-seconds", type=int, default=60)
+    ap.add_argument("--mic-sentences", type=int, default=6,
+                    help="corpus sentences shown on the phone to read")
     ap.add_argument("--skip-preflight", action="store_true")
     ap.add_argument("--timeout", type=int, default=3600)
     args = ap.parse_args()
@@ -283,8 +373,18 @@ def main() -> int:
         names = [m.strip() for m in args.push_models.split(",") if m.strip()]
         prepare_dirs(dev, model_dirs=names)
         push_models(dev, names)
-        if args.arms == "A" and not args.label:
+        if args.arms == "A" and not args.label and not args.mic:
             return 0
+
+    if args.mic:
+        prepare_dirs(dev)
+        lang = args.langs.split(",")[0].strip()
+        run_mic_check(dev, args.mic, lang, args.mic_seconds, args.mic_sentences,
+                      timeout_s=args.timeout)
+        from devicelib import battery
+        bat = battery(dev)
+        print(f"[post] battery: {bat.get('pct')}% {bat.get('temp_c')} C")
+        return 0
 
     if not args.no_push:
         prepare_dirs(dev)

@@ -18,10 +18,12 @@ import com.k2fsa.sherpa.onnx.Vad
 import com.k2fsa.sherpa.onnx.VadModelConfig
 import io.github.davamix.asrbench.Arm
 import io.github.davamix.asrbench.ArmResult
-import io.github.davamix.asrbench.PacedFeeder
+import io.github.davamix.asrbench.AudioFeeder
+import io.github.davamix.asrbench.SessionTimeline
 import io.github.davamix.asrbench.Telemetry
 import io.github.davamix.asrbench.TranscriptTracker
 import io.github.davamix.asrbench.Wav
+import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -270,6 +272,7 @@ class SherpaOfflineArm(
         audio: Wav.Audio,
         language: String,
         threads: Int,
+        feeder: AudioFeeder,
     ): ArmResult {
         if (recognizer == null && moonshine == null) {
             return ArmResult.failed("model not loaded", audio.durationMs)
@@ -291,7 +294,7 @@ class SherpaOfflineArm(
             v.reset()
             v.clear()
 
-            runClip(v, exec, audio)
+            runClip(v, exec, audio, feeder, SessionTimeline.forAudio(context, audio))
         } catch (e: Throwable) {
             ArmResult.failed("${e.javaClass.simpleName}: ${e.message}", audio.durationMs)
         }
@@ -327,6 +330,9 @@ class SherpaOfflineArm(
         v: Vad,
         exec: ExecutorService,
         audio: Wav.Audio,
+        feeder: AudioFeeder,
+        /** Non-null for a session-length clip; see [SessionTimeline]. */
+        timeline: SessionTimeline?,
     ): ArmResult {
         val st = State()
         val tracker = TranscriptTracker()
@@ -370,6 +376,7 @@ class SherpaOfflineArm(
                     val text = d.text
                     val lang = d.lang
                     val t1 = SystemClock.uptimeMillis()
+                    timeline?.addDecode(t1 - t0)
                     st.finalDecodes++
                     st.finalDecodeMs += t1 - t0
                     st.maxFinalDecodeMs = maxOf(st.maxFinalDecodeMs, t1 - t0)
@@ -379,7 +386,18 @@ class SherpaOfflineArm(
                     if (text.isNotBlank()) finals += text
                     st.finalized = index + 1
                     show(null)
-                    st.finalCommitMs = SystemClock.uptimeMillis()
+                    val committed = SystemClock.uptimeMillis()
+                    st.finalCommitMs = committed
+                    timeline?.event(JSONObject().apply {
+                        val sr = audio.sampleRate
+                        put("seg", index)
+                        put("start_ms", seg.start * 1000L / sr)
+                        put("end_ms", (seg.start + seg.samples.size) * 1000L / sr)
+                        put("closed_ms", submitted - st.feedStartMs)
+                        put("decode_start_ms", t0 - st.feedStartMs)
+                        put("commit_ms", committed - st.feedStartMs)
+                        put("text", text)
+                    })
                 } catch (e: Throwable) {
                     st.error = "final decode: ${e.javaClass.simpleName}: ${e.message}"
                 } finally {
@@ -396,8 +414,10 @@ class SherpaOfflineArm(
                     if (st.finalized > index) return@Runnable
                     val t0 = SystemClock.uptimeMillis()
                     val text = decode(samples).text
+                    val ms = SystemClock.uptimeMillis() - t0
+                    timeline?.addDecode(ms)
                     st.partialDecodes++
-                    st.partialDecodeMs += SystemClock.uptimeMillis() - t0
+                    st.partialDecodeMs += ms
                     if (st.finalized > index) return@Runnable
                     show(text)
                 } catch (e: Throwable) {
@@ -420,7 +440,7 @@ class SherpaOfflineArm(
             }
         }
 
-        val stats = PacedFeeder(audio).feed(
+        val stats = feeder.feed(
             sink = { pcm, _ ->
                 val f = FloatArray(pcm.size) { pcm[it] / 32768f }
                 f.copyInto(heard, fed)
@@ -449,7 +469,8 @@ class SherpaOfflineArm(
                 }
             },
             onStart = { st.feedStartMs = SystemClock.uptimeMillis() },
-            shouldStop = { st.error != null },
+            shouldStop = { st.error != null || timeline?.abortReason != null },
+            onProgress = timeline?.progress,
         )
         val speechEnd = SystemClock.uptimeMillis()
 
@@ -472,6 +493,7 @@ class SherpaOfflineArm(
             }
         }
         val drainEnd = SystemClock.uptimeMillis()
+        timeline?.finish()
 
         // When the text became final: the last final decode's commit. Moonshine
         // is measured the same way, from its last completed line.
@@ -491,7 +513,7 @@ class SherpaOfflineArm(
             maxSlipMs = stats.maxSlipMs,
             audioDurationMs = audio.durationMs,
             peakRssMb = Telemetry.peakRssMb(),
-            error = st.error
+            error = st.error ?: timeline?.abortReason
                 ?: if (timedOut) "timed out waiting for decodes after ${drainEnd - speechEnd}ms" else null,
             extra = mapOf(
                 "variant" to variantKey,
@@ -534,7 +556,10 @@ class SherpaOfflineArm(
                 "rss_mb" to Telemetry.currentRssMb(),
                 "rss_after_load_mb" to rssAfterLoadMb,
                 "peak_rss_after_load_mb" to peakRssAfterLoadMb,
-            ) + if (moonshine != null) mapOf(
+            ) + (if (timeline != null) mapOf(
+                "timeline" to timeline.windowsJson(),
+                "final_events" to timeline.eventsJson(),
+            ) else emptyMap()) + if (moonshine != null) mapOf(
                 "moonshine_options" to
                     moonshineOptions.joinToString(",") { "${it.name}=${it.value}" },
                 // Must be 1: more would mean Moonshine re-segmented the audio.

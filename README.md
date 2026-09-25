@@ -10,24 +10,28 @@ This repo is the lab notebook, not the final report. It was made public before
 any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
-**Status:** Phases 0–4 complete; Phase 5 (sustained sessions, microphone
-check, final write-up) not started. **The answer to the central question:
-one model can serve both languages live on this phone, and it is Parakeet**
-([§1 answer](#spanish-across-the-matrix-and-the-answer-to-1)). It is the
+**Status: complete** (Phases 0–5), and tagged. **The answer to the central
+question: one model can serve both languages live on this phone, and it is
+Parakeet** ([recommendation](#trade-offs-and-the-recommendation)). It is the
 most accurate Spanish option measured, 4.47% WER against 7.2–7.4% for every
 per-language alternative (the platform recognizer and Moonshine's Spanish
 streaming model), and level with the best English models on clean speech.
-Two models buy size and heat, not Spanish accuracy. Along the way: Moonshine
-medium is the most accurate English model
+Over six continuous minutes it used 0.6 of real time with no drift
+([sessions](#six-minute-sessions-does-anything-fall-behind)). Pad each VAD
+segment with half a second of silence, or it drops whole sentences. Two
+models buy size and heat, not Spanish accuracy: Moonshine small-en +
+small-es is the smaller, cooler, MIT-licensed alternative. Along the way:
+Moonshine medium is the most accurate English model
 ([English on 100 clips](#english-on-100-clips-per-source)); Moonshine's
 Spanish streaming model exists after all
 ([finding](#moonshines-spanish-streaming-models-are-on-its-cdn-not-on-huggingface));
-Arm C is accurate but too slow to be live
-([Arm C](#arm-c-moonshine-base-es-spanish-65-mb)); and Spanish only looked
-slower to show text
-([finding](#spanish-looked-slower-to-show-text-it-was-the-clips-leading-silence)).
-Revised figures are marked where they occur. See the
-[Phase 4 summary](summaries/phase-4-spanish.md).
+Spanish only looked slower to show text
+([finding](#spanish-looked-slower-to-show-text-it-was-the-clips-leading-silence));
+and the real-microphone check found the file-fed method ~0.2 s optimistic
+on timing, and exact on text
+([microphone check](#the-real-microphone-check)). Revised figures are marked
+where they occur. See the [Phase 5 summary](summaries/phase-5-sessions-and-verdict.md)
+and the final table in [`results/`](results/README.md).
 
 ---
 
@@ -38,7 +42,7 @@ Revised figures are marked where they occur. See the
 | [Why this is not obvious](#why-this-is-not-obvious) | Why live ASR is a different problem from batch ASR, and the English/Spanish asymmetry the experiment exists to price |
 | [Hardware under test](#hardware-under-test) | The phone, its SoC, and why no published number comes from an emulator |
 | [The matrix](#the-matrix) | The five arms, with current status per arm |
-| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), [Arm B: Moonshine](#arm-b-moonshine-streaming-english), [Arms D and E: Parakeet and Whisper](#arms-d-and-e-offline-models-made-live-both-languages), [English on 100 clips per source](#english-on-100-clips-per-source), [Arm C: Moonshine `base-es`](#arm-c-moonshine-base-es-spanish-65-mb), and [**Spanish across the matrix, and the answer to §1**](#spanish-across-the-matrix-and-the-answer-to-1) |
+| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), [Arm B: Moonshine](#arm-b-moonshine-streaming-english), [Arms D and E: Parakeet and Whisper](#arms-d-and-e-offline-models-made-live-both-languages), [English on 100 clips per source](#english-on-100-clips-per-source), [Arm C: Moonshine `base-es`](#arm-c-moonshine-base-es-spanish-65-mb), [**Spanish across the matrix, and the answer to §1**](#spanish-across-the-matrix-and-the-answer-to-1), [six-minute sessions](#six-minute-sessions-does-anything-fall-behind), [the real-microphone check](#the-real-microphone-check), and [**trade-offs and the recommendation**](#trade-offs-and-the-recommendation) |
 | [Metrics](#metrics) | What is measured and why RTF alone would mislead |
 | [Method](#method-paced-file-fed-streaming) | Paced file-fed streaming — the one implementation detail everything rests on |
 | [Corpus](#corpus) | How the audio was built, and the concatenation trick for scored continuous speech |
@@ -47,8 +51,9 @@ Revised figures are marked where they occur. See the
 | [Model licences](#model-licences) | What each arm's weights permit, including one that blocks shipping |
 | [Repo layout](#repo-layout) | Where everything lives |
 | [A note on the test device](#a-note-on-the-test-device) | The safety policy, and why disabling thermal throttling is refused twice over |
-| [summaries/](summaries/) | One short write-up per phase — [Phase 1: Arm A](summaries/phase-1-arm-a.md), [Phase 2: Arm B](summaries/phase-2-arm-b.md) and [Phase 3: Arms D and E](summaries/phase-3-arms-d-e.md), with later revisions marked |
-| [HANDOVER.md](HANDOVER.md) | State, commands and constraints for running the next phase in a fresh session |
+| [summaries/](summaries/) | One short write-up per phase — [1: Arm A](summaries/phase-1-arm-a.md), [2: Arm B](summaries/phase-2-arm-b.md), [3: Arms D and E](summaries/phase-3-arms-d-e.md), [4: Spanish and the answer](summaries/phase-4-spanish.md) and [5: sessions, microphone, verdict](summaries/phase-5-sessions-and-verdict.md), with later revisions marked |
+| [results/README.md](results/README.md) | The final table, per arm and language, and the recommendation |
+| [HANDOVER.md](HANDOVER.md) | Where things stand, open questions, and how to pick the work up in a fresh session |
 
 ### Findings index
 
@@ -85,11 +90,17 @@ anywhere else.
 | 26 | [Two ONNX Runtimes in one APK collide at packaging](#two-onnx-runtimes-in-one-apk-collide-at-packaging) | Integration gotcha |
 | 27 | [sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default](#sherpa-onnxs-kotlin-vad-splits-utterances-after-5-seconds-by-default) | Integration gotcha |
 | 28 | [The battery temperature an app can read can be minutes old](#the-battery-temperature-an-app-can-read-can-be-minutes-old) | Measurement integrity |
-| 29 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
+| 29 | [The English session was built from the very quiet recordings](#the-english-session-was-built-from-the-very-quiet-recordings) | Corpus confound |
+| 30 | [Two 6-minute sessions in one run would have run for 12 minutes](#two-6-minute-sessions-in-one-run-would-have-run-for-12-minutes) | Safety policy gap |
+| 31 | [The 43 °C abort was checked only between clips](#the-43-c-abort-was-checked-only-between-clips) | Safety policy gap |
+| 32 | [The phone under test is also someone's phone](#the-phone-under-test-is-also-someones-phone) | Measurement integrity |
+| 33 | [The paced feeder hands audio over one frame early](#the-paced-feeder-hands-audio-over-one-frame-early) | Measurement integrity |
+| 34 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
 
-> **New here?** Start with the [Phase 3 summary](summaries/phase-3-arms-d-e.md),
-> then [Phase 2](summaries/phase-2-arm-b.md) and [Phase 1](summaries/phase-1-arm-a.md),
-> for results without the process. Then [Findings](#findings-and-dead-ends) for
+> **New here?** Start with [the recommendation](#trade-offs-and-the-recommendation)
+> and the [Phase 5 summary](summaries/phase-5-sessions-and-verdict.md), then the
+> [Phase 4 summary](summaries/phase-4-spanish.md) for how the answer was
+> reached, for results without the process. Then [Findings](#findings-and-dead-ends) for
 > what was learned the hard way, and [`PLAN.md`](PLAN.md) for the full
 > experiment design and the reasoning behind every decision.
 
@@ -138,9 +149,9 @@ the quantity of interest.
 | # | Arm | Streaming | EN | ES | Size | Runtime | Role | Status |
 |---|---|---|---|---|---|---|---|---|
 | A | Android on-device recognizer | native | ✅ | ✅ | **0 MB** | platform | The bar to beat | ✅ **measured, both** |
-| B | Moonshine streaming tiny/small/medium (en), small (es) | native | ✅ | ✅ | 78 / 224 / 416 MB; es 122 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ✅ **measured, all English sizes; Spanish small (Phase 4)** |
+| B | Moonshine streaming tiny/small/medium (en), small (es) | native | ✅ | ✅ | 78 / 224 / 416 MB; es 122 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ✅ **measured, all English sizes; Spanish small (Phase 4); sessions for small and medium (Phase 5)** |
 | C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ✅ **measured, Spanish** |
-| D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ✅ **measured, both** |
+| D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ✅ **measured, both; sessions (Phase 5); recommended** |
 | E | Whisper small + base int8 (VAD-segmented) | no | ✅ | ✅ | 375 / 161 MB | sherpa-onnx | Known baseline / calibration | ✅ **measured, both sizes, both languages** |
 
 Arm A decides whether bundling a model is justified at all. If the platform
@@ -425,6 +436,9 @@ and cost rows are the Phase 2 runs.
   `rtf_sustained` held at 0.79–0.81 and final latency showed no trend while
   the phone warmed from 33.5 to 35 °C. So there was no throttling visible at
   this duty cycle, but a continuous session is a harder test.
+  **Measured in Phase 5:** over six continuous minutes, small used 0.70 (en)
+  and 0.45 (es) of real time and medium 0.78, with no drift
+  ([sessions](#six-minute-sessions-does-anything-fall-behind)).
 - **The thread count is not controlled for Arm B.** The harness records
   `threads: 4`, but the SDK has no such setting, so ONNX Runtime's default
   pool applies ([finding](#moonshine-015-has-no-thread-count-setting)).
@@ -574,7 +588,9 @@ source only.
   first text forward by up to 300 ms and cost more compute.
 - **Per clip, not sustained.** No session runs yet. Parakeet's worst clip used
   0.85 of real time with partials, so a longer, hotter session is a fair
-  question.
+  question. **Measured in Phase 5:** 0.59 (en) and 0.61 (es) over six
+  continuous minutes, worst 30 s 0.73, no drift
+  ([sessions](#six-minute-sessions-does-anything-fall-behind)).
 - **Temperatures lag** ([finding](#the-battery-temperature-an-app-can-read-can-be-minutes-old)).
   The cooling pauses are counted from the gate's own log.
 
@@ -829,6 +845,200 @@ yet measured, and Phase 5 covers: 5–10 minute continuous sessions for the
 surviving stacks (Parakeet uses ~0.6 of real time with partials), and a
 real-microphone check.
 
+> **Phase 5 measured both.** Nothing falls behind over six continuous
+> minutes, and live microphone input behaves like the paced file feed except
+> that text arrives ~0.2 s later. The answer and the recommendation stand;
+> see [the recommendation](#trade-offs-and-the-recommendation).
+
+### Six-minute sessions: does anything fall behind?
+
+`rtf_sustained` is defined over 5–10 minutes of continuous speech (PLAN.md
+§6). A stack can keep up clip by clip and still fall behind the microphone
+once the phone is hot, and then never catch up. Phases 2–4 measured every
+bundled model per clip only. Phase 5 ran the surviving stacks on one
+continuous session per language: 34 English utterances (6.1 min, the
+level-matched copy; [finding](#the-english-session-was-built-from-the-very-quiet-recordings))
+and 27 Spanish ones (6.2 min), joined by 0.5–1.5 s of silence and fed in
+real time. One repetition, one stack per run, the two sessions back to back
+with the mandatory 2-minute break between them. The phone was unplugged and
+idle on its home screen, screen on, and the system log confirms nobody used
+it during these runs (two earlier runs were lost to that;
+[finding](#the-phone-under-test-is-also-someones-phone)).
+
+Each session row carries a timeline: every 30 s of audio, the compute spent
+in that stretch, how late the feeder was running, battery temperature,
+memory, and whether the phone was in use. For every final segment or line it
+records when the text was committed. Final text per utterance is timed from
+the end of that utterance's audio, the same reference as the per-clip
+figures. `scripts/session_report.py` prints all of it.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/sessions-dark.svg">
+  <img alt="Share of real time spent computing per 30 seconds across a 6-minute session. English: Moonshine medium 0.68-0.91, Moonshine small 0.61-0.77, Parakeet 0.42-0.73. Spanish: Parakeet 0.56-0.73, Moonshine small-es 0.35-0.51. All well below 1.0 throughout." src="docs/figures/sessions-light.svg">
+</picture>
+
+| 6-minute session | Parakeet, en | Parakeet, es | Moonshine small-en | Moonshine small-es | Moonshine medium-en |
+|---|---|---|---|---|---|
+| **Compute over the session (`rtf_sustained`)** | **0.59** | **0.61** | **0.70** | **0.45** | **0.78** |
+| Same, per clip (Phases 3–4) | 0.62 | 0.56 | 0.73 | 0.43 | 0.81 |
+| Worst 30 s window | 0.73 | 0.73 | 0.77 | 0.51 | 0.91 |
+| Feeder late by, worst | 42 ms | 35 ms | 1.4 s | 1.2 s | 1.6 s |
+| Final text per utterance, median / p90 / worst | 0 / 366 / 1470 ms | 23 / 416 / 1294 ms | 0 / 646 / 1356 ms | 0 / 178 / 752 ms | 220 / 919 / 2012 ms |
+| Final text drifts over the session? | no (p = 0.27) | no (p = 0.24) | no (p = 0.97) | no (p = 0.47) | no (p = 0.41) |
+| Battery temperature, start → end | 32.5 → 35.0 °C | 34.2 → 35.7 °C | 33.0 → 35.2 °C | 33.2 → 33.5 °C | 33.2 → 36.7 °C |
+| Resident memory at 30 s → end | 935 → 1066 MB | 1050 → 1111 MB | 798 → 969 MB¹ | 764 → 799 MB¹ | 819 → 936 MB |
+| WER on the session | 11.14%² | 6.26% | 7.25% | 8.62% | **6.74%** |
+| Battery used | 2 pts | 2 pts | 2 pts | 2 pts | 3 pts |
+
+¹ Both Moonshine small models were loaded in that run; an app would hold
+one. ² 8.3% had one sentence the model returned empty been transcribed
+(point 4). The
+platform recognizer's Spanish session (Phase 1) scored 6.54% on the same
+audio. "Drifts" is a rank correlation between an utterance's position in
+the session and how long its final text took, tested by permutation.
+
+**What the sessions answer:**
+
+1. **Nothing falls behind.** Over six continuous minutes every stack used
+   what it used per clip, within 0.05, and its worst 30 seconds stayed well
+   under real time: Parakeet 0.73, Moonshine small 0.77, medium 0.91.
+   Moonshine stalls its feeder while it decodes, by up to 1.6 s at a time,
+   because it decodes inside `addAudio()`
+   ([finding](#moonshine-runs-inference-inside-addaudio)). That delay did
+   not accumulate: the feeder's lateness stayed in the same range from the
+   first minute of a session to the last.
+2. **No throttling in six minutes.** Final-text lag shows no trend over any
+   session. Parakeet's English windows do rise, from ~0.5 to ~0.7 of real
+   time, but that is the audio: its later sentences are longer (9.1 s
+   against 10.6 s on average), and partials re-decode everything said so far.
+   Its decode speed, time per second of audio, got slightly faster over the
+   session (105 → 92 ms), and its Spanish session, run next on a warmer
+   phone, shows no trend at all. The phone warmed by up to 3.5 °C per
+   session, to at most 36.7 °C, and the platform never reported a thermal
+   status above "none".
+   This phone reports no thermal headroom.
+3. **Memory creeps up during a session.** Every stack ended a session
+   35–170 MB above where it stood at 30 s. Parakeet went from 935 to
+   1111 MB across its two sessions in one process, above the 1027–1034 MB
+   of the per-clip runs. It is not a steady leak: Moonshine medium's fell
+   back by 100 MB mid-session. What grows was not established; the ONNX
+   Runtime allocator sizing itself to the longest segment seen is one
+   candidate. Over longer use than 10 minutes this needs measuring.
+4. **Parakeet dropped a whole sentence.** One of its 55 English segments,
+   6.9 s of clean speech, came back empty: 22 words, 2.8 of the session's
+   11.1 WER points. The same cut, decoded on a PC with 0.5 s of silence in
+   front, gives the sentence word for word. It is the failure found on short
+   clips ([finding](#parakeet-can-return-nothing-for-a-tightly-cut-segment)),
+   and it is the strongest argument for padding.
+5. **Session WER compares stacks, not phases.** The session sentences are
+   not the short clips' sentences, and they are harder: longer, with
+   abbreviations read aloud ("GBP", "SANParks"). On the same audio,
+   Moonshine medium leads English (6.74%, against small's 7.25% and
+   Parakeet's 8.3% with the dropped sentence restored) and Parakeet leads Spanish
+   (6.26%, against the platform's 6.54% and Moonshine's 8.62%). One session
+   per language is one reading of each, not an interval.
+
+**Known limits:** one session per language per stack, one repetition, so
+these are indicative. The sessions are 6 minutes, inside the 10-minute cap
+of the safety policy, and a longer one could still find throttling.
+Temperatures lag
+([finding](#the-battery-temperature-an-app-can-read-can-be-minutes-old)).
+
+### The real-microphone check
+
+Every measured run is file-fed (PLAN.md D5), so the method rests on a claim:
+pacing a file to the wall clock shows a model what a live microphone would.
+The check tests that directly. The phone's owner read six corpus sentences
+aloud while one stack transcribed the microphone live
+(`AudioRecord`, `VOICE_RECOGNITION` source, the same 100 ms frames). The
+recording was kept, and the same samples then went through the same stack
+again, file-fed as every measured run is. Same audio, same arm, two feeds.
+Four takes of 60 s: Parakeet and Moonshine small, English and Spanish.
+
+| Take, live against file-fed | Parakeet, en | Parakeet, es | Moonshine small-en | Moonshine small-es |
+|---|---|---|---|---|
+| Text | **identical** | **identical** | 2 words of 82 differ | **identical** |
+| Compute, share of real time | 0.39 / 0.37 | 0.34 / 0.33 | 0.54 / 0.54 | 0.31 / 0.31 |
+| Feeder late by, worst | 20 / 20 ms | 19 / 28 ms | 923 / 798 ms | 517 / 498 ms |
+| Segment boundaries | identical | identical | differ slightly | differ slightly |
+| **Final text later live, per segment (median)** | **+210 ms** | **+208 ms** | +132 ms | +256 ms |
+
+**What the check answers:**
+
+1. **The simulation holds for text and compute.** Parakeet produced
+   byte-identical text from the live microphone and from the file, and
+   Moonshine's Spanish did too. Moonshine's English differed by two words,
+   within the small repetition-to-repetition variation its English streaming
+   showed in Phase 2. Compute matched within 0.02 everywhere.
+2. **Live text arrives ~0.2 s later, and half of that is the method.** With
+   identical segments, Parakeet's VAD closed each one 0.19–0.20 s later live
+   (relative to the audio) and its text committed 0.21 s later
+   ([finding](#the-paced-feeder-hands-audio-over-one-frame-early)). About
+   0.1 s is the paced feeder releasing each 100 ms frame at the start of its
+   slot, where a microphone can deliver it only at the end. The rest is the
+   phone's capture path. Every first-text and final-text figure in this
+   README is therefore about 0.2 s optimistic for a live microphone. The
+   shift is the same for every file-fed arm, so no ranking changes. Moonshine
+   shows the same shift less cleanly, because both of its feeds spend much
+   of their time waiting for its decoder.
+3. **This microphone is quiet, and Moonshine hears it.** Speech reached the
+   model at −39 to −42 dBFS RMS: about 17 dB below the level-matched corpus
+   and 20 dB above the very quiet FLEURS English on which Moonshine returns
+   nothing. Moonshine produced text for every line. So Arm B's point 5
+   guessed wrong about the level, not about the outcome.
+
+What the takes scored against the script they read is not published. The
+recordings are the owner's voice and stay local (PLAN.md §11.7), and one
+reader in one room is a realism check, not a measurement (§8).
+
+### Trade-offs, and the recommendation
+
+The per-clip results, drawn as costs against accuracy. Lower and further
+left is better. Blue is Parakeet, orange Moonshine's streaming models, gray
+everything else. Hollow points were measured on 20 clips per source, filled
+ones on 100.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/wer-disk-dark.svg">
+  <img alt="WER against disk size, for Spanish, clean English and noisy English. Parakeet (670 MB) is lowest in Spanish and near the lowest in English; the platform recognizer (0 MB) is competitive except on noisy English at 27%." src="docs/figures/wer-disk-light.svg">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/wer-final-dark.svg">
+  <img alt="WER against time to final text. Parakeet, Moonshine and the platform recognizer finish within 0.8 s of the speaker stopping; Arm C and Whisper small take 2.4-2.8 s." src="docs/figures/wer-final-light.svg">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/wer-rss-dark.svg">
+  <img alt="WER against peak memory. Parakeet peaks near 1 GB; Moonshine small near 0.6-0.8 GB; the platform recognizer is not shown because it runs in Google's process." src="docs/figures/wer-rss-light.svg">
+</picture>
+
+**Recommendation.** On this phone, ship **Parakeet as the one model for
+both languages, and pad every VAD segment with about half a second of
+leading silence.** It is the most accurate Spanish option measured (4.47%,
+about 40% fewer errors than any per-language alternative), level with the
+best English model on clean speech, and within reach of it on noisy
+speech. Over six continuous minutes it used 0.6 of real time with no drift.
+Its costs: 670 MB of disk, ~1.1 GB resident, which on a 6 GB phone pushes
+other apps out of memory, and first text 1.0–1.5 s after speech starts,
+plus ~0.2 s from a live microphone. The padding is not optional polish:
+unpadded, it silently drops whole sentences.
+
+If disk, memory or heat matter more than Spanish accuracy, ship **Moonshine
+small-en + small-es**: 346 MB, MIT-licensed, one runtime, 0.45–0.70 of real
+time, the coolest bundled stack, and Spanish at the platform recognizer's
+level (7.24%). **Moonshine medium-en** is the most accurate English model
+(4.71% / 7.02%) if English matters most and 416 MB more is acceptable.
+
+**Did Arm A make bundling unnecessary? No.** The platform recognizer is
+free and fast, and its Spanish is as good as Moonshine's. But it misses one
+word in four on noisy English (27.09%, against 7–9% for every bundled
+English model), it needs an on-device language pack the user may not have,
+and it belongs to Google, not to the app.
+
+The final table, per arm and language, is in
+[`results/README.md`](results/README.md).
+
 ## Metrics
 
 Real-time factor alone is a batch metric and would mislead here.
@@ -856,16 +1066,24 @@ sentence twice identically, so mic input would confound every comparison with
 your own delivery.
 
 WAV is pushed through each streaming API in **wall-clock-paced 100 ms chunks**,
-so the model sees exactly what it would see from a live microphone — but
+so the model sees what it would see from a live microphone — but
 deterministically, and identically across every arm.
+
+> **Corrected in Phase 5.** Not exactly what a microphone would give: each
+> chunk is released at the start of its 100 ms, where a microphone can only
+> deliver it at the end. The real-microphone check measured the result:
+> identical text, identical compute, and text ~0.2 s later live, half of it
+> this head start and half the phone's capture path
+> ([finding](#the-paced-feeder-hands-audio-over-one-frame-early)).
 
 Ground truth for continuous audio comes from a concatenation trick: scored
 clips from a reference dataset are joined with inserted silence gaps. That
 yields realistic multi-minute continuous speech **with an exact reference
 transcript**, which hand-recorded audio cannot give.
 
-A single real-microphone sanity check runs at the very end. That is
-validation, not measurement.
+A single real-microphone check runs at the very end
+([results](#the-real-microphone-check)). That is validation, not
+measurement.
 
 ## Corpus
 
@@ -875,7 +1093,7 @@ Built by `scripts/build_corpus.py` from pinned dataset revisions
 | Bucket | Content | Purpose |
 |---|---|---|
 | `short` | 100 clips × 3 sources (FLEURS `en_us`, FLEURS `es_419`, LibriSpeech `test-other`), plus a level-matched copy of every English FLEURS clip. 3–8 s (mean 5.4–6.5 s), except Spanish clips 20–99 at 3–10 s (mean 8.6 s) | latency per utterance; accuracy |
-| `session` | 1 per language, ~6 min, 0.5–1.5 s gaps | sustained RTF, thermals |
+| `session` | 1 per language, ~6 min, 0.5–1.5 s gaps, plus a level-matched copy of the English one | sustained RTF, thermals |
 
 Sources are deliberately symmetric: FLEURS `en_us` and `es_419` are the same
 corpus recorded the same way in both languages, so an English-vs-Spanish
@@ -883,7 +1101,7 @@ comparison is not confounded by domain or recording conditions. LibriSpeech
 `test-other` adds the noisy-English stress case that FLEURS's clean read
 speech does not cover.
 
-Current build: 402 clips, 56.6 minutes total (en 2202.4 s, es 1193.9 s),
+Current build: 403 clips, 62.7 minutes total (en 2565.8 s, es 1193.9 s),
 all 16 kHz mono PCM16. A hundred of them are `fleurs_en_norm`: the English
 FLEURS clips lifted by a static gain to −23 dBFS RMS, because the originals
 are recorded ~40 dB quieter than the other sources
@@ -921,6 +1139,13 @@ re-measured on the new clips
 ([results](#english-on-100-clips-per-source)): the very quiet originals would
 have added half again the phone time, for a question the ranking does not
 need.
+
+**The English session gained a level-matched copy in Phase 5**
+(`fleurs-en-norm-session`): the same 34 utterances at the same times, each
+lifted by its own static gain to −23 dBFS, because the original is the very
+quiet recording, on which Moonshine returns no text for some utterances
+([finding](#the-english-session-was-built-from-the-very-quiet-recordings)).
+All 704 existing files rebuilt byte for byte.
 
 ## Reproducing
 
@@ -972,14 +1197,30 @@ a phone that cannot be replaced (§11.5):
     --arms B:moonshine-small-es --langs es --sources fleurs_es --reps 3 --no-push
 #   --moonshine-options max_tokens_per_second=13 runs an Arm C ablation
 
+# Phase 5: one 6-minute session per language, one stack per run. English
+# uses the level-matched session; the break between the two is automatic.
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --arms D:parakeet-tdt-v3-int8 --langs en,es --buckets session \
+    --sources fleurs_en_norm,fleurs_es --reps 1
+.venv/Scripts/python scripts/session_report.py        # inside each session
+
+# Phase 5: the real-microphone check. Needs the owner at the phone, which
+# shows the sentences to read and asks for microphone access. The take is
+# kept in corpus/self-recorded/, which is gitignored.
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --mic D:parakeet-tdt-v3-int8 --langs en --no-push
+.venv/Scripts/python scripts/mic_report.py            # live against file-fed
+
 .venv/Scripts/python scripts/compare.py --standard    # paired bootstrap: which gaps are real
 
 .venv/Scripts/python scripts/summarize.py             # score everything, on the PC
+.venv/Scripts/python scripts/plot_tradeoffs.py        # the figures in docs/figures/
 ```
 
 `run_bench.py` refuses to start unless storage, battery level, temperature and
-charging state are all in range, and it checks the device again inside the run
-loop, aborting at 43 °C. The device is always selected explicitly — with an
+charging state are all in range. Inside the run it checks again before every
+clip, waits out a call in progress, and aborts at 43 °C, including every
+30 s during a session-length clip. The device is always selected explicitly — with an
 emulator frequently attached at the same time, an implicit choice is how a
 benchmark ends up pointed at the wrong machine.
 
@@ -1608,6 +1849,13 @@ as a partial can disappear when the final arrives. The platform recognizer
 does something similar
 ([finding](#the-platform-recognizer-can-return-only-the-last-clause)).
 
+**It happens in continuous speech too, and not only to short segments.** In
+Phase 5's 6-minute English session, one of Parakeet's 55 VAD segments came
+back empty: 6.9 s of clean speech, a whole 22-word sentence ("In 1990, it
+was added to the list of world heritage sites in danger…"), 2.8 of the
+session's 11.1 WER points. Decoded on the PC, the same cut returns nothing;
+with 0.5 s of silence in front, it returns the sentence word for word.
+
 ### Years written as digits cost four WER points
 
 A third scoring bias, found in Phase 3, and again one that punished a
@@ -1843,6 +2091,132 @@ Consequences:
 Why the refresh is so irregular was not established. Charge-level changes do
 not explain it: most temperature updates came between them.
 
+### The English session was built from the very quiet recordings
+
+Phase 0 built both 6-minute sessions from the original FLEURS audio, before
+anyone knew FLEURS English is recorded ~40 dB quiet
+([finding](#fleurs-english-is-recorded-40-db-quieter-than-fleurs-spanish)).
+Phase 2 fixed the short clips with level-matched copies. The session was
+never fixed, because only Arm A had run it, and Arm A does not mind the
+level. Phase 5, about to run it on the bundled models, measured it first:
+
+| 6-minute session | Utterances | RMS level per utterance, median (range) | Below −50 dBFS |
+|---|---|---|---|
+| English, as built in Phase 0 | 34 | **−60.0 dBFS** (−69.7 to −21.7) | **25** |
+| Spanish | 27 | −23.5 dBFS (−29.5 to −18.7) | 0 |
+| English, level-matched (Phase 5) | 34 | −23.0 dBFS (−24.3 to −23.0) | 0 |
+
+On audio this quiet Moonshine returns no text for some utterances, at
+every size, and scores 25–30% WER
+([finding](#moonshine-returns-no-text-and-no-error-on-some-quiet-clips)). A
+session run on the original, three quarters of it that quiet, would have
+measured that failure again instead of sustained behaviour. So `build_corpus.py`
+now also writes `fleurs-en-norm-session`: the same 34 utterances at the same
+times, each lifted by its own static gain, by the same rule as the
+level-matched short clips. The gaps are digital silence and stay silent, and
+the reference is shared. It is built last, and a full rebuild reproduced
+every existing corpus file byte for byte. Arm A's Phase 1 English session
+(10.10%) was on the original and stands as measured.
+
+### Two 6-minute sessions in one run would have run for 12 minutes
+
+PLAN.md §11.3 caps continuous inference at 10 minutes. The harness enforced
+it by checking, before each clip, whether 10 minutes had *already* passed
+since the last break. With 5–10 s clips, that overshoots by one clip at
+most. With 6-minute sessions, the second session of a run starts at minute
+6, passes the check, and ends at minute 12.
+
+The check now looks ahead: the break comes before any clip that would *end*
+past the cap. A clip longer than the cap is refused outright, since no
+pause could fit it. On the emulator, a two-session run logged
+`session cap: 373s run + 363s clip would pass 600s -- pausing 120s`
+between its sessions.
+
+### The 43 °C abort was checked only between clips
+
+The same loop held the thermal abort: before each clip, stop at 43 °C.
+For a 6 s clip, that means a check every few seconds. For a 6-minute
+session, it means no check for 6 minutes. Nothing came near 43 °C in
+Phases 1–4 (35.5 °C was the highest reading), so this is a gap in the
+safety policy, not an incident.
+
+A clip of a minute or more now carries a timeline: every 30 s of audio, the
+harness reads the battery temperature, records it, and stops the feed at
+43 °C, recording why. The host-side watchdog that guards battery level
+during long runs now also force-stops the app at 43 °C, from `dumpsys
+battery`, as a second, independent check. Both read the same lagging
+sensor ([finding](#the-battery-temperature-an-app-can-read-can-be-minutes-old)).
+
+### The phone under test is also someone's phone
+
+Phases 1–4 ran with the phone left alone, so nothing in the harness checked
+that it was. In Phase 5 that went wrong twice, and only the system log
+showed it:
+
+- **A video call ran through a session.** The first Moonshine session run
+  overlapped a WhatsApp video call, camera running, for the whole Spanish
+  session. The row looked plausible: 0.57 of real time where the per-clip
+  runs gave 0.43, and a battery at 38.0 °C, the highest reading of the
+  experiment, still below the 43 °C abort. Nothing in it said "confounded".
+- **Clearing recent apps kills the benchmark.** MIUI's clean-up
+  (`OneKeyClean` in the log) ended that run during its cooling pause, and
+  the next attempt 4.5 minutes into its first session, the second time
+  after the phone was woken and Gmail opened. Instrumentation reports it as
+  `Process crashed`.
+
+Both runs are in `results/superseded/` or were discarded, and every number
+in this README comes from runs in which the log shows the phone idle. The
+harness now records, in every row and every 30 s of a session, whether the
+screen was on and whether a call was in progress (`AudioManager` mode, which
+covers VoIP), and waits before a clip while a call is in progress. It cannot
+stop a clean-up. What prevents both is agreeing phone time with its owner
+before a run, which is now how Phase 5 runs.
+
+The second episode also showed what a 1 GB model costs the rest of the
+phone. With the benchmark holding ~850 MB, waking the phone and opening two
+apps put it into "direct reclaim and thrashing", and the low-memory killer
+ended 21 cached apps in 17 seconds. The benchmark itself was not among
+them: a foreground-priority process outranks cached apps. That is one
+observation, not a measurement, but it is what ~1 GB resident means on a
+phone with ~2 GB available: a transcription app this size keeps running by
+pushing the user's other apps out of memory.
+
+### The paced feeder hands audio over one frame early
+
+The method's central claim (PLAN.md §7) is that pacing a file to the wall
+clock shows the model exactly what a live microphone would. The microphone
+check tested it with the same audio fed both ways
+([results](#the-real-microphone-check)). Text and compute matched. Timing
+did not: from the microphone, Parakeet's VAD closed every segment 0.19–0.20 s
+later relative to the audio, and final text committed 0.21 s later
+(medians over 29 segments, segments identical in both feeds).
+
+Half of that is in `PacedFeeder`. It releases frame *k*, the audio from
+*k*·100 to (*k*+1)·100 ms, at *k*·100 ms, the start of its slot. A
+microphone cannot hand over that audio before (*k*+1)·100 ms, the end of the
+slot, when the last sample of it has been spoken. So the file feed runs one
+frame, 100 ms, ahead of any live source. The other ~0.1 s is the phone's own
+capture path, which a file feed cannot contain at all.
+
+Finding 17 had already moved "end of speech" to the true end of the audio.
+That fixed the stamp, not the feed: the model still has the last frame
+100 ms before the audio ends. Consequences:
+
+- **Every first-text and final-text figure in this README is about 0.2 s
+  optimistic for a live microphone on this phone**, 0.1 s of it for any
+  microphone at all.
+- **Comparisons between arms are unaffected.** Every arm is fed by the same
+  feeder, so each gets the same head start. Where a model stalls its feeder,
+  as Moonshine does, the head start is partly used up waiting, and its live
+  penalty is smaller.
+- **The published numbers are left as measured.** Changing the feeder now
+  would make Phase 5 incomparable with Phases 1–4. A new harness should
+  release each frame at the end of its slot.
+
+This is what the microphone check was for: it is the one step in PLAN.md
+that is validation rather than measurement, and it found the one thing the
+simulation got wrong.
+
 ### Excluded before testing
 
 - **Vosk** — Kaldi-era HMM/DNN, no punctuation or casing, accuracy collapses on
@@ -1879,8 +2253,14 @@ corpus/
   manifest.json          # clip -> reference -> language -> duration bucket
   refs/                  # ground-truth transcripts
   audio/                 # gitignored, rebuildable
+  self-recorded/         # gitignored: the microphone check's takes (the owner's voice)
 results/                 # pulled JSON, one dir per device+date
-scripts/                 # fetch_corpus / build_corpus / fetch_models / fetch_runtime / run_bench / summarize / score
+  README.md              # the final table, per arm and language (PLAN.md §13)
+  superseded/            # runs kept as evidence, excluded from every aggregate
+docs/figures/            # the trade-off figures, light and dark (plot_tradeoffs.py)
+summaries/               # one short write-up per phase
+scripts/                 # fetch_corpus / build_corpus / fetch_models / fetch_runtime / run_bench
+                         # summarize / score / compare / session_report / mic_report / plot_tradeoffs
 ```
 
 ## A note on the test device
@@ -1897,8 +2277,16 @@ and it is *methodologically wrong* — live transcription runs hot for minutes,
 so throttling is part of the phenomenon being measured. Measuring the phone as
 users actually experience it is the honest result.
 
-`RECORD_AUDIO` is not declared or requested until Phase 5, because every
-measured run is file-fed and needs no microphone access.
+`RECORD_AUDIO` was not declared until Phase 5, because every measured run is
+file-fed and needs no microphone access. It is declared now for the single
+microphone check, and only that check's screen asks for it: the owner grants
+it on the phone. Granting it over adb (`pm grant`) would need MIUI's "USB
+debugging (Security settings)", which the safety policy rules out.
+
+The phone came out as it went in. At the end of Phase 5 the harness was
+uninstalled, which removed every model, clip, result and microphone take it
+had written, all of it inside the app's own directory; nothing was ever
+written outside it. Storage free was back at ~75 GB.
 
 ## Licence
 

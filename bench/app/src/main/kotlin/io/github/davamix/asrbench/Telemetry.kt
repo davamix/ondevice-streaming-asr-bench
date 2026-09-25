@@ -3,8 +3,10 @@ package io.github.davamix.asrbench
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.media.AudioManager
 import android.os.BatteryManager
 import android.os.Build
+import android.os.PowerManager
 import java.io.File
 
 /**
@@ -64,6 +66,46 @@ object Telemetry {
                     status == BatteryManager.BATTERY_STATUS_FULL
             } else null,
         )
+    }
+
+    /**
+     * Whether someone is using the phone. The test device is the owner's
+     * daily phone, and a video call during a Phase 5 session confounded it:
+     * the call's load and heat went into the arm's numbers, and nothing in
+     * the row showed it. `audioMode` is `AudioManager.MODE_*`; anything but
+     * MODE_NORMAL (0) means a call is ringing or in progress, VoIP included.
+     */
+    class Usage(val screenOn: Boolean?, val audioMode: Int?) {
+        val inCall: Boolean get() = audioMode != null && audioMode != AudioManager.MODE_NORMAL
+    }
+
+    fun usage(context: Context): Usage = Usage(
+        screenOn = runCatching {
+            context.getSystemService(PowerManager::class.java)?.isInteractive
+        }.getOrNull(),
+        audioMode = runCatching {
+            context.getSystemService(AudioManager::class.java)?.mode
+        }.getOrNull(),
+    )
+
+    class Thermal(val status: Int?, val headroom: Double?)
+
+    /**
+     * The platform's own thermal signal, which does not share the battery
+     * temperature's lag (README finding 28). `status` is
+     * `PowerManager.THERMAL_STATUS_*` (0 none .. 6 shutdown). `headroom` is
+     * `getThermalHeadroom(0)`: 1.0 is where the device starts severe
+     * throttling. It is null where the thermal HAL does not support it, and
+     * the platform returns NaN if asked more than about once a second, so
+     * callers sample it sparingly.
+     */
+    fun thermal(context: Context): Thermal {
+        val pm = context.getSystemService(PowerManager::class.java)
+            ?: return Thermal(null, null)
+        val status = runCatching { pm.currentThermalStatus }.getOrNull()
+        val headroom = runCatching { pm.getThermalHeadroom(0).toDouble() }.getOrNull()
+            ?.takeUnless { it.isNaN() }
+        return Thermal(status, headroom)
     }
 
     /** Non-identifying device description for the results header. */

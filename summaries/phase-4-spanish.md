@@ -21,6 +21,14 @@ phone, or do we ship a different model per language?*
 Measured 2026-09-24 and -25. Full method in the
 [README](../README.md#spanish-across-the-matrix-and-the-answer-to-1).
 
+> **Confirmed in Phase 5.** Over six continuous minutes Parakeet used 0.6 of
+> real time with no drift, and Moonshine small and medium held their
+> per-clip figures too. A real microphone gave identical text; timing figures
+> here are ~0.2 s optimistic for live input, for every arm alike. Padding is
+> now part of the recommendation, not an aside: unpadded, Parakeet dropped a
+> whole sentence mid-session. See the
+> [Phase 5 summary](phase-5-sessions-and-verdict.md).
+
 ---
 
 ## Results

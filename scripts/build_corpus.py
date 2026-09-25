@@ -299,6 +299,52 @@ def build_level_matched(shorts: list[dict], key: str, clips: list[dict]) -> list
     return out
 
 
+def build_level_matched_session(src: dict, key: str, clips: list[dict]) -> dict:
+    """A copy of session `src` with each utterance lifted as the shorts are.
+
+    The English session was built from the very quiet FLEURS recordings (25 of
+    its 34 utterances below -50 dBFS RMS), and on audio that quiet Moonshine
+    returns no text for some utterances, at every size. A session run on it
+    would measure that failure again, not sustained behaviour. Each utterance gets its own static gain to
+    LEVEL_MATCH_DBFS, by the rule `build_level_matched` applies to a short
+    clip; each is a different speaker. The gaps are digital silence and stay
+    silent. Utterance timings, and so the reference, are unchanged.
+    """
+    x = read_pcm16(ROOT / "corpus" / src["audio"]).astype(np.float64) / 32768.0
+    y = x.copy()
+    segs = src["segments"]
+    spans = [(int(round(s["start_s"] * SAMPLE_RATE)), int(round(s["end_s"] * SAMPLE_RATE)))
+             for s in segs]
+    gains = []
+    for i, (a, b) in enumerate(spans):
+        rms_db, peak_db = dbfs(x[a:b])
+        gain_db = min(LEVEL_MATCH_DBFS - rms_db, PEAK_CEILING_DBFS - peak_db)
+        # Measured on the utterance, applied out to the middle of each gap:
+        # segment times are rounded to the millisecond, and the gaps are
+        # zeros, so this cannot leave an edge sample of speech unlifted.
+        lo = 0 if i == 0 else (spans[i - 1][1] + a) // 2
+        hi = len(x) if i == len(spans) - 1 else (b + spans[i + 1][0]) // 2
+        y[lo:hi] = x[lo:hi] * 10 ** (gain_db / 20)
+        gains.append(round(gain_db, 2))
+    y = np.clip(np.round(y * 32768.0), -32768, 32767)
+    clip_id = src["clip_id"].replace("-session", "-norm-session")
+    rel = f"audio/session/{clip_id}.wav"
+    write_pcm16(y, ROOT / "corpus" / rel)
+    entry = {
+        **{k: v for k, v in src.items() if k not in ("clip_id", "audio", "source", "segments")},
+        "clip_id": clip_id,
+        "audio": rel,
+        "source": key,
+        "derived_from": src["clip_id"],
+        "segments": [{**seg, "clip_id": seg["clip_id"].replace("-session", "-norm-session"),
+                      "gain_db": g} for seg, g in zip(src["segments"], gains)],
+    }
+    clips.append(entry)
+    print(f"[level] {clip_id}: {len(gains)} utterances, gain {min(gains):+.1f} .. "
+          f"{max(gains):+.1f} dB -> {LEVEL_MATCH_DBFS} dBFS RMS")
+    return entry
+
+
 def build_session(key: str, rng: random.Random, exclude: set[str],
                   clips: list[dict]) -> dict:
     """Concatenate clips with silence gaps into one multi-minute session."""
@@ -431,6 +477,10 @@ def main() -> int:
                  count=EN_EXTRA_COUNT, first_index=len(shorts_ls),
                  exclude=frozenset(c["source_id"] for c in shorts_ls),
                  distinct=True)
+
+    # Phase 5: the English session, level-matched. Derived, not sampled, and
+    # last, so nothing above changes (see build_level_matched_session).
+    build_level_matched_session(session_en, "fleurs_en_norm", clips)
 
     manifest = {
         "schema": 1,

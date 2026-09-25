@@ -8,10 +8,12 @@ import ai.moonshine.voice.TranscriptEvent
 import ai.moonshine.voice.TranscriptEventListener
 import io.github.davamix.asrbench.Arm
 import io.github.davamix.asrbench.ArmResult
-import io.github.davamix.asrbench.PacedFeeder
+import io.github.davamix.asrbench.AudioFeeder
+import io.github.davamix.asrbench.SessionTimeline
 import io.github.davamix.asrbench.Telemetry
 import io.github.davamix.asrbench.TranscriptTracker
 import io.github.davamix.asrbench.Wav
+import org.json.JSONObject
 import java.io.File
 import java.util.function.Consumer
 
@@ -97,6 +99,7 @@ class MoonshineArm(
         audio: Wav.Audio,
         language: String,
         threads: Int,
+        feeder: AudioFeeder,
     ): ArmResult {
         val t = transcriber
             ?: return ArmResult.failed("transcriber not loaded", audio.durationMs)
@@ -104,6 +107,7 @@ class MoonshineArm(
         val tracker = TranscriptTracker()
         val state = State()
         val lines = LinkedHashMap<Long, String>()
+        val timeline = SessionTimeline.forAudio(context, audio)
 
         val listener = object : TranscriptEventListener() {
             override fun onLineStarted(e: TranscriptEvent.LineStarted) {
@@ -129,9 +133,20 @@ class MoonshineArm(
                 val line = e.line ?: return
                 lines[line.id] = line.text.orEmpty()
                 tracker.update(lines.values.joinToString(" ").trim())
-                state.finalMs = SystemClock.uptimeMillis()
-                state.lastTextMs = state.finalMs
+                val now = SystemClock.uptimeMillis()
+                state.finalMs = now
+                state.lastTextMs = now
                 state.linesCompleted++
+                // The line's span is on the stream's audio timeline, which
+                // starts with the feed, so it lines up with the corpus.
+                timeline?.event(JSONObject().apply {
+                    put("line", line.id)
+                    put("start_ms", (line.startTime * 1000).toLong())
+                    put("end_ms", ((line.startTime + line.duration) * 1000).toLong())
+                    put("commit_ms", now - state.feedStartMs)
+                    put("sdk_latency_ms", line.lastTranscriptionLatencyMs)
+                    put("text", line.text.orEmpty())
+                })
             }
 
             override fun onError(e: TranscriptEvent.Error) {
@@ -147,18 +162,20 @@ class MoonshineArm(
             t.startStream(stream)
 
             // Moonshine takes float PCM in [-1, 1]; the corpus is PCM16.
-            val stats = PacedFeeder(audio).feed(
+            val stats = feeder.feed(
                 sink = { pcm, _ ->
                     t.addAudioToStream(stream, pcm.toFloatPcm(), audio.sampleRate)
                 },
                 onStart = { state.feedStartMs = SystemClock.uptimeMillis() },
-                shouldStop = { state.error != null },
+                shouldStop = { state.error != null || timeline?.abortReason != null },
+                onProgress = timeline?.progress,
             )
             val speechEnd = SystemClock.uptimeMillis()
 
             // Flush: stopStream drains whatever the model still holds.
             t.stopStream(stream)
             val drainEnd = SystemClock.uptimeMillis()
+            timeline?.finish()
             if (state.finalMs == null) state.finalMs = drainEnd
             t.freeStream(stream)
 
@@ -192,7 +209,7 @@ class MoonshineArm(
                 maxSlipMs = stats.maxSlipMs,
                 audioDurationMs = audio.durationMs,
                 peakRssMb = Telemetry.peakRssMb(),
-                error = state.error,
+                error = state.error ?: timeline?.abortReason,
                 extra = mapOf(
                     "variant" to variant,
                     "arch" to arch,
@@ -212,7 +229,10 @@ class MoonshineArm(
                     "sdk_mean_latency_ms" to
                         if (state.sdkLatencyCount > 0)
                             state.sdkLatencySum / state.sdkLatencyCount else null,
-                ),
+                ) + if (timeline != null) mapOf(
+                    "timeline" to timeline.windowsJson(),
+                    "final_events" to timeline.eventsJson(),
+                ) else emptyMap(),
             )
         } catch (e: Throwable) {
             ArmResult.failed("${e.javaClass.simpleName}: ${e.message}", audio.durationMs)

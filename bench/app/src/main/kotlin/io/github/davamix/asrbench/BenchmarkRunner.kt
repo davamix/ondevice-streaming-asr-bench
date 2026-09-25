@@ -88,6 +88,13 @@ class BenchmarkRunner(
             "no clips matched languages=${config.languages} buckets=${config.buckets} " +
                 "sources=${config.sources.ifEmpty { listOf("all") }}"
         }
+        // A clip is fed without a pause, so one longer than the cap could
+        // not be run inside it at all.
+        val tooLong = clips.filter { it.durationS * 1000 > config.sessionCapMs }
+        check(tooLong.isEmpty()) {
+            "clips longer than the ${config.sessionCapMs / 1000}s continuous-inference " +
+                "cap (PLAN.md §11.3): ${tooLong.joinToString { it.clipId }}"
+        }
 
         Log.i(TAG, "matrix: ${config.arms.size} arms x ${clips.size} clips x ${config.reps} reps")
 
@@ -149,10 +156,15 @@ class BenchmarkRunner(
                     // matrix is allowed to exceed that in total, but only by
                     // being broken up -- the cap is on how long the phone runs
                     // hot without a pause, not on how much work it does.
+                    // The break comes before a clip that would *end* past the
+                    // cap, not after the cap has passed: two 6-minute
+                    // sessions back to back would otherwise run for 12.
                     val elapsed = System.currentTimeMillis() - sessionStart
-                    if (elapsed >= config.sessionCapMs) {
+                    val clipMs = (clip.durationS * 1000).toLong()
+                    if (elapsed + clipMs > config.sessionCapMs) {
                         breaks++
-                        Log.i(TAG, "session cap reached (${elapsed / 1000}s) -- " +
+                        Log.i(TAG, "session cap: ${elapsed / 1000}s run + ${clipMs / 1000}s clip " +
+                            "would pass ${config.sessionCapMs / 1000}s -- " +
                             "pausing ${config.sessionBreakMs / 1000}s (break #$breaks)")
                         // Checkpoint while nothing is being measured. Results
                         // are otherwise written only at the end, so a crash an
@@ -168,8 +180,23 @@ class BenchmarkRunner(
                     }
 
                     val before = Telemetry.battery(context)
+                    var usage = Telemetry.usage(context)
 
                     if (config.enforceThermal) {
+                        // The phone is the owner's. A call in progress would
+                        // put its load and heat into the measurement, so
+                        // wait it out, and stop if it does not end.
+                        if (usage.inCall) {
+                            Log.w(TAG, "phone in use: call in progress (audio mode " +
+                                "${usage.audioMode}); waiting")
+                            if (!waitWhileInCall()) {
+                                aborted = "a call stayed in progress for " +
+                                    "${IN_CALL_LIMIT_MS / 60_000} minutes"
+                                Log.e(TAG, "ABORT: $aborted")
+                                break@outer
+                            }
+                            usage = Telemetry.usage(context)
+                        }
                         val t = before.tempC
                         if (t != null && t >= config.abortTempC) {
                             aborted = "battery ${t} C >= abort threshold ${config.abortTempC} C"
@@ -217,6 +244,7 @@ class BenchmarkRunner(
                         batteryBefore = before,
                         batteryAfter = after,
                         modelLoadMs = loadMs[arm] ?: -1L,
+                        usage = usage,
                     )
                     rows++
 
@@ -249,6 +277,16 @@ class BenchmarkRunner(
         return Outcome(out, rows, aborted)
     }
 
+    /** Wait for a call to end, up to a bounded time. */
+    private fun waitWhileInCall(): Boolean {
+        val deadline = System.currentTimeMillis() + IN_CALL_LIMIT_MS
+        while (System.currentTimeMillis() < deadline) {
+            Thread.sleep(15_000)
+            if (!Telemetry.usage(context).inCall) return true
+        }
+        return false
+    }
+
     /** Wait for the battery to drop below [target], up to a bounded time. */
     private fun coolDown(target: Double): Boolean {
         val deadline = System.currentTimeMillis() + COOLDOWN_LIMIT_MS
@@ -264,6 +302,7 @@ class BenchmarkRunner(
     private companion object {
         const val TAG = "AsrBench"
         const val COOLDOWN_LIMIT_MS = 10 * 60 * 1000L
+        const val IN_CALL_LIMIT_MS = 30 * 60 * 1000L
 
         /** Upper bound on a single matrix run; the wake lock expires with it. */
         const val MAX_RUN_MS = 3 * 60 * 60 * 1000L

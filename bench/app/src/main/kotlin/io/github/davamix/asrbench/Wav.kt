@@ -79,6 +79,21 @@ object Wav {
         return Audio(out, sampleRate)
     }
 
+    /** Writes [audio] as 16 kHz mono PCM16, the format [read] accepts. */
+    fun write(file: File, audio: Audio) {
+        val data = audio.samples.size * 2
+        val bb = ByteBuffer.allocate(44 + data).order(ByteOrder.LITTLE_ENDIAN)
+        bb.put("RIFF".toByteArray(Charsets.US_ASCII)).putInt(36 + data)
+        bb.put("WAVE".toByteArray(Charsets.US_ASCII))
+        bb.put("fmt ".toByteArray(Charsets.US_ASCII)).putInt(16)
+        bb.putShort(1).putShort(1)                          // PCM, mono
+        bb.putInt(audio.sampleRate).putInt(audio.sampleRate * 2)
+        bb.putShort(2).putShort(16)                         // block align, bits
+        bb.put("data".toByteArray(Charsets.US_ASCII)).putInt(data)
+        bb.asShortBuffer().put(audio.samples)
+        file.writeBytes(bb.array())
+    }
+
     private fun tag(bb: ByteBuffer, at: Int): String =
         String(ByteArray(4) { bb.get(at + it) }, Charsets.US_ASCII)
 }

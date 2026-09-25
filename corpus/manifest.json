@@ -4885,6 +4885,295 @@
       "duration_s": 4.31,
       "source": "librispeech_other",
       "source_id": "8188-269288-0044"
+    },
+    {
+      "ref": "refs/fleurs-en-session.txt",
+      "language": "en",
+      "bucket": "session",
+      "duration_s": 363.325,
+      "utterances": 34,
+      "gap_range_s": [
+        0.5,
+        1.5
+      ],
+      "clip_id": "fleurs-en-norm-session",
+      "audio": "audio/session/fleurs-en-norm-session.wav",
+      "source": "fleurs_en_norm",
+      "derived_from": "fleurs-en-session",
+      "segments": [
+        {
+          "clip_id": "fleurs-en-norm-session-seg-000",
+          "source_id": "1964",
+          "start_s": 0.0,
+          "end_s": 11.88,
+          "text": "The 25 Dunlap broadsides still known to exist are the oldest surviving copies of the document. The original handwritten copy has not survived.",
+          "gain_db": 0.36
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-001",
+          "source_id": "1914",
+          "start_s": 12.634,
+          "end_s": 19.594,
+          "text": "Twentieth century research has shown that there are two pools of genetic variation: hidden and expressed.",
+          "gain_db": 41.26
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-002",
+          "source_id": "1867",
+          "start_s": 20.386,
+          "end_s": 27.406,
+          "text": "Plants make oxygen which humans breathe, and they take in carbon-dioxide which humans exhale (that is, breathe out).",
+          "gain_db": 41.4
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-003",
+          "source_id": "1797",
+          "start_s": 28.508,
+          "end_s": 40.148,
+          "text": "Everyone participates in society and uses transportation systems. Almost everyone complains about transportation systems.",
+          "gain_db": 28.51
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-004",
+          "source_id": "1979",
+          "start_s": 41.452,
+          "end_s": 51.532,
+          "text": "The official Falklands currency is the Falkland pound (FKP) whose value is set equivalent to that of one British pound (GBP).",
+          "gain_db": 39.88
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-005",
+          "source_id": "1798",
+          "start_s": 52.811,
+          "end_s": 64.031,
+          "text": "In its early days, the show was featured solely at the long-running internet radio site TogiNet Radio, a site focused on talk radio.",
+          "gain_db": 36.21
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-006",
+          "source_id": "1922",
+          "start_s": 64.531,
+          "end_s": 73.591,
+          "text": "There are of course Christian theological explanations for this tradition, but it may well be a pre-Christian Spring and Fertility ritual.",
+          "gain_db": 36.57
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-007",
+          "source_id": "1894",
+          "start_s": 74.39,
+          "end_s": 80.87,
+          "text": "A curry is a dish based on herbs and spices, together with either meat or vegetables.",
+          "gain_db": 37.81
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-008",
+          "source_id": "1673",
+          "start_s": 82.255,
+          "end_s": 92.335,
+          "text": "During the Revolutionary War, the thirteen states first formed a weak central government—with the Congress being its only component—under the Articles of Confederation.",
+          "gain_db": 38.28
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-009",
+          "source_id": "1851",
+          "start_s": 93.378,
+          "end_s": 99.798,
+          "text": "Rip currents are the returning flow from waves breaking off the beach, often at a reef or similar.",
+          "gain_db": 39.4
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-010",
+          "source_id": "1833",
+          "start_s": 100.535,
+          "end_s": 109.595,
+          "text": "Aristotle, a philosopher, theorised that everything is made up of a mixture of one or more of four elements. They were earth, water, air, and fire.",
+          "gain_db": 41.19
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-011",
+          "source_id": "1981",
+          "start_s": 111.054,
+          "end_s": 120.954,
+          "text": "If you only go ashore using shipboard excursions you will not need a separate visa (as of 2009).",
+          "gain_db": 1.83
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-012",
+          "source_id": "1731",
+          "start_s": 121.938,
+          "end_s": 129.418,
+          "text": "In the archipelagos and lakes you do not necessarily need a yacht.",
+          "gain_db": -0.84
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-013",
+          "source_id": "1707",
+          "start_s": 129.999,
+          "end_s": 140.919,
+          "text": "It is one of the main attractions of South Africa and it is considered the flagship of South African National Parks (SANParks).",
+          "gain_db": 27.78
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-014",
+          "source_id": "1771",
+          "start_s": 141.424,
+          "end_s": 153.324,
+          "text": "Remember that even though music on the main stages may have finished, there may be sections of the festival that will keep playing music until late into the night.",
+          "gain_db": -1.31
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-015",
+          "source_id": "1932",
+          "start_s": 154.656,
+          "end_s": 172.536,
+          "text": "Five minutes into the display a wind starts rolling in, about a minute later, the wind is reaching 70km/h... then the rain comes, but so hard and so large that it slaps your skin like a needle, then hail fell from the sky, people panicking and screaming and running over each other.",
+          "gain_db": 36.2
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-016",
+          "source_id": "1679",
+          "start_s": 173.229,
+          "end_s": 177.189,
+          "text": "Aerosmith have cancelled their remaining concerts on their tour.",
+          "gain_db": 39.94
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-017",
+          "source_id": "1704",
+          "start_s": 178.085,
+          "end_s": 188.345,
+          "text": "In 1990, it was added to the list of world heritage sites in danger, due to the threat of desert sands.",
+          "gain_db": 30.03
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-018",
+          "source_id": "1926",
+          "start_s": 188.938,
+          "end_s": 197.278,
+          "text": "Accepted were Aristotle's views on all matters of science, including psychology.",
+          "gain_db": 36.87
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-019",
+          "source_id": "1750",
+          "start_s": 198.503,
+          "end_s": 203.123,
+          "text": "The find also grants insight into the evolution of feathers in birds.",
+          "gain_db": 41.71
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-020",
+          "source_id": "1897",
+          "start_s": 204.025,
+          "end_s": 213.605,
+          "text": "In the north the region is bounded by the Sahel, and in the south and west by the Atlantic Ocean.",
+          "gain_db": 4.67
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-021",
+          "source_id": "1837",
+          "start_s": 215.017,
+          "end_s": 225.277,
+          "text": "Liberal criticism of the reconstruction effort has focused on the awarding of reconstruction contracts to perceived Washington insiders.",
+          "gain_db": 3.59
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-022",
+          "source_id": "1699",
+          "start_s": 226.335,
+          "end_s": 235.935,
+          "text": "Bishkek was described as sinking into a state of \"anarchy\" by one observer, as gangs of people roamed the streets and plundered stores of consumer goods.",
+          "gain_db": 37.09
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-023",
+          "source_id": "1815",
+          "start_s": 237.342,
+          "end_s": 248.282,
+          "text": "The fission bomb works on the principle that it takes energy to put together a nucleus with many protons and neutrons.",
+          "gain_db": 3.35
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-024",
+          "source_id": "1825",
+          "start_s": 249.061,
+          "end_s": 258.301,
+          "text": "If you want to be close to the action you're going to have to get in early to get a camping site close to the music.",
+          "gain_db": 26.12
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-025",
+          "source_id": "1795",
+          "start_s": 259.429,
+          "end_s": 272.809,
+          "text": "Since 1988, ballot boxes must be transparent so that voters and observers can witness that no envelopes are present at the start of the vote and that no envelopes are added except those of the duly counted and authorized voters.",
+          "gain_db": 39.41
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-026",
+          "source_id": "1848",
+          "start_s": 274.227,
+          "end_s": 283.467,
+          "text": "A car bomb detonated at police headquarters in Gaziantep, Turkey yesterday morning killed two police officers and injured more than twenty other people.",
+          "gain_db": 35.83
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-027",
+          "source_id": "1859",
+          "start_s": 284.252,
+          "end_s": 300.872,
+          "text": "towards the end of the Middle Ages western Europe began to develop their own style. one of the biggest developments of the time as a result of the crusades people began to use buttons to fasten clothing.",
+          "gain_db": 27.23
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-028",
+          "source_id": "1710",
+          "start_s": 301.411,
+          "end_s": 309.331,
+          "text": "Last week, METI announced that Apple had informed it of 34 additional overheating incidents, which the company called \"non-serious.\"",
+          "gain_db": 40.39
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-029",
+          "source_id": "1898",
+          "start_s": 310.1,
+          "end_s": 322.46,
+          "text": "\"He [Wales] basically lied to us from the start. First, by acting as if this was for legal reasons. Second, by pretending he was listening to us, right up to his art deletion.\"",
+          "gain_db": 46.73
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-030",
+          "source_id": "1800",
+          "start_s": 323.21,
+          "end_s": 331.49,
+          "text": "The bridge is scheduled to be fully operational in September 2017, when the Brazilian customs checkpoints are expected to be finished.",
+          "gain_db": 37.89
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-031",
+          "source_id": "2009",
+          "start_s": 332.764,
+          "end_s": 343.804,
+          "text": "The most readily accessible plant resources would have been the proteins accessible in leaves and legumes, but these are hard for primates like us to digest unless they are cooked.",
+          "gain_db": 42.56
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-032",
+          "source_id": "1938",
+          "start_s": 344.487,
+          "end_s": 355.047,
+          "text": "The hospital has followed protocol for infection control, including separating the patient from others to prevent possible infection of others.",
+          "gain_db": 3.79
+        },
+        {
+          "clip_id": "fleurs-en-norm-session-seg-033",
+          "source_id": "1976",
+          "start_s": 355.825,
+          "end_s": 363.325,
+          "text": "Middle order batsmen, Sachin Tendulkar and Rahul Dravid, performed well and made a hundred-run partnership.",
+          "gain_db": 37.98
+        }
+      ]
     }
   ]
 }

@@ -18,7 +18,16 @@ import java.util.TimeZone
  * is uninstalled. That is the clean exit, and it is the entire write scope on
  * the device (PLAN.md §11.2).
  */
-class ResultWriter(private val context: Context, private val runLabel: String) {
+class ResultWriter(
+    private val context: Context,
+    private val runLabel: String,
+    /**
+     * Under the app's files dir. "results" is what `run_bench.py` pulls into
+     * the repo; the microphone check writes elsewhere, because its rows come
+     * from the owner's voice and stay off the repo (PLAN.md §11.7).
+     */
+    private val subdir: String = "results",
+) {
 
     private val rows = JSONArray()
     private val started = System.currentTimeMillis()
@@ -37,6 +46,8 @@ class ResultWriter(private val context: Context, private val runLabel: String) {
         batteryBefore: Telemetry.Battery,
         batteryAfter: Telemetry.Battery,
         modelLoadMs: Long,
+        /** At the start of the clip; null where not taken. */
+        usage: Telemetry.Usage? = null,
     ) {
         rows.put(JSONObject().apply {
             put("arm", arm.id)
@@ -67,6 +78,10 @@ class ResultWriter(private val context: Context, private val runLabel: String) {
             putOrNull("battery_pct_before", batteryBefore.pct)
             putOrNull("battery_pct_after", batteryAfter.pct)
             putOrNull("charging", batteryBefore.charging)
+            if (usage != null) {
+                putOrNull("screen_on", usage.screenOn)
+                putOrNull("audio_mode", usage.audioMode)
+            }
 
             putOrNull("error", result.error)
 
@@ -79,7 +94,7 @@ class ResultWriter(private val context: Context, private val runLabel: String) {
     }
 
     fun write(): File {
-        val dir = File(context.getExternalFilesDir(null), "results").apply { mkdirs() }
+        val dir = File(context.getExternalFilesDir(null), subdir).apply { mkdirs() }
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US)
             .apply { timeZone = TimeZone.getTimeZone("UTC") }
             .format(Date(started))

@@ -10,8 +10,10 @@ findings section, not here.
 | 2 | [Arm B](phase-2-arm-b.md) | Moonshine streaming English, tiny / small / medium (78–416 MB), against Arm A. Revised in Phases 3 and 4. |
 | 3 | [Arms D and E](phase-3-arms-d-e.md) | Parakeet (670 MB) and Whisper base / small (161 / 375 MB), both languages, via sherpa-onnx with Silero VAD. Revised before and in Phase 4. |
 | 4 | [Spanish, and the answer](phase-4-spanish.md) | Arm C (Moonshine `base-es`, 65 MB) and Moonshine's Spanish streaming model (122 MB) against Arm A and Parakeet; English re-measured on 100 clips; the answer to PLAN.md §1. |
+| 5 | [Sessions, the microphone, and the verdict](phase-5-sessions-and-verdict.md) | Six-minute continuous sessions for Parakeet and Moonshine small and medium; the real-microphone check, live against file-fed; the final recommendation. |
 
 For the full method and reproduction steps see the [main README](../README.md);
 for the experiment design and the reasoning behind each decision see
-[`PLAN.md`](../PLAN.md). The next phase to run is described in
-[`HANDOVER.md`](../HANDOVER.md).
+[`PLAN.md`](../PLAN.md). The final table is in
+[`results/README.md`](../results/README.md); where things stand, and what is
+left open, is in [`HANDOVER.md`](../HANDOVER.md).

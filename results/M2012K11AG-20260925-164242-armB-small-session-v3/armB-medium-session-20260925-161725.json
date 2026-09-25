@@ -1,0 +1,692 @@
+{
+  "schema": 1,
+  "run_label": "armB-medium-session",
+  "started_utc": "2026-09-25T16:17:25Z",
+  "finished_utc": "2026-09-25T16:23:32Z",
+  "device": {
+    "model": "M2012K11AG",
+    "device": "alioth",
+    "soc_manufacturer": "QTI",
+    "soc_model": "SM8250",
+    "android_release": "13",
+    "sdk_int": 33,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "armeabi"
+    ],
+    "cpu_cores": 8,
+    "total_ram_mb": 5522,
+    "is_emulator": false
+  },
+  "notes": {
+    "frame_ms": 100,
+    "reps": 1,
+    "threads": 4,
+    "seed": 1,
+    "sources": "fleurs_en_norm",
+    "thermal_enforced": true,
+    "session_breaks": 0,
+    "session_cap_ms": 600000,
+    "complete": true
+  },
+  "runs": [
+    {
+      "arm": "B",
+      "arm_label": "Moonshine medium-en",
+      "runtime": "ai.moonshine:moonshine-voice:0.1.5 (ONNX Runtime)",
+      "disk_size_mb": 416,
+      "clip_id": "fleurs-en-norm-session",
+      "lang": "en",
+      "bucket": "session",
+      "source": "fleurs_en_norm",
+      "rep": 0,
+      "threads": 4,
+      "hypothesis": "The twenty-five Dunlap broadsides still known to exist are the oldest surviving copies of the document. The original hand-raiding copping has not survived. Twentieth century research has shown that there are two poles of genetic variation hidden and expressed. Plants make oxygen, which humans breathe, and they take in carbon dioxide, which humans exhale. That is, breathe out. Everyone participates in society and uses transportation systems. Almost everyone complains about Transportation systems. The official socklings currency is the Falkland pound S. K. P. whose value is that equivalent to that of a British pound, G. P. B. In its early days, the show was featured solely at the long-running internet radio site ToggyNet Radio. 2. A site focused on talk radio. 3. There are of course Christian theological explanations for this tradition, but it may well be a pre-Christian spring and fertility ritual. A curry is a dish based on herbs and spices together with either meat or vegetables During the Revolutionary War, the Thirteen States first formed a weak central government, with the Congress being its only component under the Articles of Confederation. Rear currents are the returning flow from waves breaking off the beach often at a reach, reef, or similar. Aristotle, a philosopher, theorized that everything is made up of a mixture of one or more four elements. There were earth, water, air, and fire. If you only go ashore using ship or excursions, you will not need a separate visa as of 2000. 9. In the archipelagos and lakes you do not Necessarily need a yacht. It's one of the main attractions of South Africa. and is considered the flagship of South African national parks. Sandbarks. Remember that even though music on the main stages may have finished, There may be sections of the festival that will keep playing music until late into the night. Five minutes into the display, a wind starts rolling in. About a minute later, the wind is reaching 70 kilometers per hour. Then the rain comes but so hard and so large that it slaps your skin like a needle. Then hail fell from the sky, people panicking and screaming and running over each other. Aerosmith had canceled their remaining concerts on their tour. In nineteen ninety, it was added to the list of World Heritage sites in danger due to the threat of desert sands. Accepted were Aristotle's views on all matters of science, including psychology. The find also grabs insight into the evolution of feathers and birds. In the north, the region is bounded by the Sahel. And in the south and west by the Atlantic Ocean. Liberal criticism of the reconstruction effort has focused on the awarding of reconstruction contracts. To perceive Washington insiders. Bishkek was described as sinking into a state of anarchy by one observer as gangs of people roam the streets and plundered stores of consumer goods. The fission bomb works on the principle that it takes energy to put together a nucleus with many protons and neutrons. If you want to be close to the action, you're going to have to get in early to get a camping site close to the music. Since 1988, ballot boxes must be transparent so that the voters and observers can witness that no envelopes are present at the start of the vote and that no envelopes are added except for except those of the duly counted and authorized voters. A car bomb detonated a police headquarters in Gaziantep, Turkey, yesterday morning killed two police officers and injured more than 20 other people. Towards the end of the Middle Ages, Western Europe began to develop their own style. One of the biggest developments of that time As a result of the crusades began to people began to use buttons to fasten their clothes. Last week, many announced that Apple had informed it of thirty-four additional overheating incidents which the company called \"non-serious\". He whales basically lied to us from the start first by acting as if this was for legal reasons Second, by pretending he was listening to us right up to his art deletion. The bridge is scheduled to be fully operational in September 2017 when the Brazilian custom checkpoints are expected to be finished. The most readily accessible plant resources would have been the proteins accessible in leaves and legumes, but these are hard for primates like us to digest unless they are cooked. The hospital has filed a protocol for infection control including separating the patient from others To prevent possible infection of others. Middle order batsman Sachin Tendulkar and Rakul Dravid performed well and made a hundred-run partnership.",
+      "latency_first_partial_ms": 1246,
+      "latency_final_ms": 0,
+      "partial_instability": 588,
+      "partial_updates": 470,
+      "rtf_sustained": 0.7747801555081538,
+      "max_slip_ms": 1582,
+      "audio_duration_ms": 363325,
+      "peak_rss_mb": 1004.48828125,
+      "model_load_ms": 1053,
+      "battery_temp_c_before": 33.2,
+      "battery_temp_c_after": 36.7,
+      "battery_pct_before": 73,
+      "battery_pct_after": 70,
+      "charging": false,
+      "screen_on": true,
+      "audio_mode": 0,
+      "error": null,
+      "extra": {
+        "variant": "moonshine-medium-en",
+        "arch": 5,
+        "lines_started": 55,
+        "lines_completed": 55,
+        "sink_busy_ms": 281497,
+        "suspended_ms": 0,
+        "drain_ms": 15,
+        "finished_early_ms": null,
+        "final_slip_ms": 574,
+        "speech_end_lag_ms": 549,
+        "final_after_audio_end_ms": 549,
+        "sdk_mean_latency_ms": 616,
+        "timeline": [
+          {
+            "audio_ms": 30000,
+            "sink_ms": 22724,
+            "decode_ms": 0,
+            "rtf": 0.7574666666666666,
+            "slip_ms": 215,
+            "temp_c": 34.2,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 819.2421875,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 60000,
+            "sink_ms": 23111,
+            "decode_ms": 0,
+            "rtf": 0.7703666666666666,
+            "slip_ms": 414,
+            "temp_c": 34.2,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 852.70703125,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 90000,
+            "sink_ms": 21775,
+            "decode_ms": 0,
+            "rtf": 0.7258333333333333,
+            "slip_ms": 410,
+            "temp_c": 34.7,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 869.04296875,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 120000,
+            "sink_ms": 24770,
+            "decode_ms": 0,
+            "rtf": 0.8256666666666667,
+            "slip_ms": 898,
+            "temp_c": 35,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 758.4140625,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 150000,
+            "sink_ms": 21000,
+            "decode_ms": 0,
+            "rtf": 0.7,
+            "slip_ms": 0,
+            "temp_c": 35,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 852.203125,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 180000,
+            "sink_ms": 22481,
+            "decode_ms": 0,
+            "rtf": 0.7493666666666666,
+            "slip_ms": 266,
+            "temp_c": 35.7,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 767.04296875,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 210000,
+            "sink_ms": 22119,
+            "decode_ms": 0,
+            "rtf": 0.7373,
+            "slip_ms": 1,
+            "temp_c": 35.7,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 792.61328125,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 240000,
+            "sink_ms": 20525,
+            "decode_ms": 0,
+            "rtf": 0.6841666666666667,
+            "slip_ms": 251,
+            "temp_c": 36,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 779.80859375,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 270000,
+            "sink_ms": 24469,
+            "decode_ms": 0,
+            "rtf": 0.8156333333333333,
+            "slip_ms": 306,
+            "temp_c": 35.7,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 914.7890625,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 300000,
+            "sink_ms": 27384,
+            "decode_ms": 0,
+            "rtf": 0.9128,
+            "slip_ms": 1153,
+            "temp_c": 35.7,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 905.0859375,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 330000,
+            "sink_ms": 24053,
+            "decode_ms": 0,
+            "rtf": 0.8017666666666666,
+            "slip_ms": 372,
+            "temp_c": 36.5,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 936.17578125,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 360000,
+            "sink_ms": 23579,
+            "decode_ms": 0,
+            "rtf": 0.7859666666666667,
+            "slip_ms": 306,
+            "temp_c": 36.7,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 931.69921875,
+            "screen_on": true,
+            "audio_mode": 0
+          },
+          {
+            "audio_ms": 363325,
+            "sink_ms": 3507,
+            "decode_ms": 0,
+            "rtf": 1.0547368421052632,
+            "slip_ms": 574,
+            "temp_c": 36.7,
+            "thermal_status": 0,
+            "thermal_headroom": null,
+            "rss_mb": 935.55078125,
+            "screen_on": true,
+            "audio_mode": 0
+          }
+        ],
+        "final_events": [
+          {
+            "line": -2721335159798214120,
+            "start_ms": 479,
+            "end_ms": 7424,
+            "commit_ms": 9260,
+            "sdk_latency_ms": 1526,
+            "text": "The twenty-five Dunlap broadsides still known to exist are the oldest surviving copies of the document."
+          },
+          {
+            "line": -2721335159798214119,
+            "start_ms": 7871,
+            "end_ms": 11328,
+            "commit_ms": 12484,
+            "sdk_latency_ms": 669,
+            "text": "The original hand-raiding copping has not survived."
+          },
+          {
+            "line": -2721335159798214118,
+            "start_ms": 13600,
+            "end_ms": 18976,
+            "commit_ms": 19781,
+            "sdk_latency_ms": 653,
+            "text": "Twentieth century research has shown that there are two poles of genetic variation hidden and expressed."
+          },
+          {
+            "line": -2721335159798214117,
+            "start_ms": 20384,
+            "end_ms": 25664,
+            "commit_ms": 27141,
+            "sdk_latency_ms": 702,
+            "text": "Plants make oxygen, which humans breathe, and they take in carbon dioxide, which humans exhale."
+          },
+          {
+            "line": -2721335159798214116,
+            "start_ms": 25504,
+            "end_ms": 27136,
+            "commit_ms": 27793,
+            "sdk_latency_ms": 578,
+            "text": "That is, breathe out."
+          },
+          {
+            "line": -2721335159798214115,
+            "start_ms": 29216,
+            "end_ms": 34432,
+            "commit_ms": 35350,
+            "sdk_latency_ms": 637,
+            "text": "Everyone participates in society and uses transportation systems."
+          },
+          {
+            "line": -2721335159798214114,
+            "start_ms": 34688,
+            "end_ms": 37152,
+            "commit_ms": 37966,
+            "sdk_latency_ms": 348,
+            "text": "Almost everyone complains about"
+          },
+          {
+            "line": -2721335159798214113,
+            "start_ms": 37280,
+            "end_ms": 39328,
+            "commit_ms": 40231,
+            "sdk_latency_ms": 500,
+            "text": "Transportation systems."
+          },
+          {
+            "line": -2721335159798214112,
+            "start_ms": 41600,
+            "end_ms": 45344,
+            "commit_ms": 46183,
+            "sdk_latency_ms": 857,
+            "text": "The official socklings currency is the Falkland pound"
+          },
+          {
+            "line": -2721335159798214111,
+            "start_ms": 46079,
+            "end_ms": 51456,
+            "commit_ms": 52634,
+            "sdk_latency_ms": 806,
+            "text": "S. K. P. whose value is that equivalent to that of a British pound, G. P. B."
+          },
+          {
+            "line": -2721335159798214110,
+            "start_ms": 53343,
+            "end_ms": 59840,
+            "commit_ms": 61524,
+            "sdk_latency_ms": 764,
+            "text": "In its early days, the show was featured solely at the long-running internet radio site ToggyNet Radio."
+          },
+          {
+            "line": -2721335159798214109,
+            "start_ms": 59488,
+            "end_ms": 62272,
+            "commit_ms": 63205,
+            "sdk_latency_ms": 891,
+            "text": "2. A site focused on talk radio. 3."
+          },
+          {
+            "line": -2721335159798214108,
+            "start_ms": 65087,
+            "end_ms": 72704,
+            "commit_ms": 73837,
+            "sdk_latency_ms": 904,
+            "text": "There are of course Christian theological explanations for this tradition, but it may well be a pre-Christian spring and fertility ritual."
+          },
+          {
+            "line": -2721335159798214107,
+            "start_ms": 74912,
+            "end_ms": 80096,
+            "commit_ms": 80745,
+            "sdk_latency_ms": 417,
+            "text": "A curry is a dish based on herbs and spices together with either meat or vegetables"
+          },
+          {
+            "line": -2721335159798214106,
+            "start_ms": 82687,
+            "end_ms": 91456,
+            "commit_ms": 92501,
+            "sdk_latency_ms": 381,
+            "text": "During the Revolutionary War, the Thirteen States first formed a weak central government, with the Congress being its only component under the Articles of Confederation."
+          },
+          {
+            "line": -2721335159798214105,
+            "start_ms": 93728,
+            "end_ms": 99712,
+            "commit_ms": 101810,
+            "sdk_latency_ms": 1570,
+            "text": "Rear currents are the returning flow from waves breaking off the beach often at a reach, reef, or similar."
+          },
+          {
+            "line": -2721335159798214104,
+            "start_ms": 100448,
+            "end_ms": 107136,
+            "commit_ms": 108586,
+            "sdk_latency_ms": 684,
+            "text": "Aristotle, a philosopher, theorized that everything is made up of a mixture of one or more four elements."
+          },
+          {
+            "line": -2721335159798214103,
+            "start_ms": 107007,
+            "end_ms": 109312,
+            "commit_ms": 110216,
+            "sdk_latency_ms": 799,
+            "text": "There were earth, water, air, and fire."
+          },
+          {
+            "line": -2721335159798214102,
+            "start_ms": 112000,
+            "end_ms": 118656,
+            "commit_ms": 120797,
+            "sdk_latency_ms": 1317,
+            "text": "If you only go ashore using ship or excursions, you will not need a separate visa as of 2000."
+          },
+          {
+            "line": -2721335159798214101,
+            "start_ms": 118752,
+            "end_ms": 119904,
+            "commit_ms": 121332,
+            "sdk_latency_ms": 507,
+            "text": "9."
+          },
+          {
+            "line": -2721335159798214100,
+            "start_ms": 122176,
+            "end_ms": 126752,
+            "commit_ms": 127408,
+            "sdk_latency_ms": 590,
+            "text": "In the archipelagos and lakes you do not"
+          },
+          {
+            "line": -2721335159798214099,
+            "start_ms": 126496,
+            "end_ms": 128832,
+            "commit_ms": 129412,
+            "sdk_latency_ms": 594,
+            "text": "Necessarily need a yacht."
+          },
+          {
+            "line": -2721335159798214098,
+            "start_ms": 130944,
+            "end_ms": 134144,
+            "commit_ms": 134547,
+            "sdk_latency_ms": 328,
+            "text": "It's one of the main attractions of South Africa."
+          },
+          {
+            "line": -2721335159798214097,
+            "start_ms": 134272,
+            "end_ms": 138496,
+            "commit_ms": 139903,
+            "sdk_latency_ms": 974,
+            "text": "and is considered the flagship of South African national parks."
+          },
+          {
+            "line": -2721335159798214096,
+            "start_ms": 138496,
+            "end_ms": 139584,
+            "commit_ms": 140472,
+            "sdk_latency_ms": 436,
+            "text": "Sandbarks."
+          },
+          {
+            "line": -2721335159798214095,
+            "start_ms": 142208,
+            "end_ms": 146720,
+            "commit_ms": 147399,
+            "sdk_latency_ms": 570,
+            "text": "Remember that even though music on the main stages may have finished,"
+          },
+          {
+            "line": -2721335159798214094,
+            "start_ms": 146592,
+            "end_ms": 152640,
+            "commit_ms": 153185,
+            "sdk_latency_ms": 459,
+            "text": "There may be sections of the festival that will keep playing music until late into the night."
+          },
+          {
+            "line": -2721335159798214093,
+            "start_ms": 155264,
+            "end_ms": 162080,
+            "commit_ms": 162871,
+            "sdk_latency_ms": 743,
+            "text": "Five minutes into the display, a wind starts rolling in. About a minute later, the wind is reaching 70 kilometers per hour."
+          },
+          {
+            "line": -2721335159798214092,
+            "start_ms": 161920,
+            "end_ms": 166816,
+            "commit_ms": 167885,
+            "sdk_latency_ms": 605,
+            "text": "Then the rain comes but so hard and so large that it slaps your skin like a needle."
+          },
+          {
+            "line": -2721335159798214091,
+            "start_ms": 166592,
+            "end_ms": 171488,
+            "commit_ms": 172184,
+            "sdk_latency_ms": 658,
+            "text": "Then hail fell from the sky, people panicking and screaming and running over each other."
+          },
+          {
+            "line": -2721335159798214090,
+            "start_ms": 173696,
+            "end_ms": 177024,
+            "commit_ms": 178108,
+            "sdk_latency_ms": 985,
+            "text": "Aerosmith had canceled their remaining concerts on their tour."
+          },
+          {
+            "line": -2721335159798214089,
+            "start_ms": 178880,
+            "end_ms": 186368,
+            "commit_ms": 188239,
+            "sdk_latency_ms": 698,
+            "text": "In nineteen ninety, it was added to the list of World Heritage sites in danger due to the threat of desert sands."
+          },
+          {
+            "line": -2721335159798214088,
+            "start_ms": 190176,
+            "end_ms": 195872,
+            "commit_ms": 196629,
+            "sdk_latency_ms": 402,
+            "text": "Accepted were Aristotle's views on all matters of science, including psychology."
+          },
+          {
+            "line": -2721335159798214087,
+            "start_ms": 199008,
+            "end_ms": 203072,
+            "commit_ms": 203928,
+            "sdk_latency_ms": 302,
+            "text": "The find also grabs insight into the evolution of feathers and birds."
+          },
+          {
+            "line": -2721335159798214086,
+            "start_ms": 205184,
+            "end_ms": 208512,
+            "commit_ms": 209892,
+            "sdk_latency_ms": 286,
+            "text": "In the north, the region is bounded by the Sahel."
+          },
+          {
+            "line": -2721335159798214085,
+            "start_ms": 208320,
+            "end_ms": 212288,
+            "commit_ms": 212957,
+            "sdk_latency_ms": 327,
+            "text": "And in the south and west by the Atlantic Ocean."
+          },
+          {
+            "line": -2721335159798214084,
+            "start_ms": 215584,
+            "end_ms": 222176,
+            "commit_ms": 223273,
+            "sdk_latency_ms": 404,
+            "text": "Liberal criticism of the reconstruction effort has focused on the awarding of reconstruction contracts."
+          },
+          {
+            "line": -2721335159798214083,
+            "start_ms": 221920,
+            "end_ms": 224928,
+            "commit_ms": 225476,
+            "sdk_latency_ms": 455,
+            "text": "To perceive Washington insiders."
+          },
+          {
+            "line": -2721335159798214082,
+            "start_ms": 226784,
+            "end_ms": 235136,
+            "commit_ms": 235980,
+            "sdk_latency_ms": 556,
+            "text": "Bishkek was described as sinking into a state of anarchy by one observer as gangs of people roam the streets and plundered stores of consumer goods."
+          },
+          {
+            "line": -2721335159798214081,
+            "start_ms": 238304,
+            "end_ms": 247616,
+            "commit_ms": 248347,
+            "sdk_latency_ms": 710,
+            "text": "The fission bomb works on the principle that it takes energy to put together a nucleus with many protons and neutrons."
+          },
+          {
+            "line": -2721335159798214080,
+            "start_ms": 250240,
+            "end_ms": 257120,
+            "commit_ms": 258481,
+            "sdk_latency_ms": 840,
+            "text": "If you want to be close to the action, you're going to have to get in early to get a camping site close to the music."
+          },
+          {
+            "line": -2721335159798214079,
+            "start_ms": 259903,
+            "end_ms": 269952,
+            "commit_ms": 271685,
+            "sdk_latency_ms": 1010,
+            "text": "Since 1988, ballot boxes must be transparent so that the voters and observers can witness that no envelopes are present at the start of the vote and that no envelopes are added except for"
+          },
+          {
+            "line": -2721335159798214078,
+            "start_ms": 269472,
+            "end_ms": 272576,
+            "commit_ms": 274182,
+            "sdk_latency_ms": 1060,
+            "text": "except those of the duly counted and authorized voters."
+          },
+          {
+            "line": -2721335159798214077,
+            "start_ms": 274368,
+            "end_ms": 282752,
+            "commit_ms": 285108,
+            "sdk_latency_ms": 1483,
+            "text": "A car bomb detonated a police headquarters in Gaziantep, Turkey, yesterday morning killed two police officers and injured more than 20 other people."
+          },
+          {
+            "line": -2721335159798214076,
+            "start_ms": 285216,
+            "end_ms": 289984,
+            "commit_ms": 291388,
+            "sdk_latency_ms": 539,
+            "text": "Towards the end of the Middle Ages, Western Europe began to develop their own style."
+          },
+          {
+            "line": -2721335159798214075,
+            "start_ms": 290048,
+            "end_ms": 292608,
+            "commit_ms": 293346,
+            "sdk_latency_ms": 226,
+            "text": "One of the biggest developments of that time"
+          },
+          {
+            "line": -2721335159798214074,
+            "start_ms": 292768,
+            "end_ms": 299936,
+            "commit_ms": 301598,
+            "sdk_latency_ms": 464,
+            "text": "As a result of the crusades began to people began to use buttons to fasten their clothes."
+          },
+          {
+            "line": -2721335159798214073,
+            "start_ms": 301344,
+            "end_ms": 309376,
+            "commit_ms": 310157,
+            "sdk_latency_ms": 827,
+            "text": "Last week, many announced that Apple had informed it of thirty-four additional overheating incidents which the company called \"non-serious\"."
+          },
+          {
+            "line": -2721335159798214072,
+            "start_ms": 311072,
+            "end_ms": 317568,
+            "commit_ms": 319581,
+            "sdk_latency_ms": 1397,
+            "text": "He whales basically lied to us from the start first by acting as if this was for legal reasons"
+          },
+          {
+            "line": -2721335159798214071,
+            "start_ms": 317344,
+            "end_ms": 321664,
+            "commit_ms": 322938,
+            "sdk_latency_ms": 1192,
+            "text": "Second, by pretending he was listening to us right up to his art deletion."
+          },
+          {
+            "line": -2721335159798214070,
+            "start_ms": 323584,
+            "end_ms": 330752,
+            "commit_ms": 331806,
+            "sdk_latency_ms": 462,
+            "text": "The bridge is scheduled to be fully operational in September 2017 when the Brazilian custom checkpoints are expected to be finished."
+          },
+          {
+            "line": -2721335159798214069,
+            "start_ms": 332832,
+            "end_ms": 342720,
+            "commit_ms": 344046,
+            "sdk_latency_ms": 803,
+            "text": "The most readily accessible plant resources would have been the proteins accessible in leaves and legumes, but these are hard for primates like us to digest unless they are cooked."
+          },
+          {
+            "line": -2721335159798214068,
+            "start_ms": 344992,
+            "end_ms": 351424,
+            "commit_ms": 352962,
+            "sdk_latency_ms": 815,
+            "text": "The hospital has filed a protocol for infection control including separating the patient from others"
+          },
+          {
+            "line": -2721335159798214067,
+            "start_ms": 351200,
+            "end_ms": 354528,
+            "commit_ms": 355219,
+            "sdk_latency_ms": 287,
+            "text": "To prevent possible infection of others."
+          },
+          {
+            "line": -2721335159798214066,
+            "start_ms": 356224,
+            "end_ms": 362432,
+            "commit_ms": 363874,
+            "sdk_latency_ms": 832,
+            "text": "Middle order batsman Sachin Tendulkar and Rakul Dravid performed well and made a hundred-run partnership."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,17 +1,10 @@
-# Handover — next phase to run
+# Handover — where things stand
 
-**Currently: Phase 5 — sustained sessions for the surviving stacks, the
-real-microphone check, and the final write-up.**
-
-This file carries whatever phase is next. It is rewritten as each phase
-completes; finished phases are written up in [`summaries/`](summaries/).
+**Currently: the experiment is complete.** Phases 0–5 are done, written up
+and tagged. No phase is pending. This file records the final state, what is
+left open, and how to pick the work up again in a fresh session.
 
 **For:** a fresh session picking this up with no prior context.
-
-Phases 0–4 are complete and pushed. Phase 4 answered PLAN.md §1: **one model
-can serve both languages live on this phone, and it is Parakeet** (Arm D).
-Phase 5 checks that answer against what per-clip runs cannot show: minutes of
-continuous speech, and a real microphone.
 
 ---
 
@@ -19,19 +12,18 @@ continuous speech, and a real microphone.
 
 > Continue the on-device ASR experiment in `F:\Development\Samples\android-transcription-sample`.
 >
-> Read `PLAN.md` for the experiment design, `HANDOVER.md` for current state
-> and exact commands, and the four summaries in `summaries/` for what Phases
-> 1–4 established. `README.md` has the full results and findings.
+> Read `PLAN.md` for the experiment design, `HANDOVER.md` for current state,
+> the five summaries in `summaries/` for what each phase established, and
+> `results/README.md` for the final table. `README.md` has the full results
+> and findings.
 >
-> Phases 0–4 are complete. Phase 5 (PLAN.md §10): validate session runs for
-> Moonshine and Parakeet on the emulator, run 5–10 minute sessions on the
-> phone for the surviving stacks, then the single real-microphone sanity
-> check (the only step that needs `RECORD_AUDIO`), then the final write-up,
-> README verdict and a tagged release.
+> The experiment is complete (Phases 0–5, tagged). Any further work is a
+> follow-up from "Open questions" below, agreed with the owner first.
 >
-> The test device is the owner's only phone. `PLAN.md` §11 is a hard safety
-> policy — read it before touching the device. The pre-flight gate in
-> `scripts/run_bench.py` enforces most of it; do not bypass it.
+> The test device is the owner's only phone, and in daily use. `PLAN.md` §11
+> is a hard safety policy — read it before touching the device. The
+> pre-flight gate in `scripts/run_bench.py` enforces most of it; do not bypass
+> it. Agree phone time with the owner before every run.
 
 ---
 
@@ -39,124 +31,77 @@ continuous speech, and a real microphone.
 
 | | State |
 |---|---|
-| Phases 0–3 | ✅ complete, revised since — summaries [1](summaries/phase-1-arm-a.md), [2](summaries/phase-2-arm-b.md), [3](summaries/phase-3-arms-d-e.md) |
-| Phase 4 (Spanish, English on 100 clips, §1 answer) | ✅ complete — [summary](summaries/phase-4-spanish.md) |
-| Phase 5 (sessions, microphone, write-up, release) | ⬜ **next** |
+| Phases 0–4 | ✅ complete — summaries [1](summaries/phase-1-arm-a.md), [2](summaries/phase-2-arm-b.md), [3](summaries/phase-3-arms-d-e.md), [4](summaries/phase-4-spanish.md) |
+| Phase 5 (sessions, microphone, write-up, release) | ✅ complete — [summary](summaries/phase-5-sessions-and-verdict.md) |
 
-Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push after each phase)
+Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public)
 
-**The answer so far** (100 clips per source; first text from speech onset):
-
-| Live stack | Disk | Spanish WER | English WER, clean / noisy | Final text | First text | Peak RSS |
-|---|---|---|---|---|---|---|
-| **Parakeet** | 670 MB | **4.47%** | 4.97 / 9.34% | 0–350 ms | 1.0–1.5 s | 1.03 GB |
-| Moonshine small-en + small-es | 346 MB | 7.24% | 7.36 / 8.92% | 0–490 ms | 0.7–1.0 s | 0.64–0.76 GB |
-| Moonshine medium-en + small-es | 538 MB | 7.24% | **4.71 / 7.02%** | 0–770 ms | 0.7–1.0 s | 0.97 GB |
-| Moonshine small-en + Arm A | 224 MB + pack | 7.39% | 7.36 / 8.92% | 0–490 ms | 0.7–1.0 s | 0.76 GB |
-
-Out: Arm C (5.09% Spanish, but 2.5 s to final text, 1.16× real time, and a
-non-commercial licence), Whisper (calibration only), Moonshine tiny.
+**The answer** (PLAN.md §1): one model can serve both languages live on this
+phone, and it is Parakeet, padded with ~0.5 s of leading silence per VAD
+segment. Moonshine small-en + small-es is the smaller, cooler alternative.
+Arm A did not make bundling unnecessary. The final table and recommendation
+are in [`results/README.md`](results/README.md).
 
 ---
 
-## Phase 5 — what to do
+## Open questions
 
-### 1. Sessions (PLAN.md §6, §10 step 19)
+Stated in the write-up; none blocks the verdict.
 
-`rtf_sustained` is defined over 5–10 minutes of continuous speech, and no
-bundled model has had one. The corpus has one ~6-minute session per language
-(`bucket: session`, clips disjoint from the short ones), built for this.
-Only Arm A has run them (Phase 1, segmented mode).
-
-**Untested for B and D. Validate on the emulator first (§11.5)**:
-`--buckets session` with `B:moonshine-small-en` / `B:moonshine-small-es` /
-`D:parakeet-tdt-v3-int8`, `--reps 1`. Things to check: the feeder, the
-Moonshine stream and the VAD arm all run for 6 minutes without a stall; the
-harness's hypothesis joins every line/segment; the drain timeout
-(`DRAIN_TIMEOUT_MS`, 60 s in `SherpaOfflineArm`) is not hit at the end;
-`summarize.py` scores the session against its concatenated reference.
-The 10-minute continuous-inference cap is per session and a 6-minute session
-fits under it.
-
-Then on the phone, one session per language per stack, `--reps 1`
-(`summarize.py` keeps rep 0 for single-rep runs and flags it indicative):
-
-| Stack | Sessions |
-|---|---|
-| Parakeet | en, es |
-| Moonshine small-en / small-es | en / es |
-| Moonshine medium-en | en (optional: it ran hottest per clip) |
-
-What to read: `rtf_sustained` over the whole session (above 1.0 means it falls
-behind the microphone), final latency late in the session against early,
-battery temperature before and after, and cooling pauses. Parakeet used ~0.6
-of real time per clip with partials; medium 0.8.
-
-### 2. The real-microphone check (§7, §10 step 20)
-
-Validation, not measurement: confirm that live microphone input behaves like
-the paced file feed. This is the **only** step that needs `RECORD_AUDIO`; it
-is not declared in the manifest yet (§11.4). It needs the owner speaking, so
-plan it with them. Self-recorded audio is the owner's voice: keep it local
-and gitignored, never in the repo (§11.7).
-
-### 3. Write-up and release (§10 steps 21–22)
-
-Latency / WER / size / RSS trade-off curves, the recommendation, the final
-README verdict (the §1 answer is already in the README, "Spanish across the
-matrix, and the answer to §1"), and a tagged release so the published
-numbers correspond to a fixed commit. PLAN.md §13 lists what "done" means.
-
----
-
-## Open questions the write-up should settle or state
-
-- **Padded Parakeet on the phone.** The owner chose not to re-measure it in
-  Phase 4. A PC diagnostic says 0.5 s of leading silence per VAD segment
-  recovers ~2 points on noisy English (README finding 21), which would put it
-  level with Moonshine medium. The recommendation says "pad"; the phone has
-  not confirmed it. ~17 battery points for the English sources.
+- **Padded Parakeet on the phone.** Recommended, on a PC diagnostic and on
+  the sentence the English session dropped. Never measured on the phone.
+  ~17 battery points for the two English sources; the harness change is a
+  few lines in `SherpaOfflineArm` (prepend silence to each final and partial
+  decode), and it must become a distinct variant so it never pools.
+- **Memory growth in sessions.** Every stack ended a 6-minute session
+  35–170 MB above its level at 30 s; Parakeet reached 1.11 GB across two
+  sessions. Not a steady leak; cause not established. A 10-minute session is
+  the longest the safety policy allows; longer use would need the owner's
+  agreement to a different cap.
+- **The feeder's one-frame head start** (README finding 33). File-fed timing
+  is ~0.2 s optimistic for live input. A new harness should release each
+  frame at the end of its slot; changing it would make new runs incomparable
+  with the published ones.
 - **Compound spelling** ("reelected" vs "re elected") moves each arm by
-  0.2–0.6 points and makes small-vs-medium on noisy English unresolved. The
-  scorer was not changed.
+  0.2–0.6 points and makes Moonshine small-vs-medium on noisy English
+  unresolved. The scorer was not changed.
 - **Moonshine's shipped vs loaded size.** English variants ship
   `decoder_kv_with_attention.ort`, loaded only for word timestamps: 78 / 224 /
-  416 MB shipped, 45 / 142 / 269 MB used. Spanish small ships without it.
+  416 MB shipped, 45 / 142 / 269 MB used.
 - **Why Arm C decodes so slowly** (2.2 s per final on a 58M-parameter model)
-  and why its memory climbs to 872 MB were not established.
-- **Moonshine `small-es` scores 7.24%**, not the 4.9% Moonshine publishes
-  (different data, whole utterances, its own normaliser). Accents are 9% of
-  its errors.
-- Not done and probably not needed for the verdict: the 2/4/6/8 thread sweep
-  (possible on Parakeet), a partials-off run, the Moonshine update-interval
-  sweep, a better thermal signal (`PowerManager.getThermalHeadroom()`).
+  and why its memory climbs to 872 MB.
+- **Moonshine `small-es` scores 7.24%**, not the 4.9% Moonshine publishes.
+- Not done and not needed for the verdict: the 2/4/6/8 thread sweep, a
+  measured partials-off run, the Moonshine update-interval sweep.
 
 ---
 
 ## Lessons that apply directly
 
-- **Measure from the event the metric is named after.** First text was timed
-  from the start of the clip; the Spanish clips open with ~1 s more silence,
-  and "Spanish is slower" survived three phases. `summarize.py` now prints
-  first text from speech onset too. Sessions start with silence as well.
-- **Look at a new arm's worst clips before trusting its pooled WER.** It found
-  the years bias, Parakeet's empty segments, and the accent share of
-  `small-es`'s errors.
-- **Report an interval, not two numbers.** `compare.py --standard`.
-- **Check claims against the library source.** It settled Arm C's design and
-  exposed the CDN.
-- **Deterministic arms need 2 repetitions** (rep 0 discarded); Moonshine
-  English streaming varies a little between reps (3), Moonshine `small-es`
-  did not. Verify with rep-to-rep text before cutting reps.
-- **Budget before a long run.** Arm C was estimated at 8–15 points and cost 24
-  for half its plan. A 10-minute checkpoint tells you the rate; stopping at a
-  checkpoint (force-stop during the 2-minute break after it) loses nothing.
+- **Agree phone time with the owner, and read the log after every run.** Two
+  Phase 5 runs were lost to ordinary use of the phone: a video call through a
+  session, and "clear recent apps" (`OneKeyClean`) killing the process. The
+  row looked plausible both times. `adb logcat -b all` shows foreground apps
+  (`wm_set_resumed_activity`), calls and clean-ups.
+- **Validate the method against the thing it simulates.** The microphone
+  check found the feeder's one-frame head start after five phases of
+  file-fed numbers.
+- **Measure from the event the metric is named after.** First text from
+  speech onset; final text per utterance from that utterance's end.
+- **Look at a new arm's worst clips before trusting its pooled WER.** It
+  found the years bias, Parakeet's empty segments (twice), and the accent
+  share of `small-es`'s errors.
+- **Check a corpus file's level before measuring on it.** The English session
+  sat unfixed at −60 dBFS for four phases.
+- **Report an interval, not two numbers.** `compare.py --standard`; for a
+  drift, `session_report.py`'s rank correlation.
+- **Budget before a long run.** A 10-minute checkpoint tells you the rate.
 
 ---
 
 ## Budget and constraints
 
-**Measured cost per run on the phone** (all runs so far):
+**Measured cost per run on the phone:**
 
 | Run | Clips | Time | Battery | Peak temp (as read) | Cooling pauses |
 |---|---|---|---|---|---|
@@ -175,16 +120,21 @@ numbers correspond to a fixed commit. PLAN.md §13 lists what "done" means.
 | Arm A, English 100 | 400 | 64 min | 4 points | 28.2 °C | 0 |
 | Arm C, Spanish 100 (stopped after 2 reps) | 206 | 78 min | 24 points | 35.2 °C | 8 |
 | Moonshine small-es, Spanish 100 | 300 | 61 min | 11 points | 31.7 °C | 0 |
+| **Parakeet, sessions en + es** | 2 × 6 min | 14 min | 5 points | 36.0 °C | 0 |
+| **Moonshine small, sessions en + es** | 2 × 6 min | 14 min | 4 points | 35.0 °C | 0 |
+| **Moonshine medium, session en** | 6 min | 6 min | 3 points | 36.7 °C | 0 |
+| **Microphone check, 4 takes** | 4 × 60 s | 15 min | 3 points | 34.7 °C | 0 |
 
-A 6-minute session is ~6 minutes of audio plus load, so a session run costs
-roughly what 60 short clips do.
+A 6-minute session costs about what 60 short clips do, and heats the phone
+2.5–3.5 °C; after one, expect 5–10 minutes of cooling before the 35 °C gate
+passes again.
 
 The gate needs battery 30–80% and not charging, and checks the level only at
 start. §11.3 asks for 30–80% *throughout*, so run a watchdog alongside every
 long run. This wrapper runs one `run_bench.py` command with a watchdog that
-polls every minute for the whole run and force-stops only this app below
-30%; the run's last checkpoint survives. Save it outside the repo (it needs
-the device address):
+polls every minute and force-stops only this app below 30% battery or at
+43 °C; the run's last checkpoint survives. Save it outside the repo (it
+needs the device address):
 
 ```bash
 #!/usr/bin/env bash
@@ -202,6 +152,9 @@ cd "F:/Development/Samples/android-transcription-sample"
     if [ -n "$lvl" ] && [ "$lvl" -lt 30 ]; then
       MSYS_NO_PATHCONV=1 $A -s "$D" shell am force-stop io.github.davamix.asrbench; break
     fi
+    if [ -n "$t" ] && [ "$t" -ge 430 ]; then
+      MSYS_NO_PATHCONV=1 $A -s "$D" shell am force-stop io.github.davamix.asrbench; break
+    fi
     sleep 60
   done ) &
 WD=$!
@@ -209,12 +162,8 @@ WD=$!
 kill $WD 2>/dev/null; tail -25 "$LOG"; exit $rc
 ```
 
-**Charging leaves the phone hot.** Straight off the charger it read 36.7 °C,
-above the 35 °C gate, and took ~8 minutes to read 32 °C. Unplug a while
-before a run.
-
-**Temperatures lag.** The battery temperature the gate reads can be minutes
-old (README finding). `dumpsys battery` has the same lag.
+**Charging leaves the phone hot**, and **temperatures lag** (README finding
+28): the reading can drop 2 °C in one minute after sitting still for five.
 
 ---
 
@@ -234,87 +183,85 @@ The address can change between sessions. `adb devices` shows the phone twice
 so always pass `--device`. In Git Bash, prefix raw `adb shell` / `adb pull`
 calls that take device paths with `MSYS_NO_PATHCONV=1`.
 
-### Build and fetch
-
-```bash
-.venv/Scripts/python scripts/fetch_runtime.py   # sherpa-onnx AAR -> bench/app/libs/, SHA-256 checked
-.venv/Scripts/python scripts/fetch_models.py --list
-```
-
 ### Emulator first
 
 ```bash
 D:/Android/Sdk/emulator/emulator.exe -avd Medium_Phone_API_36.0 &
 .venv/Scripts/python scripts/run_bench.py --device emulator --push-models <dir>
-.venv/Scripts/python scripts/run_bench.py --device emulator \
-    --arms <arm> --langs en,es --buckets session --reps 1 --label emu<arm>
 ```
 
-The emulator has ~0.5 GB free; it holds `silero-vad`, `moonshine-tiny-en`,
-`moonshine-base-es` and `moonshine-small-es`. Swap models one at a time.
-Emulator results are gitignored and never published.
+The emulator has ~0.5 GB free and also holds the owner's other app; it now
+holds `silero-vad` and `whisper-base-int8`, and Parakeet no longer fits.
+Swap models one at a time, within this app's files dir only. Its virtual
+microphone records silence (host audio input is off); its test takes were
+deleted. Emulator results are gitignored and never published.
 
 ### Measure, score, write up
 
 ```bash
 .venv/Scripts/python scripts/summarize.py            # all results, per variant
-.venv/Scripts/python scripts/summarize.py results/<dir>/<file>.json   # one run
+.venv/Scripts/python scripts/session_report.py       # inside each 6-minute session
+.venv/Scripts/python scripts/mic_report.py           # microphone takes (local only)
 .venv/Scripts/python scripts/compare.py --standard   # paired bootstrap
+.venv/Scripts/python scripts/plot_tradeoffs.py       # docs/figures/, light and dark
 ```
 
-`--arms` knows `A`, `B[:variant]`, `C[:variant]`, `D[:variant]` and
-`E[:variant]`. `--sources` limits a run and its corpus push. `--partial-ms N`
-sets the partial cadence for C, D and E (default 500; 0 = finals only).
-`--moonshine-options k=v,...` overrides Moonshine options for arm C.
-
-**Long runs:** `adb am instrument` can outlive a host-side timeout. If the
-wrapper dies, the run usually continues on the device; check
-`adb logcat -s AsrBench:*`. If the run itself dies, the last checkpoint is
-in the device's results dir, marked `complete: false`.
+Sessions: `--buckets session --sources fleurs_en_norm,fleurs_es --reps 1`.
+The microphone check: `--mic <arm> --langs en --no-push`, with the owner at
+the phone. See README "Reproducing" for the full commands.
 
 ---
 
 ## Things to know about the harness
 
-- **Nothing is bundled in the APK.** On the phone now: all Moonshine English
-  variants, `moonshine-base-es`, `moonshine-small-es`, `silero-vad`, both
-  Whisper variants and `parakeet-tdt-v3-int8` (~2.1 GB), and the 100 Spanish
-  plus 200 English short clips of the 100-clip sets. The session clips are
-  on it from Phase 1, but push them again (`--buckets session`) to be sure.
-  ~73 GB free.
-- **The phone runs the Phase 4 APK.**
-- **The app must create its own directories** before anything is pushed into
-  them (`prepareDirs`); `run_bench.py` handles this.
+- **The harness is uninstalled from the phone** (2026-09-25, the clean exit
+  of §11.2): no app, no models, no corpus, results or microphone takes on
+  it, and nothing in `/data/local/tmp`. ~75 GB free, as before the
+  experiment. Every result is in `results/`; the four microphone takes (the
+  owner's voice) are only in the gitignored `corpus/self-recorded/`. The
+  emulator's copy is uninstalled too. **Nothing is bundled in the APK**, so
+  a follow-up starts by installing and pushing again: `run_bench.py` builds
+  and installs, and `--push-models` pushes the pinned weights (~2.1 GB for
+  everything, ~20 minutes over wireless; push only what the run needs).
+- **The APK declares `RECORD_AUDIO`**, and only the microphone check's
+  screen asks for it; the owner grants it on the phone.
+- **Session-length clips carry a timeline** (`SessionTimeline`): every 30 s
+  of audio, compute, slip, temperature, memory, screen and call state, and
+  one event per final segment or line. It also aborts at 43 °C mid-clip.
+- **The 10-minute cap looks ahead**: the break comes before a clip that
+  would end past it.
+- **The runner waits out a call in progress** before a clip (up to 30 min).
+  It cannot stop "clear recent apps", which kills the run.
+- **The mic check's screen is opened through the shell** (`am start` from
+  the test's UiAutomation): MIUI refuses an app opening its own activity
+  from the background. The activity is exported but guarded by `DUMP`.
 - **Two ONNX Runtimes live in the APK**, Moonshine's and sherpa-onnx's
-  (statically linked). Arm C uses both.
-- **`SherpaOfflineArm` decodes on its own thread** for C, D and E.
-- **Moonshine's `loadFromFiles(path, int)` second argument is the model
-  architecture** (`JNI.MOONSHINE_MODEL_ARCH_*`). Streaming models take their
-  dimensions from `streaming_config.json`; non-streaming ones need the right
-  value.
+  (statically linked). `SherpaOfflineArm` decodes on its own thread for C, D
+  and E; Moonshine decodes inside `addAudio()`.
 - **`pull_results` pulls every file in the device's results dir**, so each run
   directory holds all earlier results. `summarize.py` and `compare.py` dedupe
-  by file name.
+  by file name, and exclude `results/superseded/` by name.
 - **Scoring happens on the PC**, never on the device.
 
 ---
 
 ## Safety — read `PLAN.md` §11 before touching the device
 
-The phone is the owner's only handset, personal and irreplaceable.
+The phone is the owner's only handset, personal and irreplaceable, and in
+daily use.
 
 **Never:** root, bootloader unlock, `disable-verity`, fastboot, factory reset,
 disabling thermal throttling or forcing a CPU governor, `pm uninstall/clear` on
-anything but this app, or writes outside the two paths in §11.2.
+anything but this app, `pm grant` (it needs MIUI's security toggle, which
+§11.1 rules out), or writes outside the two paths in §11.2.
 
 **The gate** (`scripts/devicelib.py`) refuses to start a run unless: ≥5 GB free,
-battery 30–80%, temperature <35 °C, **not charging**. It aborts mid-run at
-43 °C, pauses before any clip that would start at or above 35 °C, and pauses
-2 minutes every 10 minutes of continuous inference. There is a
+battery 30–80%, temperature <35 °C, **not charging**. It aborts at 43 °C,
+before a clip and every 30 s during a long one, pauses before any clip that
+would start at or above 35 °C, waits out calls, and pauses 2 minutes before
+any clip that would take continuous inference past 10 minutes. There is a
 `--skip-preflight` flag; treat needing it as a signal to stop and think.
 
-`RECORD_AUDIO` is **not** declared until the Phase 5 microphone check. Every
-measured run is file-fed and needs no microphone.
-
-Nothing personal enters the repo: no device serial, no self-recorded audio, no
-account identifiers, no device IP address. Check before every push.
+Nothing personal enters the repo: no device serial, no self-recorded audio or
+its transcripts, no account identifiers, no device IP address. Check before
+every push.

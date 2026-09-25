@@ -38,14 +38,17 @@ interface Arm : AutoCloseable {
     /**
      * Transcribe one clip, pacing the audio to the wall clock.
      *
-     * Implementations feed [audio] through a [PacedFeeder] and report the
-     * timing of what came back. They must not pre-read the whole clip.
+     * Implementations feed [audio] through [feeder] and report the timing of
+     * what came back. They must not pre-read the whole clip. The feeder is a
+     * [PacedFeeder] over [audio] for every measured run; the microphone check
+     * passes a [MicFeeder] that fills [audio] as it records.
      */
     fun transcribe(
         context: Context,
         audio: Wav.Audio,
         language: String,
         threads: Int,
+        feeder: AudioFeeder = PacedFeeder(audio),
     ): ArmResult
 
     override fun close() {}
@@ -91,6 +94,13 @@ class ArmResult(
     /** Anything arm-specific worth keeping. */
     val extra: Map<String, Any?> = emptyMap(),
 ) {
+    /** The same result with more `extra` fields, e.g. how it was fed. */
+    fun withExtra(vararg more: Pair<String, Any?>): ArmResult = ArmResult(
+        hypothesis, latencyFirstPartialMs, latencyFinalMs, partialInstability,
+        partialUpdates, rtfSustained, maxSlipMs, audioDurationMs, peakRssMb, error,
+        extra + more,
+    )
+
     companion object {
         fun failed(reason: String, audioDurationMs: Long = 0): ArmResult = ArmResult(
             hypothesis = "",

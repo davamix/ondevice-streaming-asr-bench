@@ -1,0 +1,9 @@
+{
+  "model": "M2012K11AG",
+  "device": "alioth",
+  "soc_model": "SM8250",
+  "soc_manufacturer": "QTI",
+  "android_release": "13",
+  "sdk_int": "33",
+  "abi": "arm64-v8a"
+}

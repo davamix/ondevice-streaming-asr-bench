@@ -13,6 +13,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import io.github.davamix.asrbench.Arm
 import io.github.davamix.asrbench.ArmResult
+import io.github.davamix.asrbench.AudioFeeder
 import io.github.davamix.asrbench.PacedFeeder
 import io.github.davamix.asrbench.TranscriptTracker
 import io.github.davamix.asrbench.Wav
@@ -98,6 +99,7 @@ class PlatformRecognizerArm(
         audio: Wav.Audio,
         language: String,
         threads: Int,
+        feeder: AudioFeeder,
     ): ArmResult {
         if (!SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
             return ArmResult.failed(
@@ -251,7 +253,7 @@ class PlatformRecognizerArm(
             val feeder = Thread({
                 try {
                     ParcelFileDescriptor.AutoCloseOutputStream(writeEnd).use { stream ->
-                        stats = PacedFeeder(audio).feed(
+                        stats = feeder.feed(
                             sink = { pcm, _ -> stream.writePcm16(pcm) },
                             onStart = { state.feedStartMs = SystemClock.uptimeMillis() },
                             shouldStop = { state.errorCode != null },

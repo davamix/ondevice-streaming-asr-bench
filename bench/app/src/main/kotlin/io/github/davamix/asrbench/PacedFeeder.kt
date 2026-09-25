@@ -30,7 +30,7 @@ import android.os.SystemClock
 class PacedFeeder(
     private val audio: Wav.Audio,
     private val frameMs: Int = DEFAULT_FRAME_MS,
-) {
+) : AudioFeeder {
 
     fun interface Sink {
         /**
@@ -38,6 +38,16 @@ class PacedFeeder(
          * @param atMs  audio-timeline position of this frame's first sample
          */
         fun onFrame(pcm: ShortArray, atMs: Long)
+    }
+
+    /** Called after every frame, outside the sink's timing. */
+    fun interface Progress {
+        /**
+         * @param audioMs    audio-timeline position just past this frame
+         * @param sinkBusyMs time spent inside the sink so far
+         * @param slipMs     how late this frame was released
+         */
+        fun onFrame(audioMs: Long, sinkBusyMs: Long, slipMs: Long)
     }
 
     class FeedStats(
@@ -68,9 +78,9 @@ class PacedFeeder(
      * [onStart] runs immediately before the first frame is released, so a
      * caller can timestamp "speech started" without racing the first frame.
      */
-    fun feed(
+    override fun feed(
         sink: Sink,
-        onStart: (() -> Unit)? = null,
+        onStart: (() -> Unit)?,
         /**
          * Checked before every frame. Returning true stops the feed early.
          *
@@ -80,7 +90,9 @@ class PacedFeeder(
          * will block forever once the pipe buffer fills. Stopping early turns
          * that hang into a recorded failure.
          */
-        shouldStop: (() -> Boolean)? = null,
+        shouldStop: (() -> Boolean)?,
+        /** Sees the feed's running totals; used for a long clip's timeline. */
+        onProgress: Progress?,
     ): FeedStats {
         val total = audio.samples.size
         var offset = 0
@@ -122,6 +134,7 @@ class PacedFeeder(
 
             offset += n
             frames++
+            onProgress?.onFrame(offset * 1000L / audio.sampleRate, sinkBusy, slip)
         }
 
         val end = SystemClock.elapsedRealtime()
@@ -145,4 +158,20 @@ class PacedFeeder(
          */
         const val DEFAULT_FRAME_MS = 100
     }
+}
+
+/**
+ * Where an arm's audio comes from. [PacedFeeder] releases a file on the wall
+ * clock, which is how every measured run is fed (PLAN.md D5, §7);
+ * [MicFeeder] reads a live microphone, for the one check that the two behave
+ * alike (§10 step 20). Arms feed through this, so both paths run the same
+ * arm code.
+ */
+interface AudioFeeder {
+    fun feed(
+        sink: PacedFeeder.Sink,
+        onStart: (() -> Unit)? = null,
+        shouldStop: (() -> Boolean)? = null,
+        onProgress: PacedFeeder.Progress? = null,
+    ): PacedFeeder.FeedStats
 }

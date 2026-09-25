@@ -1,5 +1,7 @@
 package io.github.davamix.asrbench
 
+import android.content.pm.PackageManager
+import android.os.SystemClock
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -14,6 +16,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 /**
  * The harness entry point. Headless by design -- this is an instrument, not a
@@ -138,7 +144,7 @@ class BenchmarkTest {
             .map { "models/$it" }
         val dirs = listOf(
             "corpus", "corpus/audio", "corpus/audio/short", "corpus/audio/session",
-            "models", "results",
+            "models", "results", "mic",
         ) + modelDirs
         for (d in dirs) {
             val f = File(filesDir, d)
@@ -307,6 +313,170 @@ class BenchmarkTest {
         // in minutes rather than an hour.
         val sessionCapMs = minOf(arg("session_cap_s", "600").toLong(), 600L) * 1000
 
+        val arms = buildArms(armIds, buckets, threads)
+
+        Log.i(TAG, "benchmark arms=$armIds langs=$langs buckets=$buckets " +
+            "reps=$reps threads=$threads emulator=$onEmulator thermal=$enforceThermal")
+
+        val outcome = BenchmarkRunner(
+            context,
+            BenchmarkRunner.Config(
+                arms = arms,
+                languages = langs,
+                buckets = buckets,
+                sources = sources,
+                reps = reps,
+                threads = threads,
+                label = label,
+                seed = seed,
+                enforceThermal = enforceThermal,
+                sessionCapMs = sessionCapMs,
+            ),
+        ).run()
+
+        Log.i(TAG, "wrote ${outcome.rows} rows -> ${outcome.resultFile.absolutePath}")
+        if (outcome.aborted != null) Log.e(TAG, "run aborted: ${outcome.aborted}")
+        assertTrue("no rows produced", outcome.rows > 0)
+    }
+
+    /**
+     * The single real-microphone check (PLAN.md §7, §10 step 20). Validation,
+     * not measurement: nothing it produces enters the results table.
+     *
+     *   -e arm D:parakeet-tdt-v3-int8  -e lang en  -e seconds 60
+     *
+     * The owner reads the sentences shown on the phone while one arm
+     * transcribes the microphone live. The recording is kept, and the same
+     * samples then go through the same arm again, file-fed and paced exactly
+     * as every measured run is. If the method is sound, the two agree: the
+     * text, and the timing, of live input and of the simulation. Whatever
+     * still differs from the corpus runs is the audio itself (a real voice,
+     * room and microphone), which is the qualitative half of the check.
+     *
+     * The recording and both rows are written to files/mic/, not results/:
+     * they are the owner's voice (§11.7), `run_bench.py --mic` pulls them into
+     * the gitignored corpus/self-recorded/, and no later pull sweeps them into
+     * the repo.
+     */
+    @Test
+    fun micCheck() {
+        val armSpec = arg("arm", "D:parakeet-tdt-v3-int8")
+        val lang = arg("lang", "en")
+        val seconds = arg("seconds", "60").toInt()
+        val threads = arg("threads", "4").toInt()
+        val label = arg("label", "mic")
+        // Live, then the replay: twice this of continuous inference, which
+        // must stay inside the 10-minute cap (§11.3).
+        require(seconds in 10..MIC_MAX_S) { "seconds must be 10..$MIC_MAX_S" }
+
+        val micDir = File(context.getExternalFilesDir(null), MIC_DIR).apply { mkdirs() }
+        val prompt = File(micDir, "prompt-$lang.txt").takeIf { it.isFile }
+            ?.readText()?.trim().orEmpty()
+        check(prompt.isNotEmpty()) { "no script at ${micDir.absolutePath}/prompt-$lang.txt" }
+
+        // The start gate the matrix runner applies before every clip (§11.3).
+        if (!Telemetry.isEmulator()) {
+            val bat = Telemetry.battery(context)
+            check(bat.charging != true) { "device is charging" }
+            check((bat.tempC ?: 0.0) < 35.0) { "battery ${bat.tempC} C, start gate is 35 C" }
+        }
+
+        val arm = buildArms(listOf(armSpec), listOf("mic"), threads).single()
+        check(arm.supports(lang)) { "${arm.label} does not support $lang" }
+
+        // Opened through the shell, not startActivity(): MIUI aborts an app
+        // starting its own activity from the background ("MIUILOG-
+        // Permission Denied Activity"), and while instrumented, this app is
+        // in the background. The shell may start activities from anywhere.
+        instr.uiAutomation.executeShellCommand(
+            "am start -n ${context.packageName}/${MicCheckActivity::class.java.name} " +
+                "--es ${MicCheckActivity.EXTRA_LANG} $lang"
+        ).close()
+        val shown = SystemClock.uptimeMillis() + SCREEN_WAIT_MS
+        while (MicCheckActivity.current == null) {
+            check(SystemClock.uptimeMillis() < shown) {
+                "the mic check screen did not open within ${SCREEN_WAIT_MS / 1000}s"
+            }
+            Thread.sleep(200)
+        }
+        val screen = MicCheckActivity.current!!
+        try {
+            val deadline = SystemClock.uptimeMillis() + PERMISSION_WAIT_MS
+            if (!micGranted()) mic("waiting for microphone permission: tap Allow on the phone")
+            while (!micGranted()) {
+                check(SystemClock.uptimeMillis() < deadline) {
+                    "RECORD_AUDIO not granted within ${PERMISSION_WAIT_MS / 1000}s"
+                }
+                Thread.sleep(500)
+            }
+
+            screen.setStatus("Loading the model…")
+            val loadMs = arm.load(context)
+            mic("loaded ${arm.label} in ${loadMs}ms")
+            for (i in 5 downTo 1) {
+                screen.setStatus("Start reading in $i…")
+                mic("start reading in $i")
+                Thread.sleep(1000)
+            }
+
+            val sr = Wav.REQUIRED_SAMPLE_RATE
+            val audio = Wav.Audio(ShortArray(seconds * sr), sr)
+            val feeder = MicFeeder(audio)
+            screen.countdown("● Recording: read aloud", seconds)
+            mic("RECORDING ${seconds}s: read now")
+            val before = Telemetry.battery(context)
+            val live = arm.transcribe(context, audio, lang, threads, feeder)
+            val afterLive = Telemetry.battery(context)
+            screen.setStatus("Stop. Thank you. Processing…")
+            mic("recording done: level %.1f dBFS, error=%s".format(
+                feeder.rmsDbfs ?: Double.NaN, live.error ?: "-"))
+
+            val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US)
+                .apply { timeZone = TimeZone.getTimeZone("UTC") }
+                .format(Date())
+            val clipId = "mic-$lang-$stamp"
+            Wav.write(File(micDir, "$clipId.wav"), audio)
+
+            // The same samples, through the same arm, fed as every measured
+            // run is.
+            mic("replaying the recording, file-fed")
+            val replay = arm.transcribe(context, audio, lang, threads)
+            val afterReplay = Telemetry.battery(context)
+
+            val writer = ResultWriter(context, label, subdir = MIC_DIR)
+            writer.note("purpose", "real-microphone check (PLAN.md §7): the same audio " +
+                "transcribed live from the microphone (rep 0) and file-fed (rep 1)")
+            writer.note("mic_source", feeder.source)
+            writer.note("mic_rms_dbfs", feeder.rmsDbfs)
+            writer.note("prompt", prompt)
+            val clip = Manifest.Clip(clipId, "$clipId.wav", lang, "mic",
+                audio.durationMs / 1000.0, "self_recorded")
+            writer.add(arm, clip, 0, threads, live.withExtra("feed" to "mic"),
+                before, afterLive, loadMs)
+            writer.add(arm, clip, 1, threads, replay.withExtra("feed" to "file"),
+                afterLive, afterReplay, loadMs)
+            val out = writer.write()
+            mic("wrote ${out.name} and $clipId.wav")
+            screen.setStatus("Finished. You can put the phone down.")
+            Thread.sleep(2000)
+        } finally {
+            screen.finish()
+            arm.close()
+        }
+    }
+
+    private fun micGranted(): Boolean =
+        context.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+
+    private fun mic(msg: String) = Log.i(TAG, "MIC: $msg")
+
+    /**
+     * The arms named by [armIds], e.g. "A", "B:moonshine-small-en",
+     * "D:parakeet-tdt-v3-int8". Shared by the matrix run and the microphone
+     * check, so both build an arm the same way.
+     */
+    private fun buildArms(armIds: List<String>, buckets: List<String>, threads: Int): List<Arm> {
         // Arms C, D and E only: how often open speech is re-decoded for
         // partial text. 0 shows text only when the VAD closes a segment.
         val partialMs = arg("partial_ms",
@@ -323,7 +493,7 @@ class BenchmarkTest {
 
         // Arm B is selected per variant: "B:moonshine-small-en", or plain
         // "B" for every variant that has been pushed to the device.
-        val arms = armIds.flatMap { spec ->
+        return armIds.flatMap { spec ->
             val id = spec.substringBefore(':').uppercase()
             val detail = spec.substringAfter(':', "")
             when (id) {
@@ -376,32 +546,15 @@ class BenchmarkTest {
                 )
             }
         }
-
-        Log.i(TAG, "benchmark arms=$armIds langs=$langs buckets=$buckets " +
-            "reps=$reps threads=$threads emulator=$onEmulator thermal=$enforceThermal")
-
-        val outcome = BenchmarkRunner(
-            context,
-            BenchmarkRunner.Config(
-                arms = arms,
-                languages = langs,
-                buckets = buckets,
-                sources = sources,
-                reps = reps,
-                threads = threads,
-                label = label,
-                seed = seed,
-                enforceThermal = enforceThermal,
-                sessionCapMs = sessionCapMs,
-            ),
-        ).run()
-
-        Log.i(TAG, "wrote ${outcome.rows} rows -> ${outcome.resultFile.absolutePath}")
-        if (outcome.aborted != null) Log.e(TAG, "run aborted: ${outcome.aborted}")
-        assertTrue("no rows produced", outcome.rows > 0)
     }
 
     private companion object {
         const val TAG = "AsrBench"
+
+        /** Where the microphone check writes; see [micCheck]. */
+        const val MIC_DIR = "mic"
+        const val MIC_MAX_S = 180
+        const val PERMISSION_WAIT_MS = 120_000L
+        const val SCREEN_WAIT_MS = 20_000L
     }
 }

@@ -2,13 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-      RECORD_AUDIO is deliberately ABSENT until Phase 5 (PLAN.md §11.4).
+      RECORD_AUDIO was deliberately absent until Phase 5 (PLAN.md §11.4).
       Every measured run is file-fed: audio reaches the recognizer through a
-      ParcelFileDescriptor pipe via RecognizerIntent.EXTRA_AUDIO_SOURCE, which
-      needs no microphone access at all. The single real-mic sanity check at
-      the end of the experiment is the only step that will need this, and it
-      gets added then.
+      ParcelFileDescriptor pipe via RecognizerIntent.EXTRA_AUDIO_SOURCE, or
+      straight into the model, and needs no microphone access at all. It is
+      declared now for the single real-microphone check (§10 step 20), and
+      only MicCheckActivity asks for it: the owner grants it on the phone, and
+      nothing else in the harness records.
     -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!--
       Keeps the CPU awake for the duration of a run. Without it the device
@@ -40,6 +42,17 @@
         <!--
           No launcher Activity. This is a headless instrument driven by
           `adb shell am instrument`; a demo UI comes after there are numbers.
+          The one activity is the microphone check's script and permission
+          prompt, opened by BenchmarkTest#micCheck through the shell (`am
+          start`): MIUI refuses an app opening its own screen from the
+          background, and the instrumented app is in the background. Exported
+          for that reason only, and guarded by DUMP, which the shell and the
+          system hold and no installed app can: nothing else can open it.
         -->
+        <activity
+            android:name=".MicCheckActivity"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:label="ASR Bench mic check" />
     </application>
 </manifest>
