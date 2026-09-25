@@ -33,7 +33,13 @@ method in the
 > it is level with medium on clean speech (4.97% vs 4.71%) and with small on
 > noisy (9.34% vs 8.92%), and medium is the most accurate English model.
 > Parakeet's noisy figure is held down by a failure mode: on some tightly cut
-> VAD segments it returns no text at all. English figures below are updated;
+> VAD segments it returns no text at all. The Spanish first-text figures below
+> are ~1.3 s longer than their English counterparts because the Spanish clips
+> open with more silence, not because the models are slower in Spanish; from
+> speech onset, Parakeet shows Spanish text in ~1.0 s
+> ([finding](../README.md#spanish-looked-slower-to-show-text-it-was-the-clips-leading-silence)).
+> Phase 4 settled the Spanish question: see the
+> [Phase 4 summary](phase-4-spanish.md). English figures below are updated;
 > see [English on 100 clips](../README.md#english-on-100-clips-per-source)
 > and [the finding](../README.md#parakeet-can-return-nothing-for-a-tightly-cut-segment).
 

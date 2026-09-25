@@ -92,6 +92,44 @@ def med(values: list) -> float | None:
     return statistics.median(vals) if vals else None
 
 
+_ONSETS: dict[str, float | None] = {}
+_AUDIO: dict[str, str] = {}
+
+
+def speech_onset_ms(clip_id: str) -> float | None:
+    """When speech starts in a clip, in ms from its first sample.
+
+    PLAN.md §6 defines first-text latency from speech start, but the harness
+    times it from the start of the clip, and clips open with very different
+    amounts of silence: a median 1.3 s for FLEURS Spanish against 0.3-0.5 s
+    for the English sources. Uncorrected, that made Spanish look ~0.9 s
+    slower to show text on every arm.
+
+    The onset is an energy estimate, taken on the PC from the same audio the
+    phone was fed: the first 20 ms frame within 25 dB of the clip's loudest.
+    """
+    if clip_id in _ONSETS:
+        return _ONSETS[clip_id]
+    if not _AUDIO:
+        manifest = json.loads((CORPUS / "manifest.json").read_text(encoding="utf-8"))
+        _AUDIO.update({c["clip_id"]: c["audio"] for c in manifest["clips"]})
+    onset = None
+    path = CORPUS / _AUDIO.get(clip_id, "")
+    if clip_id in _AUDIO and path.is_file():
+        import numpy as np
+        import soundfile as sf
+
+        audio, sr = sf.read(path, dtype="float32")
+        frame = sr // 50
+        n = len(audio) // frame
+        if n:
+            rms = np.sqrt((audio[: n * frame].reshape(n, frame) ** 2).mean(axis=1) + 1e-12)
+            db = 20 * np.log10(rms)
+            onset = float(np.argmax(db > db.max() - 25)) * frame * 1000 / sr
+    _ONSETS[clip_id] = onset
+    return onset
+
+
 def is_timing_clean(run: dict) -> bool:
     return (run.get("max_slip_ms") or 0) <= SLIP_BUDGET_MS
 
@@ -204,6 +242,13 @@ def collect(paths: list[Path], keep_first: bool) -> dict:
             "speech_end_lag_ms": med([e.get("speech_end_lag_ms") for e in extras]),
             "n_audio_end": len(after_end),
             "latency_first_partial_ms": med([r.get("latency_first_partial_ms") for r in rows]),
+            # The same, measured from when speech starts in the clip rather
+            # than from the clip's first sample (see speech_onset_ms).
+            "first_text_from_onset_ms": med([
+                r["latency_first_partial_ms"] - onset for r in rows
+                if r.get("latency_first_partial_ms") is not None
+                and (onset := speech_onset_ms(r["clip_id"])) is not None
+            ]),
             "partial_instability": med([r.get("partial_instability") for r in rows]),
             "rtf_sustained": med([r.get("rtf_sustained") for r in rows]),
             "latency_final_ms_lowslip": med([r.get("latency_final_ms") for r in timed]),
@@ -288,6 +333,8 @@ def print_detail(summary: dict) -> None:
                   f"{fmt(s['final_after_audio_end_signed_ms'], '.0f')}; old stamp late by "
                   f"{fmt(s['speech_end_lag_ms'], '.0f')} ms]")
         print(f"  latency_first_partial_ms {fmt(s['latency_first_partial_ms'], '.0f')}  (median)")
+        print(f"    from speech onset      {fmt(s['first_text_from_onset_ms'], '.0f')}"
+              f"   [onset estimated from the audio; see speech_onset_ms]")
         print(f"    same, low-slip rows    {fmt(s['latency_first_partial_ms_lowslip'], '.0f')}"
               f"   [n={s['n_timing']}, biased toward easy clips -- see SLIP_BUDGET_MS]")
         print(f"    final, low-slip rows   {fmt(s['latency_final_ms_lowslip'], '.0f')}")

@@ -10,19 +10,24 @@ This repo is the lab notebook, not the final report. It was made public before
 any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
-**Status:** Phases 0–3 complete; Phase 4 under way. Arm D (Parakeet) is the
-first model to serve **both** languages well: 4.47% WER in Spanish against
-the platform recognizer's 7.39%, on 100 clips. On English, re-measured on 100
-clips per source, it is level with Moonshine medium on clean speech (4.97%
-vs 4.71%) and with Moonshine small on noisy (9.34% vs 8.92%); Moonshine
-medium is the most accurate English model measured
-([English on 100 clips](#english-on-100-clips-per-source)). Phase 4 also
-found that Moonshine's Spanish streaming model exists after all
-([finding](#moonshines-spanish-streaming-models-are-on-its-cdn-not-on-huggingface)).
-Arm C (Moonshine `base-es`, 65 MB) is level with Parakeet in Spanish (5.09%)
-but too slow to be live on this phone: final text 2.5 s after the speaker
-stops ([Arm C](#arm-c-moonshine-base-es-spanish-65-mb)). Moonshine's Spanish
-streaming model is next. Revised figures are marked where they occur.
+**Status:** Phases 0–4 complete; Phase 5 (sustained sessions, microphone
+check, final write-up) not started. **The answer to the central question:
+one model can serve both languages live on this phone, and it is Parakeet**
+([§1 answer](#spanish-across-the-matrix-and-the-answer-to-1)). It is the
+most accurate Spanish option measured, 4.47% WER against 7.2–7.4% for every
+per-language alternative (the platform recognizer and Moonshine's Spanish
+streaming model), and level with the best English models on clean speech.
+Two models buy size and heat, not Spanish accuracy. Along the way: Moonshine
+medium is the most accurate English model
+([English on 100 clips](#english-on-100-clips-per-source)); Moonshine's
+Spanish streaming model exists after all
+([finding](#moonshines-spanish-streaming-models-are-on-its-cdn-not-on-huggingface));
+Arm C is accurate but too slow to be live
+([Arm C](#arm-c-moonshine-base-es-spanish-65-mb)); and Spanish only looked
+slower to show text
+([finding](#spanish-looked-slower-to-show-text-it-was-the-clips-leading-silence)).
+Revised figures are marked where they occur. See the
+[Phase 4 summary](summaries/phase-4-spanish.md).
 
 ---
 
@@ -33,7 +38,7 @@ streaming model is next. Revised figures are marked where they occur.
 | [Why this is not obvious](#why-this-is-not-obvious) | Why live ASR is a different problem from batch ASR, and the English/Spanish asymmetry the experiment exists to price |
 | [Hardware under test](#hardware-under-test) | The phone, its SoC, and why no published number comes from an emulator |
 | [The matrix](#the-matrix) | The five arms, with current status per arm |
-| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), [Arm B: Moonshine](#arm-b-moonshine-streaming-english), [Arms D and E: Parakeet and Whisper](#arms-d-and-e-offline-models-made-live-both-languages), [English on 100 clips per source](#english-on-100-clips-per-source), and [Arm C: Moonshine `base-es`](#arm-c-moonshine-base-es-spanish-65-mb) |
+| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), [Arm B: Moonshine](#arm-b-moonshine-streaming-english), [Arms D and E: Parakeet and Whisper](#arms-d-and-e-offline-models-made-live-both-languages), [English on 100 clips per source](#english-on-100-clips-per-source), [Arm C: Moonshine `base-es`](#arm-c-moonshine-base-es-spanish-65-mb), and [**Spanish across the matrix, and the answer to §1**](#spanish-across-the-matrix-and-the-answer-to-1) |
 | [Metrics](#metrics) | What is measured and why RTF alone would mislead |
 | [Method](#method-paced-file-fed-streaming) | Paced file-fed streaming — the one implementation detail everything rests on |
 | [Corpus](#corpus) | How the audio was built, and the concatenation trick for scored continuous speech |
@@ -75,11 +80,12 @@ anywhere else.
 | 21 | [Parakeet can return nothing for a tightly cut segment](#parakeet-can-return-nothing-for-a-tightly-cut-segment) | Model behaviour |
 | 22 | [Years written as digits cost four WER points](#years-written-as-digits-cost-four-wer-points) | Measurement integrity |
 | 23 | [Twenty clips could not tell the arms apart](#twenty-clips-could-not-tell-the-arms-apart) | Measurement integrity |
-| 24 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
-| 25 | [Two ONNX Runtimes in one APK collide at packaging](#two-onnx-runtimes-in-one-apk-collide-at-packaging) | Integration gotcha |
-| 26 | [sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default](#sherpa-onnxs-kotlin-vad-splits-utterances-after-5-seconds-by-default) | Integration gotcha |
-| 27 | [The battery temperature an app can read can be minutes old](#the-battery-temperature-an-app-can-read-can-be-minutes-old) | Measurement integrity |
-| 28 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
+| 24 | [Spanish looked slower to show text; it was the clips' leading silence](#spanish-looked-slower-to-show-text-it-was-the-clips-leading-silence) | Measurement integrity |
+| 25 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
+| 26 | [Two ONNX Runtimes in one APK collide at packaging](#two-onnx-runtimes-in-one-apk-collide-at-packaging) | Integration gotcha |
+| 27 | [sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default](#sherpa-onnxs-kotlin-vad-splits-utterances-after-5-seconds-by-default) | Integration gotcha |
+| 28 | [The battery temperature an app can read can be minutes old](#the-battery-temperature-an-app-can-read-can-be-minutes-old) | Measurement integrity |
+| 29 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
 
 > **New here?** Start with the [Phase 3 summary](summaries/phase-3-arms-d-e.md),
 > then [Phase 2](summaries/phase-2-arm-b.md) and [Phase 1](summaries/phase-1-arm-a.md),
@@ -132,7 +138,7 @@ the quantity of interest.
 | # | Arm | Streaming | EN | ES | Size | Runtime | Role | Status |
 |---|---|---|---|---|---|---|---|---|
 | A | Android on-device recognizer | native | ✅ | ✅ | **0 MB** | platform | The bar to beat | ✅ **measured, both** |
-| B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ✅ **measured, all three sizes** |
+| B | Moonshine streaming tiny/small/medium (en), small (es) | native | ✅ | ✅ | 78 / 224 / 416 MB; es 122 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ✅ **measured, all English sizes; Spanish small (Phase 4)** |
 | C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ✅ **measured, Spanish** |
 | D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ✅ **measured, both** |
 | E | Whisper small + base int8 (VAD-segmented) | no | ✅ | ✅ | 375 / 161 MB | sherpa-onnx | Known baseline / calibration | ✅ **measured, both sizes, both languages** |
@@ -156,6 +162,11 @@ corrected harness. English was later re-measured on 100 clips per source. Its
 WER replaces the 20-clip figures in every table below, while the timing
 columns keep the original runs; the 100-clip runs' own timing is in
 [English on 100 clips per source](#english-on-100-clips-per-source).
+
+**First text** is timed from the start of the clip, as the harness records
+it. Across languages that misleads, because the Spanish clips open with ~1 s
+more silence; the Phase 4 tables also give it from speech onset
+([finding](#spanish-looked-slower-to-show-text-it-was-the-clips-leading-silence)).
 
 **Final text** is measured from the actual end of the audio, clamped at zero:
 text already final when the audio ended counts as 0 ms of waiting. Phase 1
@@ -230,14 +241,18 @@ clips it scores 9.72% against Spanish's 7.39%. The sentences differ between
 languages, so no paired test applies, and a gap of about two points is as
 far as the data goes.
 
-**3. Spanish is slower to show text, and that one does reproduce.** First text
-arrives at ~2.0 s in Spanish against 1.0–1.3 s in English. The Spanish figure
-landed within 11 ms across three runs (2019 / 2008 / 2009 ms). For continuous
-dictation it is paid once per session (6-minute sessions: 2607 vs 1214 ms), and
-for voice commands on every utterance. Final text is fast in both languages
-(0–76 ms after the audio ends). Clips end with different amounts of silence,
-though, so the final-text difference between languages is not a clean
-comparison.
+**3. Spanish looked slower to show text, and that was the clips.** First text
+arrives at ~2.0 s in Spanish against 1.0–1.3 s in English, and the Spanish
+figure landed within 11 ms across three runs (2019 / 2008 / 2009 ms). But the
+harness times it from the start of the clip, and the Spanish clips open with
+~1 s more silence. From when speech starts, Arm A shows first text in ~0.7 s
+in both languages
+([finding](#spanish-looked-slower-to-show-text-it-was-the-clips-leading-silence)).
+Final text is fast in both languages (0–76 ms after the audio ends).
+
+> **Revised in Phase 4.** This point was "Spanish is slower to show text,
+> and that one does reproduce", read as a property of the Spanish
+> recognizer. It reproduced because the audio did.
 
 ### Reproducibility
 
@@ -530,8 +545,11 @@ source only.
    the clip's own trailing silence and the decode is fast. First text is the
    weak spot. At 1.5–3.0 s the VAD arms are the slowest in the matrix. A
    partial waits for the VAD to declare speech (at least 0.25 s of it), then
-   one 500 ms interval, then a decode. In Spanish every arm is slow
-   (2.0–3.0 s), and there Parakeet matches Arm A's final text (0 ms).
+   one 500 ms interval, then a decode. In Spanish every arm looked slower
+   (2.0–3.0 s), but that is the Spanish clips' leading silence: from speech
+   onset, Parakeet shows first text in ~1.0 s in Spanish and 1.4–1.5 s in
+   English ([finding](#spanish-looked-slower-to-show-text-it-was-the-clips-leading-silence)).
+   In Spanish, Parakeet matches Arm A's final text (0 ms).
 6. **Partials cost more than the model.** Showing live text roughly doubles
    or triples the compute: finals alone need 0.20–0.59 of real time, and
    re-decoding open speech every 500 ms brings that to 0.52–1.36
@@ -707,6 +725,110 @@ So for a live app Arm C does not work as the cheap Spanish option.
 For transcribing after the user stops speaking, it is the most accurate
 option per megabyte measured, with a licence that forbids shipping it.
 
+### Spanish across the matrix, and the answer to §1
+
+Phase 4 added a fifth Spanish option: Moonshine's Spanish streaming model,
+`small-streaming-es` (122 MB, MIT), which turned out to exist on the vendor's
+CDN ([finding](#moonshines-spanish-streaming-models-are-on-its-cdn-not-on-huggingface)).
+It runs through the same SDK and harness path as the English variants (Arm B).
+Measured 2026-09-25 on the 100 Spanish clips, 3 repetitions: 300 rows, no
+errors, no empty rows, and identical text in repetitions 1 and 2.
+
+| Spanish, 100 clips | Arm A (0 MB) | Moonshine `small-es` (122 MB) | Arm C `base-es` (65 MB) | **Parakeet (670 MB)** | Whisper small (375 MB)³ |
+|---|---|---|---|---|---|
+| WER | 7.39% | 7.24% | 5.09% | **4.47%** | 11.24% |
+| CER | 3.55% | 2.27% | 2.05% | **1.76%** | 4.22% |
+| Final text | **0 ms** | **0 ms** | 2504 ms | **0 ms** | 2750 ms |
+| First text, from speech onset⁴ | **711 ms** | 738 ms | 1328 ms | 980 ms | 1721 ms |
+| Compute, with partials (finals only) | — | **0.43** | 1.16 (0.45) | 0.58 (0.21) | 1.24 (0.52) |
+| Revisions (median) | 6 | 14 | 8 | 12 | 2 |
+| Peak RSS | 124 MB² | 640 MB | 872 MB | 1027 MB | 997 MB |
+| Battery per 240 clips | 4 pts | 8.8 pts | 28 pts | 13 pts | 29 pts |
+| Cooling pauses at the 35 °C gate | 0 | 0 | 8 | 0 | 15 |
+| Licence | platform | MIT | **non-commercial** | CC-BY-4.0 | MIT |
+
+² Our harness only; the recognizer's own memory is in Google's process.
+³ Original 20 clips; its battery and cooling figures cover its whole run, both
+languages. ⁴ The harness times first text from the start of the clip, and the
+Spanish clips open with ~1 s more silence than the English ones. Measured from
+when speech starts, Spanish first text drops by 1.2–1.4 s on every arm, and
+English by 0.2–0.6 s
+([finding](#spanish-looked-slower-to-show-text-it-was-the-clips-leading-silence)).
+
+| Spanish WER, 100 clips | A − B | 95% interval | |
+|---|---|---|---|
+| Arm A − Parakeet | +2.9 | +0.6 to +5.8 | Parakeet better |
+| Moonshine `small-es` − Parakeet | +2.8 | +1.3 to +4.3 | Parakeet better |
+| Moonshine `small-es` − Arm C | +2.2 | +0.5 to +3.8 | Arm C better |
+| Arm A − Moonshine `small-es` | +0.1 | −2.7 to +3.5 | not resolved |
+| Arm A − Arm C | +2.3 | −0.0 to +5.1 | not resolved, only just |
+| Arm C − Parakeet | +0.6 | −0.5 to +1.8 | not resolved |
+
+**What Spanish answers:**
+
+1. **Parakeet is the most accurate Spanish option, and the only one that is
+   both accurate and live.** It beats the platform recognizer and Moonshine's
+   Spanish streaming model by about three points each, both resolved, and
+   its final text is ready when the speaker stops.
+2. **Moonshine's Spanish streaming model is level with the free recognizer,
+   not better.** 7.24% against 7.39%. Moonshine publishes 4.9% for it, on
+   FLEURS and MLS, decoding whole utterances, with its own normaliser; that
+   did not carry over to this corpus and this live pipeline, and why was not
+   established. Missing accents are a larger share of its errors than for
+   the other arms (9%, against 0–3%); without them it would score 6.62%,
+   still behind Arm C and Parakeet. It is the cheapest bundled stack to
+   run: 0.43 of real time, 8.8 battery points per 240 clips, never above
+   31.7 °C.
+3. **Arm C is accurate but not live** ([Arm C](#arm-c-moonshine-base-es-spanish-65-mb)),
+   and its licence rules it out for shipping.
+4. **Spanish is not slower to show text.** From speech onset, Arm A, Moonshine
+   and Parakeet show the first words in 0.7–1.0 s.
+
+**The answer to PLAN.md §1** — *can one model serve both English and Spanish
+at acceptable live latency on a mid-range phone, or do we ship a different
+model per language?*
+
+**One model can, and it is Parakeet.** The live stacks, side by side:
+
+| Live stack | Disk | Spanish WER | English WER, clean / noisy | Final text | First text, from speech onset | Peak RSS |
+|---|---|---|---|---|---|---|
+| **One model: Parakeet** | 670 MB | **4.47%** | 4.97 / 9.34% | 0–350 ms | 1.0–1.5 s | 1.03 GB |
+| Moonshine small-en + small-es | 346 MB | 7.24% | 7.36 / 8.92% | 0–490 ms | 0.7–1.0 s | 0.64–0.76 GB |
+| Moonshine medium-en + small-es | 538 MB | 7.24% | **4.71 / 7.02%** | 0–770 ms | 0.7–1.0 s | 0.97 GB |
+| Moonshine small-en + Arm A for Spanish | 224 MB + a language pack | 7.39% | 7.36 / 8.92% | 0–490 ms | 0.7–1.0 s | 0.76 GB |
+
+English figures are the 100-clip runs; peak RSS is per model, as an app would
+load one language at a time.
+
+- **What one model buys is Spanish accuracy.** Parakeet makes about 40% fewer
+  Spanish errors than any per-language option (4.47% against 7.2–7.4%, gaps
+  resolved), and serves English within reach of the best: level with Moonshine
+  medium on clean speech, 2.3 points behind it on noisy (not resolved). Its
+  noisy figure is held down by a failure mode that half a second of padding
+  largely fixes in a PC diagnostic
+  ([finding](#parakeet-can-return-nothing-for-a-tightly-cut-segment)), unmeasured
+  on the phone.
+- **What two models buy is size, first-text speed and heat, not Spanish
+  accuracy.** Moonshine for both languages is half Parakeet's disk, one MIT
+  runtime, cooler, and shows the first words 0.2–0.6 s sooner. But its
+  Spanish is no better than the free platform recognizer's. The asymmetry
+  the experiment set out to price is real: every per-language option is
+  strong in English and merely adequate in Spanish.
+- **The platform recognizer is not the fallback it looked like.** It is
+  level with Moonshine's Spanish model and fastest to show text, but it fails
+  on noisy English (27%), needs a language pack the user may not have, and
+  is not the app's to bundle: it depends on Google's on-device recognizer
+  being present.
+
+On this phone, then: ship Parakeet as the one model if ~670 MB of disk and
+~1 GB of memory are acceptable, and pad each VAD segment with leading
+silence. If size or heat matters more than Spanish accuracy, ship Moonshine
+small-en + small-es: MIT, one runtime, 346 MB, no dependency on a platform
+language pack, and Spanish at the platform recognizer's level. What is not
+yet measured, and Phase 5 covers: 5–10 minute continuous sessions for the
+surviving stacks (Parakeet uses ~0.6 of real time with partials), and a
+real-microphone check.
+
 ## Metrics
 
 Real-time factor alone is a batch metric and would mislead here.
@@ -834,10 +956,21 @@ a phone that cannot be replaced (§11.5):
     --arms B:moonshine-tiny-en --langs en --reps 4 --no-push
 
 # Arms D and E: the VAD goes along with each model; both languages
-.venv/Scripts/python scripts/run_bench.py --device physical     --push-models silero-vad,parakeet-tdt-v3-int8
-.venv/Scripts/python scripts/run_bench.py --device physical     --arms D:parakeet-tdt-v3-int8 --langs en,es --reps 4 --no-push
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --push-models silero-vad,parakeet-tdt-v3-int8
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --arms D:parakeet-tdt-v3-int8 --langs en,es --reps 4 --no-push
 #   --partial-ms 0 shows final text only; the default re-decodes every 500 ms
 #   --sources fleurs_en_norm,librispeech_other measures only those corpus sources
+
+# Phase 4, Spanish: Arm C (Moonshine base-es, non-commercial) and Moonshine's
+# Spanish streaming model; both fetched by fetch_models.py
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --push-models moonshine-base-es,moonshine-small-es \
+    --arms C:moonshine-base-es --langs es --sources fleurs_es --reps 2
+.venv/Scripts/python scripts/run_bench.py --device physical \
+    --arms B:moonshine-small-es --langs es --sources fleurs_es --reps 3 --no-push
+#   --moonshine-options max_tokens_per_second=13 runs an Arm C ablation
 
 .venv/Scripts/python scripts/compare.py --standard    # paired bootstrap: which gaps are real
 
@@ -899,9 +1032,11 @@ Japanese. The HuggingFace repo has streaming models for English only. Moonshine'
 docs list the Spanish pair at 4.9% and 6.2% WER, so reading them would have
 caught this.
 
-What changed for the experiment: `small-streaming-es` joins Arm B in Phase 4.
-It makes a second answer to the one-model-or-two question possible, Moonshine
-for both languages, as two models on one runtime. A CDN has no revisions to
+What changed for the experiment: `small-streaming-es` joined Arm B in Phase 4.
+It made a second answer to the one-model-or-two question possible, Moonshine
+for both languages, as two models on one runtime. Measured, it scores 7.24%
+in Spanish, level with the platform recognizer and behind Parakeet
+([results](#spanish-across-the-matrix-and-the-answer-to-1)). A CDN has no revisions to
 pin, so `fetch_models.py` pins each file by SHA-256 and refuses a mismatch
 (`models/MODELS.md`).
 
@@ -1601,6 +1736,45 @@ timing, not its accuracy. And "X beats Y" needs an interval, not two pooled
 numbers side by side. `scripts/compare.py --standard` re-checks every
 comparison the README relies on.
 
+### Spanish looked slower to show text; it was the clips' leading silence
+
+From Phase 1 on, the README said the platform recognizer is slower to show
+text in Spanish than in English, ~2.0 s against 1.0–1.3 s, and that it
+reproduced. It did reproduce, on every arm: Parakeet, Whisper, and
+Moonshine's Spanish model against its English sibling were all 0.6–0.9 s
+slower on Spanish too. Phase 4 found why. The harness times first text from the start of the clip, and the
+clips do not start with speech equally soon:
+
+| Source | Silence before speech, median (p25–p75) |
+|---|---|
+| FLEURS `es_419` | **1.31 s** (0.97–1.58) |
+| FLEURS `en_us`, level-matched | 0.32 s (0.14–0.53) |
+| LibriSpeech `test-other` | 0.46 s (0.28–0.56) |
+
+PLAN.md §6 defines the metric from *speech start*. Measured that way, the
+language difference disappears:
+
+| First text, median | From clip start | From speech onset |
+|---|---|---|
+| Arm A, Spanish | 2009 ms | **711 ms** |
+| Arm A, English clean / noisy | 1210 / 1131 ms | **730 / 752 ms** |
+| Arm A, 6-minute sessions, es / en | 2607 / 1214 ms | **767 / 474 ms** |
+| Moonshine, Spanish (`small-es`) | 2127 ms | **738 ms** |
+| Moonshine small, English clean / noisy | 1350 / 1190 ms | **968 / 818 ms** |
+| Parakeet, Spanish | 2372 ms | **980 ms** |
+| Parakeet, English clean / noisy | 1824 / 1564 ms | **1528 / 1366 ms** |
+
+The onset is an energy estimate, computed on the PC from the same audio the
+phone was fed: the first 20 ms frame within 25 dB of the clip's loudest.
+`summarize.py` now prints first text both ways. The ranking between arms
+does not change, because every arm heard the same clips. Only comparisons
+across languages were wrong, and one of the README's "three things worth
+stopping on" was one of them.
+
+The lesson generalises: a latency measured from the start of a file inherits
+whatever the file starts with. Measure from the event the metric is named
+after.
+
 ### Two ONNX Runtimes in one APK collide at packaging
 
 Moonshine's AAR and sherpa-onnx's regular AAR each ship
@@ -1685,7 +1859,7 @@ pinned revisions (`models/MODELS.md`) under their own licences:
 | Arm | Model | Licence | Ship-safe? |
 |---|---|---|---|
 | A | Android on-device recognizer | platform | ✅ |
-| B | Moonshine streaming en | MIT | ✅ |
+| B | Moonshine streaming en, es | MIT | ✅ |
 | C | Moonshine `base-es` | Moonshine Community (non-commercial) | ❌ **experiment only** |
 | D | Parakeet TDT v3 | CC-BY-4.0 | ✅ with attribution |
 | E | Whisper small/base | MIT | ✅ |

@@ -46,6 +46,16 @@ Measured 2026-09-23. Full method and reproduction steps in the [README](../READM
 > Spanish session 6.54% (was 6.68%). Spanish has since grown to 100 clips,
 > on which this recognizer scores **7.39%**. "Clean Spanish: strong" stands,
 > but Parakeet (Phase 3) beats it measurably: 4.47% on the same 100 clips.
+>
+> **Revised in Phase 4.** "The latency profiles are opposite, by language" no
+> longer holds even for first text. The harness times first text from the
+> start of the clip, and the Spanish clips open with ~1 s more silence than
+> the English ones (median 1.31 s against 0.32–0.46 s). From when speech
+> starts, this recognizer shows text in ~0.7 s in both languages (711 ms in
+> Spanish, 730–752 ms in English; sessions 767 vs 474 ms). The 2.0 s
+> reproduced because the audio did. On 100 clips per source its English is
+> also better than Phase 1 said: 9.72% level-matched, 27.09% noisy. See
+> [the finding](../README.md#spanish-looked-slower-to-show-text-it-was-the-clips-leading-silence).
 
 ---
 
