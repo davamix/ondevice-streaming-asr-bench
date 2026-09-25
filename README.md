@@ -10,13 +10,17 @@ This repo is the lab notebook, not the final report. It was made public before
 any results existed, and the results table below grows as phases complete.
 Negative results stay in.
 
-**Status:** Phases 0–3 complete. Arm D
-(Parakeet) is the first model to serve **both** languages well: 4.47% WER in
-Spanish against the platform recognizer's 7.39%, on 100 clips, and 7.05% on
-noisy English. See the [Phase 3 summary](summaries/phase-3-arms-d-e.md).
-Phase 3 also grew the Spanish set from 20 clips to 100, because 20 could not
-tell the arms apart, and fixed two scoring rules. Revised figures are marked
-where they occur. Arm C not started.
+**Status:** Phases 0–3 complete; Phase 4 under way. Arm D (Parakeet) is the
+first model to serve **both** languages well: 4.47% WER in Spanish against
+the platform recognizer's 7.39%, on 100 clips. On English, re-measured on 100
+clips per source, it is level with Moonshine medium on clean speech (4.97%
+vs 4.71%) and with Moonshine small on noisy (9.34% vs 8.92%); Moonshine
+medium is the most accurate English model measured
+([English on 100 clips](#english-on-100-clips-per-source)). Phase 4 also
+found that Moonshine's Spanish streaming model exists after all
+([finding](#moonshines-spanish-streaming-models-are-on-its-cdn-not-on-huggingface)).
+Arm C and Moonshine Spanish are next. Revised figures are marked where they
+occur.
 
 ---
 
@@ -27,7 +31,7 @@ where they occur. Arm C not started.
 | [Why this is not obvious](#why-this-is-not-obvious) | Why live ASR is a different problem from batch ASR, and the English/Spanish asymmetry the experiment exists to price |
 | [Hardware under test](#hardware-under-test) | The phone, its SoC, and why no published number comes from an emulator |
 | [The matrix](#the-matrix) | The five arms, with current status per arm |
-| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), [Arm B: Moonshine](#arm-b-moonshine-streaming-english), and [Arms D and E: Parakeet and Whisper](#arms-d-and-e-offline-models-made-live-both-languages) |
+| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), [Arm B: Moonshine](#arm-b-moonshine-streaming-english), [Arms D and E: Parakeet and Whisper](#arms-d-and-e-offline-models-made-live-both-languages), and [English on 100 clips per source](#english-on-100-clips-per-source) |
 | [Metrics](#metrics) | What is measured and why RTF alone would mislead |
 | [Method](#method-paced-file-fed-streaming) | Paced file-fed streaming — the one implementation detail everything rests on |
 | [Corpus](#corpus) | How the audio was built, and the concatenation trick for scored continuous speech |
@@ -46,7 +50,7 @@ anywhere else.
 
 | # | Finding | Kind |
 |---|---|---|
-| 1 | [Moonshine has no deployable Spanish streaming model](#moonshine-has-no-deployable-spanish-streaming-model) | Ecosystem gap |
+| 1 | [Moonshine's Spanish streaming models are on its CDN, not on HuggingFace](#moonshines-spanish-streaming-models-are-on-its-cdn-not-on-huggingface) | Correction (was: ecosystem gap) |
 | 2 | [The two Moonshine repos contradict each other on licensing](#the-two-moonshine-repos-contradict-each-other-on-licensing) | Licensing |
 | 3 | [sherpa-onnx has no streaming Zipformer for Spanish](#sherpa-onnx-has-no-streaming-zipformer-for-spanish) | Ecosystem gap |
 | 4 | [Whisper "small q5 = 180 MB" does not apply to a sherpa-onnx stack](#whisper-small-q5--180-mb-does-not-apply-to-a-sherpa-onnx-stack) | Correction to the plan |
@@ -66,13 +70,14 @@ anywhere else.
 | 18 | [An empty transcript is every word missed, not a row to skip](#an-empty-transcript-is-every-word-missed-not-a-row-to-skip) | Measurement integrity |
 | 19 | [Live partials from an offline model multiply its compute](#live-partials-from-an-offline-model-multiply-its-compute) | Measured |
 | 20 | [Silero VAD hears quiet speech, but late](#silero-vad-hears-quiet-speech-but-late) | Model behaviour |
-| 21 | [Years written as digits cost four WER points](#years-written-as-digits-cost-four-wer-points) | Measurement integrity |
-| 22 | [Twenty clips could not tell the arms apart](#twenty-clips-could-not-tell-the-arms-apart) | Measurement integrity |
-| 23 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
-| 24 | [Two ONNX Runtimes in one APK collide at packaging](#two-onnx-runtimes-in-one-apk-collide-at-packaging) | Integration gotcha |
-| 25 | [sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default](#sherpa-onnxs-kotlin-vad-splits-utterances-after-5-seconds-by-default) | Integration gotcha |
-| 26 | [The battery temperature an app can read can be minutes old](#the-battery-temperature-an-app-can-read-can-be-minutes-old) | Measurement integrity |
-| 27 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
+| 21 | [Parakeet can return nothing for a tightly cut segment](#parakeet-can-return-nothing-for-a-tightly-cut-segment) | Model behaviour |
+| 22 | [Years written as digits cost four WER points](#years-written-as-digits-cost-four-wer-points) | Measurement integrity |
+| 23 | [Twenty clips could not tell the arms apart](#twenty-clips-could-not-tell-the-arms-apart) | Measurement integrity |
+| 24 | [Accuracy reproduced; one session's timing did not](#reproducibility) | Measurement integrity |
+| 25 | [Two ONNX Runtimes in one APK collide at packaging](#two-onnx-runtimes-in-one-apk-collide-at-packaging) | Integration gotcha |
+| 26 | [sherpa-onnx's Kotlin VAD splits utterances after 5 seconds by default](#sherpa-onnxs-kotlin-vad-splits-utterances-after-5-seconds-by-default) | Integration gotcha |
+| 27 | [The battery temperature an app can read can be minutes old](#the-battery-temperature-an-app-can-read-can-be-minutes-old) | Measurement integrity |
+| 28 | [Excluded before testing](#excluded-before-testing) | Scope decisions |
 
 > **New here?** Start with the [Phase 3 summary](summaries/phase-3-arms-d-e.md),
 > then [Phase 2](summaries/phase-2-arm-b.md) and [Phase 1](summaries/phase-1-arm-a.md),
@@ -137,15 +142,18 @@ money-saving result — which is why it is built first.
 ## Results
 
 Every number comes from the Snapdragon 870: file-fed, paced to the wall
-clock, phone unplugged, never above 31 °C. Repetition 0 is discarded, and
-figures are medians over all remaining rows.
+clock, phone unplugged, behind a 35 °C start gate. Repetition 0 is
+discarded, and figures are medians over all remaining rows.
 
 **How runs are combined.** Accuracy reproduces across runs. Arm A scored an
 identical 9.69% on FLEURS English in two runs seven hours apart. So WER and CER
 are **pooled over every valid run**. Timing did not always reproduce (see
 [Reproducibility](#reproducibility)), so latency comes from the **Phase 2
 runs**: made back to back on the afternoon of 2026-09-23, both arms, with the
-corrected harness.
+corrected harness. English was later re-measured on 100 clips per source. Its
+WER replaces the 20-clip figures in every table below, while the timing
+columns keep the original runs; the 100-clip runs' own timing is in
+[English on 100 clips per source](#english-on-100-clips-per-source).
 
 **Final text** is measured from the actual end of the audio, clamped at zero:
 text already final when the audio ended counts as 0 ms of waiting. Phase 1
@@ -157,16 +165,17 @@ measured it from when the feeder returned, which ran up to one frame early (see
 | Lang | Source | Audio | WER | CER | Final text | First text | Revisions | Slip median | `peak_rss_mb` |
 |---|---|---|---|---|---|---|---|---|---|
 | es | FLEURS `es_419` | clean | **7.39%** | 3.55% | 0 ms | 2009 ms | 6 | 6 ms | 124 |
-| en | FLEURS `en_us` | clean, level-matched | **12.60%** | 8.78% | 76 ms | 1259 ms | 8 | 6 ms | 118 |
+| en | FLEURS `en_us` | clean, level-matched | **9.72%** | 5.22% | 76 ms | 1259 ms | 8 | 6 ms | 118 |
 | en | FLEURS `en_us` | clean, original (**very quiet**) | 9.69% | 4.36% | 50 ms | 1212 ms | 8 | 6 ms | 118 |
-| en | LibriSpeech `test-other` | **noisy** | **29.31%** | 22.42% | 68 ms | 1012 ms | 8 | 6 ms | 118 |
+| en | LibriSpeech `test-other` | **noisy** | **27.09%** | 20.11% | 68 ms | 1012 ms | 8 | 6 ms | 118 |
 
 Spanish covers 100 clips (1,767 reference words): the original 20, measured
 in four runs, and 80 added in Phase 3, measured in the fourth. Each clip
-counts once, however many runs measured it. The two original English sources
-are pooled over two runs (120 rows each), and the level-matched clips come
-from one run (60 rows). `peak_rss_mb` is our harness only; the
-recognizer runs in Google's process.
+counts once, however many runs measured it. Level-matched and noisy English
+cover 100 clips each (1,710 and 1,489 reference words), from the Phase 2 runs
+and a 2-repetition run on 2026-09-25; the very quiet originals are still the
+20 clips of Phases 1–2. `peak_rss_mb` is our harness only; the recognizer
+runs in Google's process.
 
 > **Revised in Phase 2.** Three things Phase 1 published have changed:
 >
@@ -194,22 +203,30 @@ recognizer runs in Google's process.
 >   On the 100-clip set it is 7.39%
 >   ([finding](#twenty-clips-could-not-tell-the-arms-apart)).
 
+> **Revised before Phase 4.** English grew to 100 clips per source. Noisy
+> English was 29.31% (CER 22.42%) on 20 clips and is **27.09%** on 100.
+> Level-matched English was 12.60% (CER 8.78%), dominated by one clip that
+> returned only its last clause, and is **9.72%** on 100
+> ([results](#english-on-100-clips-per-source)).
+
 ### Three things worth stopping on
 
-**1. Accuracy collapses on noisy audio, and that reproduces.** 29.31% WER on
-LibriSpeech `test-other` (29.42% and 29.19% in two runs), with CER at 22%.
-Roughly one word in three or four is wrong in conditions resembling an
-ordinary room.
+**1. Accuracy collapses on noisy audio, and that reproduces.** 27.09% WER on
+100 LibriSpeech `test-other` clips, with CER at 20%. The original 20 gave
+29.42% and 29.19% in two runs. Roughly one word in four is wrong in
+conditions resembling an ordinary room.
 That failure is the case a bundled model would exist to fix.
 
 **2. "Spanish is more accurate than English" is not established.** Phase 1
 reported 7.73% vs 9.69% on "the same corpus, recorded the same way". Neither
 half survived. The English clips turned out to be ~40 dB quieter, and Spanish
-was corrected to 8.14% (7.39% on the 100-clip set since Phase 3). At matched level, English scores 12.60%, but that
-figure is dominated by one clip where the recognizer returned only the last
-clause ([finding](#the-platform-recognizer-can-return-only-the-last-clause)).
-On the other 19 clips, level-matched English scores 8.22%. So the language gap
-is either large or nil, depending on a single utterance.
+was corrected to 8.14% (7.39% on the 100-clip set since Phase 3). On the
+original 20 clips at matched level, English scored 12.60%, dominated by one
+clip where the recognizer returned only the last clause
+([finding](#the-platform-recognizer-can-return-only-the-last-clause)). On 100
+clips it scores 9.72% against Spanish's 7.39%. The sentences differ between
+languages, so no paired test applies, and a gap of about two points is as
+far as the data goes.
 
 **3. Spanish is slower to show text, and that one does reproduce.** First text
 arrives at ~2.0 s in Spanish against 1.0–1.3 s in English. The Spanish figure
@@ -292,24 +309,29 @@ and pays it once.
 
 Moonshine v2 streaming, via `ai.moonshine:moonshine-voice:0.1.5`, weights
 loaded from disk at the pinned revision. Same corpus, same paced feeder, same
-phone as Arm A. English only, because no Spanish streaming `.ort` exists (see
-[Findings](#moonshine-has-no-deployable-spanish-streaming-model)).
+phone as Arm A. English only in Phases 2–3: the Spanish streaming model was
+believed not to exist, and in fact sits on Moonshine's CDN rather than
+HuggingFace ([finding](#moonshines-spanish-streaming-models-are-on-its-cdn-not-on-huggingface)).
+Phase 4 adds it.
 
 | Variant | Source | Audio | WER | CER | Final text | First text | Revisions | `rtf_sustained` | `peak_rss_mb` |
 |---|---|---|---|---|---|---|---|---|---|
 | tiny | FLEURS `en_us` | clean, level-matched | 11.25% | 5.76% | 0 ms | 1064 ms | 16 | 0.423 | 363–475 |
 | tiny | FLEURS `en_us` | clean, original (**very quiet**) | 30.05% | 23.05% | 0 ms | 1558 ms | 8 | 0.378 | |
 | tiny | LibriSpeech `test-other` | **noisy** | 14.43% | 6.44% | 84 ms | 1058 ms | 10 | 0.404 | |
-| small | FLEURS `en_us` | clean, level-matched | 7.71% | 3.65% | 144 ms | 1655 ms | 8 | 0.734 | 605 |
+| small | FLEURS `en_us` | clean, level-matched | 7.36% | 3.01% | 144 ms | 1655 ms | 8 | 0.734 | 605 |
 | small | FLEURS `en_us` | clean, original (**very quiet**) | 27.29% | 23.41% | 0 ms | 1675 ms | 8 | 0.667 | |
-| small | LibriSpeech `test-other` | **noisy** | 8.72% | 3.27% | 442 ms | 1191 ms | 8 | 0.723 | |
-| medium | FLEURS `en_us` | clean, level-matched | 5.62% | 2.27% | 414 ms | 1285 ms | 7 | 0.797 | 933 |
+| small | LibriSpeech `test-other` | **noisy** | 8.92% | 4.19% | 442 ms | 1191 ms | 8 | 0.723 | |
+| medium | FLEURS `en_us` | clean, level-matched | 4.71% | 1.73% | 414 ms | 1285 ms | 7 | 0.797 | 933 |
 | medium | FLEURS `en_us` | clean, original (**very quiet**) | 25.31% | 22.78% | 246 ms | 1251 ms | 6 | 0.763 | |
-| medium | LibriSpeech `test-other` | **noisy** | 6.26% | 2.83% | 662 ms | 1241 ms | 8 | 0.797 | |
+| medium | LibriSpeech `test-other` | **noisy** | 7.02% | 3.58% | 662 ms | 1241 ms | 8 | 0.797 | |
 
 Disk: tiny 77.7 MB · small 224.1 MB · medium 416.0 MB. Tiny is pooled over
 two runs (LibriSpeech gave 14.43% in both); small and medium are one
-4-repetition run each. A one-repetition medium pilot (6.71% / 5.94%) agreed
+4-repetition run each, plus, for level-matched and noisy WER, a 3-repetition
+run each on 100 clips per source
+([results](#english-on-100-clips-per-source)). Tiny and the very quiet rows
+are the original 20 clips. A one-repetition medium pilot (6.71% / 5.94%) agreed
 with the full run and is kept in `results/superseded/`. `peak_rss_mb` is a
 process high-water mark that includes the harness's own heap. It bounds each
 model's footprint from above, and it is not comparable to Arm A's.
@@ -324,8 +346,8 @@ model's footprint from above, and it is not comparable to Arm A's.
 
 | | Arm A (0 MB) | tiny (78 MB) | small (224 MB) | medium (416 MB) |
 |---|---|---|---|---|
-| WER, **noisy** | 29.31% | 14.43% | 8.72% | **6.26%** |
-| WER, clean, level-matched | 12.60% | 11.25% | 7.71% | **5.62%** |
+| WER, **noisy** | 27.09% | 14.43%³ | 8.92% | **7.02%** |
+| WER, clean, level-matched | 9.72% | 11.25%³ | 7.36% | **4.71%** |
 | WER, clean, **very quiet** | **9.69%** | 30.05% | 27.29% | 25.31% |
 | First text, noisy / clean | 1012 / 1259 ms | 1058 / 1064 ms | 1191 / 1655 ms | 1241 / 1285 ms |
 | Final text, noisy / clean | **68 / 76 ms** | 84 / 0 ms | 442 / 144 ms | 662 / 414 ms |
@@ -336,19 +358,23 @@ model's footprint from above, and it is not comparable to Arm A's.
 | Peak temperature | 29.2 °C | 30.7 °C | 33.5 °C | **35.0 °C** |
 
 ² Our harness only; the recognizer's own memory is in Google's process.
+³ Original 20 clips; the other WERs cover 100 clips per source. Timing, memory
+and cost rows are the Phase 2 runs.
 
 **What Arm B answers:**
 
-1. **Does Moonshine beat Arm A on noisy English? Yes, at every size.** Tiny
-   halves Arm A's WER (14.43% vs 29.31%), small cuts it to under a third
-   (8.72%), and medium to about a fifth (6.26%). Small's CER on noisy speech
-   is 3.27% against Arm A's 22.42%. That noisy-audio failure was the main reason to consider
-   bundling a model, and it is fixed.
-2. **The size curve bends at small.** Going from tiny to small cuts WER by
-   two fifths on noisy audio (14.43% → 8.72%) and by a third on clean
-   (11.25% → 7.71%), for +146 MB. Medium buys roughly two more points on
-   each (6.26% and 5.62%), for +192 MB more, ~330 MB more resident memory,
-   noticeably slower final text, and a phone running at the thermal gate.
+1. **Does Moonshine beat Arm A on noisy English? Yes, at every size.** On
+   100 noisy clips small cuts Arm A's WER to a third (8.92% vs 27.09%) and
+   medium to about a quarter (7.02%). Tiny, measured on the original 20,
+   halves it (14.43% vs 29.31% on those clips). Small's CER on noisy speech
+   is 4.19% against Arm A's 20.11%. That noisy-audio failure was the main
+   reason to consider bundling a model, and it is fixed.
+2. **The size curve bends at small.** On the original 20 clips, going from
+   tiny to small cuts WER by two fifths on noisy audio and by a third on
+   clean, for +146 MB. On 100 clips, medium is 1.9 points better than small
+   on noisy speech and 2.7 on clean, both resolved, the noisy one only just.
+   That costs +192 MB of disk, 200–330 MB more resident memory, slower final
+   text, and a phone running at the thermal gate.
 3. **Bigger models do not fall behind real time; they finalise later.**
    `rtf_sustained` stays under 1.0 even for medium (0.80, worst clip 0.95),
    because the SDK's update cadence absorbs longer passes. The cost goes
@@ -419,9 +445,9 @@ it. Same corpus, paced feeder and phone as Arms A and B.
 | Arm | Source | Audio | WER | CER | Final text | First text | Revisions | Compute, with partials (finals only) | `peak_rss_mb` |
 |---|---|---|---|---|---|---|---|---|---|
 | D Parakeet | FLEURS `es_419`, 100 clips | clean | **4.47%** | 1.76% | 0 ms | 2372 ms | 12 | 0.58 (0.21) | 1027 |
-| D Parakeet | FLEURS `en_us` | clean, level-matched | **6.88%** | 3.24% | 186 ms | 1797 ms | 12 | 0.60 (0.22) | |
+| D Parakeet | FLEURS `en_us` | clean, level-matched | **4.97%** | 2.30% | 186 ms | 1797 ms | 12 | 0.60 (0.22) | |
 | D Parakeet | FLEURS `en_us` | clean, original (**very quiet**) | 14.69% | 7.81% | 143 ms | 2416 ms | 24 | 0.56 (0.21) | |
-| D Parakeet | LibriSpeech `test-other` | **noisy** | **7.05%** | 3.06% | 353 ms | 1556 ms | 8 | 0.56 (0.23) | |
+| D Parakeet | LibriSpeech `test-other` | **noisy** | 9.34% | 5.57% | 353 ms | 1556 ms | 8 | 0.56 (0.23) | |
 | E Whisper base | FLEURS `es_419`, 20 clips | clean | 14.73% | 4.35% | 471 ms | 2322 ms | 14 | 0.81 (0.27) | 572 |
 | E Whisper base | FLEURS `en_us` | clean, level-matched | 11.88% | 6.64% | 618 ms | 1717 ms | 9 | 0.88 (0.28) | |
 | E Whisper base | FLEURS `en_us` | clean, original (**very quiet**) | 21.88% | 13.39% | 518 ms | 1835 ms | 26 | 0.76 (0.28) | |
@@ -438,8 +464,11 @@ Disk: Parakeet 670.5 MB, Whisper small 375.4 MB, Whisper base 160.6 MB, plus
 2.2 MB for Silero VAD. Parakeet and Whisper base were measured on 2026-09-23,
 Whisper small the next morning after a recharge. Parakeet's Spanish row is
 from a second run that day on the 100-clip Spanish set; its text on the
-original 20 clips was byte-identical to the first run's. Whisper was measured
-on the original 20 Spanish clips only.
+original 20 clips was byte-identical to the first run's. Parakeet's
+level-matched and noisy WER cover 100 clips per source, adding a 2-repetition
+run on 2026-09-24 ([results](#english-on-100-clips-per-source)); the other
+columns are the first run. Whisper was measured on the original 20 clips per
+source only.
 
 **Against the bar, both languages:**
 
@@ -447,8 +476,8 @@ on the original 20 Spanish clips only.
 |---|---|---|---|---|---|---|
 | WER, **Spanish**, 100 clips | 7.39% | — | — | — | — | **4.47%** |
 | WER, Spanish, original 20 clips | 7.75% | — | — | 14.73% | 11.24% | **6.20%** |
-| WER, English **noisy** | 29.31% | 8.72% | **6.26%** | 22.82% | 14.43% | 7.05% |
-| WER, English clean, level-matched | 12.60% | 7.71% | 5.62% | 11.88% | **5.31%** | 6.88% |
+| WER, English **noisy** | 27.09% | 8.92% | **7.02%** | 22.82%³ | 14.43%³ | 9.34% |
+| WER, English clean, level-matched | 9.72% | 7.36% | **4.71%** | 11.88%³ | 5.31%³ | 4.97% |
 | WER, English clean, **very quiet** | **9.69%** | 27.29% | 25.31% | 21.88% | 10.31% | 14.69% |
 | First text, noisy / clean / es | 1012 / 1259 / 2009 ms | 1191 / 1655 / — | 1241 / 1285 / — | 1522 / 1717 / 2322 | 2180 / 2306 / 2990 | 1556 / 1797 / 2373 |
 | Final text, noisy / clean / es | **68 / 76 / 0 ms** | 442 / 144 / — | 662 / 414 / — | 678 / 618 / 471 | 2424 / 2683 / 2750 | 353 / 186 / 0 |
@@ -458,6 +487,7 @@ on the original 20 Spanish clips only.
 | Cooling pauses at the 35 °C gate | 0 | 0 | 1 | 7 | **15** | 0 |
 
 ² Our harness only; the recognizer's own memory is in Google's process.
+³ Original 20 clips. The other English WERs cover 100 clips per source.
 
 **What Arms D and E answer:**
 
@@ -465,9 +495,10 @@ on the original 20 Spanish clips only.
    platform recognizer in Spanish: 4.47% against 7.39% on 100 clips, a gap of
    2.9 points with a 95% interval of +0.55 to +5.81
    ([finding](#twenty-clips-could-not-tell-the-arms-apart)). Nothing else in
-   the matrix does. On English it is level with Moonshine small and medium,
-   on noisy (7.05%) and on clean (6.88%) speech. No English difference among
-   the three is large enough for 20 clips to resolve. It is the first arm
+   the matrix does. On English, on 100 clips per source, it is level with
+   Moonshine medium on clean speech (4.97% vs 4.71%) and with Moonshine
+   small on noisy (9.34% vs 8.92%)
+   ([results](#english-on-100-clips-per-source)). It is the first arm
    competitive in both languages at once, with no language setting.
 2. **Memory did not bite.** The plan flagged Parakeet as the arm most likely
    to fail on memory, expecting 1.5–2 GB resident. It peaked at 1027 MB,
@@ -484,7 +515,9 @@ on the original 20 Spanish clips only.
    same 20 clips), and its English is level with Arm A on clean speech and
    well behind every bundled model on noisy. On one quiet clip it produced a repetition loop ("4x4, 3x3, 3x4,
    3x4…") instead of the sentence, in every repetition. Small is the most
-   accurate model in the matrix on clean English (5.31%), and the most robust
+   accurate model on the original 20 clean English clips (5.31%, against
+   medium's 5.94% and Parakeet's 6.88% on the same clips, gaps 20 clips
+   cannot resolve), and the most robust
    bundled model on very quiet audio (10.31%, close to Arm A's 9.69%). Its
    Spanish is well behind Parakeet's and 3.5 points behind Arm A's on the same
    20 clips (11.24% vs 7.75%), a gap 20 clips cannot resolve. It is also far
@@ -524,6 +557,85 @@ on the original 20 Spanish clips only.
   question.
 - **Temperatures lag** ([finding](#the-battery-temperature-an-app-can-read-can-be-minutes-old)).
   The cooling pauses are counted from the gate's own log.
+
+### English on 100 clips per source
+
+Twenty clips per English source could rank Arm A against the bundled models,
+but not the bundled models against each other
+([finding](#twenty-clips-could-not-tell-the-arms-apart)). So the English
+corpus grew to 100 clips per source ([Corpus](#corpus)), and the four arms
+that matter were measured again on 2026-09-24 and -25, on the level-matched
+and noisy sources only: Moonshine small and medium with 3 repetitions, whose
+streaming output varies a little between repetitions, and Parakeet and Arm A
+with 2. Repetition 0 is discarded, and all four runs used the same build.
+WER pools every valid run with each clip counted once, so the original 20
+clips also carry their earlier runs. Timing and cost come from these runs
+alone.
+
+| English, 100 clips per source | Arm A (0 MB) | Moonshine small (224 MB) | Moonshine medium (416 MB) | Parakeet (670 MB) |
+|---|---|---|---|---|
+| WER, clean, level-matched | 9.72% | 7.36% | **4.71%** | 4.97% |
+| WER, **noisy** | 27.09% | 8.92% | **7.02%** | 9.34% |
+| CER, clean / noisy | 5.22 / 20.11% | 3.01 / 4.19% | **1.73 / 3.58%** | 2.30 / 5.57% |
+| Final text, clean / noisy | **69 / 81 ms** | 222 / 486 ms | 539 / 772 ms | 250 / 349 ms |
+| First text, clean / noisy | **1162 / 1114 ms** | 1316 / 1190 ms | 1291 / 1243 ms | 1872 / 1576 ms |
+| Compute, share of real time | — | 0.73 | 0.82 | 0.56–0.62 (finals only 0.22) |
+| Peak RSS | 111 MB² | 730–760 MB | 967 MB | 1034 MB |
+| Battery per 240 clips | 2.4 pts | 10.4 pts | 13.2 pts | 10.2 pts |
+| Cooling pauses at the 35 °C gate | 0 | 2 | 7 | 3 |
+| Run | 400 rows, 64 min | 600 rows, 111 min | 600 rows, 132 min | 400 rows, 81 min |
+
+² Our harness only; the recognizer's own memory is in Google's process.
+
+Which gaps are real (`scripts/compare.py`, paired bootstrap over clips):
+
+| English WER, 100 clips | A − B | 95% interval | |
+|---|---|---|---|
+| Arm A − Moonshine small, noisy | +18.2 | +12.9 to +23.7 | resolved |
+| Arm A − Moonshine small, clean | +2.4 | +0.1 to +5.1 | resolved, barely |
+| Arm A − Parakeet, clean | +4.8 | +2.6 to +7.4 | resolved |
+| Moonshine small − medium, clean | +2.7 | +1.5 to +3.9 | resolved |
+| Moonshine small − medium, noisy | +1.9 | +0.0 to +3.8 | resolved, barely |
+| Moonshine small − Parakeet, clean | +2.4 | +1.3 to +3.6 | resolved |
+| Moonshine small − Parakeet, noisy | −0.4 | −2.8 to +1.7 | not resolved |
+| Moonshine medium − Parakeet, clean | −0.3 | −1.2 to +0.7 | not resolved |
+| Moonshine medium − Parakeet, noisy | −2.3 | −5.1 to +0.2 | not resolved |
+
+**What 100 clips answer:**
+
+1. **Moonshine medium is the most accurate English model measured.** It
+   beats small on both sources and is level with Parakeet on clean speech.
+   On noisy speech it leads Parakeet by 2.3 points, an interval that just
+   includes zero.
+2. **Parakeet is level with medium on clean speech, and with small on noisy
+   speech.** On 20 clips it looked level with both on noisy audio (7.05%).
+   On the 80 new noisy clips it scored 9.91%, against medium's 7.22%. Most
+   of that is not mishearing: on some tightly cut VAD segments it returns
+   no text at all
+   ([finding](#parakeet-can-return-nothing-for-a-tightly-cut-segment)). Half
+   a second of leading silence recovers about two points in a PC diagnostic,
+   which would put it level with medium. The published figure is the stack
+   as sherpa-onnx ships it.
+3. **Arm A is better on clean English than 20 clips said, and still fails on
+   noisy.** Its level-matched 12.60% was mostly one clip; on 100 clips it
+   scores 9.72%, and small's lead there is real but slim (2.4 points, lower
+   bound 0.06). On noisy speech every bundled model is 18–20 points ahead.
+   That noisy-audio gap is still the case for bundling a model.
+4. **The latency ordering held.** Arm A finalises fastest, medium slowest,
+   with small and Parakeet between; Parakeet shows first text last. The
+   figures moved from the 20-clip runs by up to ~125 ms for final text and
+   ~340 ms for first text, but the clip sets differ, so that is not a
+   reproducibility test. Medium's final text moved most (414 / 662 → 539 /
+   772 ms), in a run that sat at the 35 °C gate for much of its length.
+   Whether heat is the cause was not established.
+5. **One verdict is fragile to spelling.** Parakeet and small sometimes write
+   a compound as one word where LibriSpeech's references use two
+   ("reelected", "everyone" against "re elected", "every one"), and the
+   scorer charges two errors each. Joining such pairs before scoring moves
+   every bundled model by 0.2–0.6 points. It changes one verdict: small
+   against medium on noisy speech becomes unresolved (−0.2 to +3.4). The
+   scorer was not changed, because a generic rule would also forgive real
+   errors like "a way" for "away".
 
 ## Metrics
 
@@ -612,7 +724,11 @@ English session, and drawn last. Unlike Spanish, enough unused FLEURS English
 sentences fit the original 3–8 s window. They add 1,390 reference words to
 each FLEURS source and 1,191 to LibriSpeech. Like the originals, 72 of the 80
 new FLEURS recordings are very quiet (below −45 dBFS). All 304 existing files
-rebuilt byte for byte.
+rebuilt byte for byte. Only the level-matched and noisy sources were
+re-measured on the new clips
+([results](#english-on-100-clips-per-source)): the very quiet originals would
+have added half again the phone time, for a question the ranking does not
+need.
 
 ## Reproducing
 
@@ -679,32 +795,50 @@ reference words, not the mean of per-utterance WERs.
 Negative results are the useful part of this repo. They are recorded so nobody
 re-derives them.
 
-### Moonshine has no deployable Spanish streaming model
+### Moonshine's Spanish streaming models are on its CDN, not on HuggingFace
+
+> **Corrected in Phase 4.** Until Phase 4 this finding was titled "Moonshine
+> has no deployable Spanish streaming model". Moonshine has one. The check
+> looked in the one place the SDK does not download from.
 
 Moonshine v2 is streaming-native, MIT-licensed and has first-class Android
-support — the obvious English frontrunner. For Spanish it is blocked, and the
-reason is not documented anywhere else:
+support. The Android SDK consumes pre-quantized **`.ort`** files. The public
+place to get them is the HuggingFace repo `moonshine-ai/moonshine-voice-assets`,
+and that repo has **no Spanish streaming variant at any revision**, including
+its current head. Phase 0 checked there, found only the legacy non-streaming
+`base-es`, and concluded that Spanish streaming did not exist in a deployable
+form.
 
-Spanish streaming weights **do** exist on HuggingFace
-(`moonshine-streaming-tiny-es`, 108.6 MB; `moonshine-streaming-small-es`,
-452.0 MB; both MIT). But the HF *model* repos ship `safetensors` — a training
-format. The Android SDK consumes pre-quantized **`.ort`** files from
-`moonshine-ai/moonshine-voice-assets`, and that assets repo contains **no
-Spanish streaming variant at all**:
+The SDK's own downloader looks elsewhere. Its model catalog
+(`core/moonshine-model-catalog.cpp`, v0.1.5, the version this harness uses)
+points at the vendor's CDN, `download.moonshine.ai`. For Spanish it lists
+three models there: small and tiny streaming, and `base-es`. The streaming
+pair was quantized on 2026-08-24, a month before this experiment began:
 
-| Variant | Deployable `.ort`? | Size |
-|---|---|---|
-| `tiny-streaming-en` | ✅ | 77.7 MB |
-| `small-streaming-en` | ✅ | 224.1 MB |
-| `medium-streaming-en` | ✅ | 416.0 MB |
-| `base-es` (legacy, non-streaming) | ✅ | 64.8 MB |
-| **any Spanish streaming** | ❌ | **does not exist** |
+| Variant | HF `moonshine-voice-assets` | Vendor CDN | Size |
+|---|---|---|---|
+| `tiny/small/medium-streaming-en` | ✅ | ✅ (byte-identical, by MD5) | 77.7 / 224.1 / 416.0 MB |
+| `base-es` (legacy, non-streaming) | ✅ | ✅ | 64.8 MB |
+| `tiny-streaming-es` | ❌ | ✅ | 32.3 MB |
+| `small-streaming-es` | ❌ | ✅ | 121.8 MB |
 
-Converting them ourselves means reproducing a 6-component export pipeline
-(`frontend`, `encoder`, `adapter`, `cross_kv`, `decoder_kv`,
-`decoder_kv_with_attention`). Out of scope for v1; logged as a stretch goal.
+The SDK fetches English from the CDN as well, and the English files there are
+the same bytes as the ones pinned from HuggingFace. The catalog also lists
+streaming models for German, Arabic, Chinese, Vietnamese, Tagalog and
+Japanese. The HuggingFace repo has streaming models for English only. Moonshine's
+docs list the Spanish pair at 4.9% and 6.2% WER, so reading them would have
+caught this.
 
-*Verified against the HF API on 2026-09-23.*
+What changed for the experiment: `small-streaming-es` joins Arm B in Phase 4.
+It makes a second answer to the one-model-or-two question possible, Moonshine
+for both languages, as two models on one runtime. A CDN has no revisions to
+pin, so `fetch_models.py` pins each file by SHA-256 and refuses a mismatch
+(`models/MODELS.md`).
+
+The general lesson: the model hub is not necessarily where an SDK gets its
+models. Check the catalog the SDK itself downloads from.
+
+*HF checked 2026-09-23 and 2026-09-24; CDN and SDK source checked 2026-09-24.*
 
 ### The two Moonshine repos contradict each other on licensing
 
@@ -1206,12 +1340,68 @@ stage they share. The VAD dates a segment's start about 0.3 s before the
 point where it declares speech. When a soft onset takes longer than that to
 cross its threshold, the first syllables fall outside the segment and no
 model ever hears them. That is part of the gap between Parakeet's quiet-clip
-WER (14.69%) and its level-matched WER (6.88%). How large a part was not
-separated.
+WER (14.69%) and its level-matched WER on the same 20 clips (6.88%). How
+large a part was not separated.
 
 The same caveat as for Moonshine applies: a phone microphone with automatic
 gain delivers much hotter audio than these clips. But where it does not, a
 live app loses the start of the sentence rather than the whole of it.
+
+### Parakeet can return nothing for a tightly cut segment
+
+Found when English grew to 100 clips per source. On the original 20 noisy
+clips Parakeet scored 7.05%; on the 80 new ones, 9.91%. Moonshine medium,
+on the same clips, moved from 6.24% to 7.22%. Reading Parakeet's worst clips
+showed why: it was not mishearing words, it was dropping whole stretches.
+
+```
+reference:  annie stared vacantly at the cocoa then she uttered a laugh
+Parakeet:   Annie stared vacantly at the cocoa.
+reference:  for they are thy warmest friends and preceptors
+Parakeet:   (nothing)
+```
+
+The VAD had found all the speech. In the first clip it cut two segments, at
+a pause after "cocoa", and both were decoded. The second came back empty. In
+the second clip there was one segment, partial text was on screen from 1.5 s,
+and the final decode of that same audio returned nothing. Both happened
+identically in both repetitions. On five noisy clips this cost about 30
+edits, two WER points, which is most of the gap to Moonshine medium.
+
+**It is the missing silence before the speech.** Silero VAD starts a segment
+close to the speech onset, so Parakeet receives audio that begins almost
+mid-syllable. Re-running the same pipeline on a PC (sherpa-onnx 1.13.8, the
+same model files and VAD settings) reproduces the failure, and shows what
+padding does:
+
+| Parakeet, PC diagnostic | none | 0.5 s silence before | 0.5 s after | 0.5 s both |
+|---|---|---|---|---|
+| Noisy English, 100 clips | 9.47% | 7.12% | 12.09% | 6.85% |
+| Clean English, 100 clips | 5.26% | 4.68% | 8.07% | 4.62% |
+| Spanish, 100 clips | 4.13% | 4.02% | 4.13% | 4.19% |
+| Segments decoded empty (all three) | 8 | 2 | 19 | 2 |
+
+These are PC figures, not measurements of record. They are close to the
+phone's (9.34%, 4.97%, 4.47%) but not byte-identical, since x86 and ARM
+arithmetic differ slightly. Leading silence is the fix: 0.25, 0.5 and 1.0 s
+all recover most of the loss. Trailing silence alone makes things worse.
+Spanish, with longer and cleaner FLEURS clips, is barely affected.
+
+**The published Parakeet numbers are left unpadded, on purpose.** The
+harness decodes the VAD's segment as it comes, and so does sherpa-onnx's own
+simulate-streaming Android app (`vad.front().samples`, v1.13.8). So 9.34%
+is what the stack does as its authors ship it. With half a second of
+padding, the PC diagnostic puts it level with Moonshine medium on noisy
+English rather than with Moonshine small. Anyone building on this stack
+should pad.
+
+The cost of padding is compute: half a second more audio in every decode,
+partials included. It was not measured on the phone.
+
+For a product the worse half is what the user sees: text that was on screen
+as a partial can disappear when the final arrives. The platform recognizer
+does something similar
+([finding](#the-platform-recognizer-can-return-only-the-last-clause)).
 
 ### Years written as digits cost four WER points
 
@@ -1315,10 +1505,26 @@ English claims 20 clips can support:
 | Whisper small − Parakeet, clean | −1.6 | −4.4 to +1.2 | not resolved |
 
 The case for bundling a model at all rests on the first row, and it holds by
-a wide margin. The ranking among the bundled English models does not hold:
-at 20 clips, English differences under about four points are noise. Before
-the final recommendation ranks Moonshine against Parakeet, English needs the
-same treatment Spanish got.
+a wide margin. The ranking among the bundled English models did not hold: at
+20 clips, English differences under about four points were noise.
+
+So English got the same treatment as Spanish: 100 clips per source. On them,
+the same comparisons read:
+
+| English WER, 100 clips | A − B | 95% interval | |
+|---|---|---|---|
+| Arm A − Moonshine small, noisy | +18.2 | +12.9 to +23.7 | resolved |
+| Moonshine small − Parakeet, noisy | −0.4 | −2.8 to +1.7 | not resolved |
+| Moonshine medium − Parakeet, noisy | −2.3 | −5.1 to +0.2 | not resolved |
+| Moonshine small − Parakeet, clean | +2.4 | +1.3 to +3.6 | **resolved** |
+| Moonshine small − medium, clean | +2.7 | +1.5 to +3.9 | **resolved** |
+| Moonshine small − medium, noisy | +1.9 | +0.0 to +3.8 | resolved, barely |
+
+The 20-clip point estimates were not a guide. Parakeet looked 1.7 points
+ahead of small on noisy speech and is level with it; on clean speech it
+looked 0.8 points ahead and is 2.4 ahead, now resolved. The full table, and what it
+means for the choice of model, is in
+[English on 100 clips per source](#english-on-100-clips-per-source).
 
 Two general lessons. Repeating a deterministic model adds evidence about its
 timing, not its accuracy. And "X beats Y" needs an interval, not two pooled

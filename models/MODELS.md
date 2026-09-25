@@ -32,6 +32,41 @@ Each variant is 6 ONNX-Runtime components plus a tokenizer and config:
 `cross_kv.ort`, `decoder_kv.ort`, `decoder_kv_with_attention.ort`,
 `streaming_config.json`, `tokenizer.bin`.
 
+## Arm B, Spanish — Moonshine `small-streaming-es` (vendor CDN)
+
+Added in Phase 4. **Not on HuggingFace:** `moonshine-voice-assets` has no
+Spanish streaming variant at any revision (its head is still the one pinned
+above). The Moonshine SDK v0.1.5 fetches it from the vendor's CDN, per its own
+catalog (`core/moonshine-model-catalog.cpp`), and that is where
+`fetch_models.py` gets it:
+
+`https://download.moonshine.ai/model/small-streaming-es/quantized_26_08_24/`
+Licence: **MIT** (the SDK's model table; the `moonshine-streaming-small-es`
+weights repo on HF is MIT too). Published 2026-08-24 (`Last-Modified`).
+
+A CDN has no revisions, so each file is **pinned by SHA-256** in
+`fetch_models.py`, and a mismatch is refused. The SDK's catalog says dated
+directories are never overwritten; the hashes enforce it. Each download's MD5
+also matched the CDN's ETag.
+
+| File | Size |
+|---|---|
+| `adapter.ort` | 2.9 MB |
+| `cross_kv.ort` | 5.4 MB |
+| `decoder_kv.ort` | 61.3 MB |
+| `encoder.ort` | 44.4 MB |
+| `frontend.model.ort` + `frontend.weights.ort` | 7.8 MB |
+| `streaming_config.json`, `tokenizer.bin` | 0.1 MB |
+| **total** | **121.8 MB** |
+
+Same architecture as English small (encoder 620, decoder 512, depth 10), with
+a 12,288-token vocabulary instead of 32,768, which shrinks `decoder_kv.ort`
+from 81.9 to 61.3 MB. It also ships no `decoder_kv_with_attention.ort`. The
+English set's copy (81.8 MB) is loaded only when `word_timestamps` is on
+(`core/transcriber.cpp`), which this harness never sets, so English small
+needs 142 of its 224 MB. A `tiny-streaming-es` (32.3 MB) sits beside it on
+the CDN; it was not measured.
+
 ## Arm C — Moonshine `base-es` (Spanish, non-streaming)
 
 Same repo and revision as Arm B.

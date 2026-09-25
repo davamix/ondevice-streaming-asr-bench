@@ -28,6 +28,15 @@ method in the
 > Scoring fixes for clock times and percent signs also lowered the Spanish
 > figures, Arm A's most.
 
+> **Revised before Phase 4.** This summary said Parakeet is level with
+> Moonshine small and medium in English, on 20 clips per source. On 100 clips
+> it is level with medium on clean speech (4.97% vs 4.71%) and with small on
+> noisy (9.34% vs 8.92%), and medium is the most accurate English model.
+> Parakeet's noisy figure is held down by a failure mode: on some tightly cut
+> VAD segments it returns no text at all. English figures below are updated;
+> see [English on 100 clips](../README.md#english-on-100-clips-per-source)
+> and [the finding](../README.md#parakeet-can-return-nothing-for-a-tightly-cut-segment).
+
 ---
 
 ## Results
@@ -41,8 +50,8 @@ measured from the moment the audio ends.
 |---|---|---|---|---|---|---|
 | WER, **Spanish**, 100 clips (FLEURS) | 7.39% | — | — | — | — | **4.47%** |
 | WER, Spanish, original 20 clips | 7.75% | — | — | 14.73% | 11.24% | **6.20%** |
-| WER, English **noisy** (LibriSpeech `test-other`) | 29.31% | 8.72% | **6.26%** | 22.82% | 14.43% | 7.05% |
-| WER, English clean (FLEURS, level-matched) | 12.60% | 7.71% | 5.62% | 11.88% | **5.31%** | 6.88% |
+| WER, English **noisy** (LibriSpeech `test-other`), 100 clips | 27.09% | 8.92% | **7.02%** | 22.82%¹ | 14.43%¹ | 9.34% |
+| WER, English clean (FLEURS, level-matched), 100 clips | 9.72% | 7.36% | **4.71%** | 11.88%¹ | 5.31%¹ | 4.97% |
 | WER, English clean but **very quiet** | **9.69%** | 27.29% | 25.31% | 21.88% | 10.31% | 14.69% |
 | Time to **first** text, noisy / clean / Spanish | 1.0 / 1.3 / 2.0 s | 1.2 / 1.7 / — | 1.2 / 1.3 / — | 1.5 / 1.7 / 2.3 s | 2.2 / 2.3 / 3.0 s | 1.6 / 1.8 / 2.4 s |
 | Time to **final** text, noisy / clean / Spanish | **68 / 76 / 0 ms** | 442 / 144 / — | 662 / 414 / — | 678 / 618 / 471 ms | 2424 / 2683 / 2750 ms | 353 / 186 / 0 ms |
@@ -50,8 +59,12 @@ measured from the moment the audio ends.
 | Peak memory | — | 605 MB | 933 MB | 572 MB | 997 MB | 1027 MB |
 | Battery per 240 clips | 3 points | 10 points | 11 points | 15 points | 29 points | 10.5 points |
 
+¹ Whisper was measured on the original 20 clips per source only. Timing and
+cost rows are the original runs.
+
 Arm A's English and all Moonshine figures are from Phases 1–2, with the
-noisy-English scoring correction made in this phase. Arm A's Spanish includes
+noisy-English scoring correction made in this phase, and, for level-matched
+and noisy WER, the 100-clip re-measure before Phase 4. Arm A's Spanish includes
 its 100-clip re-measure.
 
 ---
@@ -63,9 +76,9 @@ its 100-clip re-measure.
 Parakeet is the first model in the matrix that is strong in both languages at
 once. In Spanish it beats the platform recognizer: 4.47% against 7.39% on 100
 clips, a 2.9-point gap whose 95% interval (+0.55 to +5.81) excludes zero.
-Nothing else measured so far does. In English it is level with Moonshine
-small and medium, on noisy speech (7.05%) and on clean (6.88%); none of those
-differences is resolvable on 20 clips. It detects the language by itself; it
+Nothing else measured so far does. In English, on 100 clips per source, it
+is level with Moonshine medium on clean speech (4.97% vs 4.71%) and with
+Moonshine small on noisy speech (9.34% vs 8.92%). It detects the language by itself; it
 was given no hint.
 
 ### The memory risk did not materialise
@@ -106,8 +119,9 @@ on the same 20 clips), is level with Arm A on clean English, and is far behind
 every bundled model on noisy English. On one clip it looped ("4x4, 3x3, 3x4, 3x4…") instead of
 transcribing, in every repetition.
 
-Whisper small is the most accurate model measured on clean English (5.31%),
-and holds up on very quiet audio better than any other bundled model
+Whisper small is the most accurate model on the original 20 clean English
+clips (5.31%, against medium's 5.94% and Parakeet's 6.88% there, gaps 20
+clips cannot resolve), and holds up on very quiet audio better than any other bundled model
 (10.31%). Its Spanish (11.24%) is well behind Parakeet's, and it is too slow
 to feel live: final text arrives 2.4–2.8 s after the speaker stops.
 
@@ -123,14 +137,15 @@ at normal level.
 ## Verdict
 
 **One model for both languages is viable, and it is Parakeet.** It is the
-only arm that beats Arm A in Spanish, measurably, while matching the Moonshine
-models in English, including on noisy speech. The price is 670 MB on disk, 1 GB of
+only arm that beats Arm A in Spanish, measurably, while staying competitive
+with the Moonshine models in English: level with medium on clean speech, with
+small on noisy. The price is 670 MB on disk, 1 GB of
 memory, and first text that takes about two seconds to appear.
 
 | | Verdict |
 |---|---|
 | Spanish | **Parakeet** (4.47%), ahead of Arm A (7.39%) on 100 clips; the gap is resolved. |
-| Noisy English | **Moonshine small or medium, or Parakeet** (8.7 / 6.3 / 7.1%). 20 clips cannot rank them. |
+| Noisy English | **Moonshine medium** (7.0%), ahead of small (8.9%); Parakeet (9.3%) is level with small, and 2.3 points behind medium, just short of resolved. |
 | One model for both | **Parakeet.** Nothing else is competitive in both. |
 | Memory | **Fits.** 1.03 GB peak, no failures. |
 | Responsiveness | **Final text good, first text slow** (1.6–2.4 s). |
@@ -146,9 +161,8 @@ cheap Spanish option (Moonshine `base-es`) before the final call.
 
 ## Known limits of these numbers
 
-- **English rankings are within noise.** Twenty clips per English source
-  resolve Arm A against the bundled models, but not the bundled models
-  against each other. Spanish now has 100 clips; English does not yet.
+- **English rankings were within noise on 20 clips.** Re-measured on 100
+  clips per source before Phase 4; the figures above are updated.
 - **Per clip, not sustained.** No 5–10 minute sessions yet. Parakeet's worst
   clip used 85% of real time with partials.
 - **The partial cadence is one setting.** Every 500 ms, matching Moonshine.

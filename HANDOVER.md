@@ -1,16 +1,17 @@
 # Handover — next phase to run
 
-**Currently: re-measure English on 100 clips per source (two phone sessions), then Phase 4, Arm C.**
+**Currently: Phase 4 — measure Arm C (Moonshine `base-es`) and Moonshine
+`small-streaming-es` on the phone, then compare Spanish across A / B-es / C /
+D / E and answer PLAN.md §1.**
 
 This file carries whatever phase is next. It is rewritten as each phase
 completes; finished phases are written up in [`summaries/`](summaries/).
 
 **For:** a fresh session picking this up with no prior context.
 
-Phases 0–3 are complete and pushed. Phase 3 found that Parakeet (Arm D)
-serves both languages well. Phase 4 prices the cheap Spanish option, Arm C,
-before the final call on PLAN.md §1: *one model for both languages, or one per
-language?*
+Phases 0–3 are complete. English has been re-measured on 100 clips per
+source. Phase 4's code is written and validated on the emulator; only the
+phone runs remain.
 
 ---
 
@@ -22,12 +23,12 @@ language?*
 > and exact commands, and the three summaries in `summaries/` for what Phases
 > 1–3 established. `README.md` has the full results and findings.
 >
-> Phases 0–3 are complete. First re-measure the English models on the
-> expanded 100-clip English sets ("Before Phase 4 — English" in HANDOVER.md).
-> Then Phase 4 integrates Arm C (Moonshine `base-es`, VAD-segmented),
-> validates it on the emulator, and measures it on the phone on the 100-clip
-> Spanish set. Then compare Spanish across Arms A, C, D and E and answer the
-> PLAN.md §1 question. Update the README results as numbers come in.
+> Phases 0–3 and the English re-measure are complete. Phase 4 is integrated
+> and emulator-validated: run Arm C (Moonshine `base-es`) and Moonshine
+> `small-streaming-es` on the phone on the 100-clip Spanish set (commands in
+> HANDOVER.md). Then compare Spanish across Arms A, B-es, C, D and E with
+> `scripts/compare.py --standard`, answer the PLAN.md §1 question, and write
+> the Phase 4 summary. Update the README results as numbers come in.
 >
 > The test device is the owner's only phone. `PLAN.md` §11 is a hard safety
 > policy — read it before touching the device. The pre-flight gate in
@@ -39,183 +40,158 @@ language?*
 
 | | State |
 |---|---|
-| Phase 0 (corpus, scorer) | ✅ complete; scorer now reads English years as years |
-| Phase 1 (Arm A) | ✅ complete, revised in Phases 2 and 3 — [summary](summaries/phase-1-arm-a.md) |
-| Phase 2 (Arm B) | ✅ complete, revised in Phase 3 — [summary](summaries/phase-2-arm-b.md) |
-| Phase 3 (Arms D, E) | ✅ complete — [summary](summaries/phase-3-arms-d-e.md) |
-| Spanish on 100 clips (Arm A, Parakeet) | ✅ done 2026-09-24 |
-| English on 100 clips (Moonshine small, medium, Parakeet, Arm A) | ⬜ **next**: corpus built, harness ready, two sessions |
-| Phase 4 (Arm C) | ⬜ after the English re-measure |
+| Phase 0 (corpus, scorer) | ✅ complete |
+| Phase 1 (Arm A) | ✅ complete, revised since — [summary](summaries/phase-1-arm-a.md) |
+| Phase 2 (Arm B) | ✅ complete, revised since — [summary](summaries/phase-2-arm-b.md) |
+| Phase 3 (Arms D, E) | ✅ complete, revised since — [summary](summaries/phase-3-arms-d-e.md) |
+| Spanish on 100 clips (Arm A, Parakeet) | ✅ 2026-09-24 |
+| English on 100 clips (Moonshine small, medium, Parakeet, Arm A) | ✅ 2026-09-24/25 |
+| Phase 4 code (Arm C, Moonshine `small-streaming-es`) | ✅ written, emulator-validated, **not yet on the phone** |
+| Phase 4 phone runs | ⬜ **next** |
 | Phase 5 (analysis, sessions, mic check) | ⬜ not started |
 
 Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push after each phase)
 
-**The bar, after Phase 3** (WER; latency is time to final text after the audio ends):
+**The bar now** (WER; latency is time to final text after the audio ends):
 
-| | Arm A (0 MB) | Moonshine small (224 MB) | Whisper small (375 MB) | Parakeet (670 MB) |
+| | Arm A (0 MB) | Moonshine small (224 MB) | Moonshine medium (416 MB) | Parakeet (670 MB) |
 |---|---|---|---|---|
-| Spanish, 100 clips | 7.39% | — | — | **4.47%** |
-| Spanish, original 20 clips | 7.75% | — | 11.24% | **6.20%** |
-| English noisy | 29.31% | 8.72% | 14.43% | **7.05%** |
-| English clean, level-matched | 12.60% | 7.71% | **5.31%** | 6.88% |
-| Final text, noisy / Spanish | **68 / 0 ms** | 442 / — | 2424 / 2750 ms | 353 / 0 ms |
-| First text, noisy / Spanish | **1.0 / 2.0 s** | 1.2 / — | 2.2 / 3.0 s | 1.6 / 2.4 s |
+| Spanish, 100 clips | 7.39% | — (B-es next) | — | **4.47%** |
+| English noisy, 100 clips | 27.09% | 8.92% | **7.02%** | 9.34% |
+| English clean, level-matched, 100 clips | 9.72% | 7.36% | **4.71%** | 4.97% |
+| Final text, clean / noisy (100-clip runs) | **69 / 81 ms** | 222 / 486 ms | 539 / 772 ms | 250 / 349 ms |
+| First text, clean / noisy | **1.16 / 1.11 s** | 1.32 / 1.19 s | 1.29 / 1.24 s | 1.87 / 1.58 s |
 
-Parakeet is the one-model-for-both candidate, and on 100 Spanish clips it
-beats Arm A measurably (2.9 points, 95% interval +0.55 to +5.81). The two-stack
-alternative is Moonshine small (English) plus Arm A (Spanish). Arm C is
-interesting if it serves Spanish near Arm A's 7.39% at 65 MB, which would make
-a small two-stack option without depending on the platform's language pack.
-Judge it with `scripts/compare.py`, not by the two pooled numbers.
+What 100 English clips resolved (`compare.py --standard`): medium beats small
+on both sources (noisy only just: lower bound +0.03, and a compound-spelling
+adjustment makes it unresolved); Parakeet beats small on clean speech and is
+level with it on noisy; medium and Parakeet are level on clean, and medium
+leads on noisy by 2.3 points, just short of resolved. Arm A loses to every
+bundled model on noisy speech by 18–20 points.
+
+Parakeet's noisy figure is held down by a failure mode, not by mishearing
+(README finding 21): on some tightly cut VAD segments it returns no text. Half
+a second of leading silence recovers ~2 points in a PC diagnostic. **The owner
+chose not to re-measure a padded Parakeet**: it stays a finding, and the
+published numbers are the stack as sherpa-onnx ships it (its own
+simulate-streaming app does not pad either).
 
 ---
 
-## Before Phase 4 — English on 100 clips per source
+## Phase 4 — what was built
 
-Twenty clips per English source could not rank the bundled English models.
-`compare.py --standard` shows every pair among Moonshine small, Moonshine
-medium and Parakeet as unresolved, except small vs medium on clean speech.
-The corpus now has 80 more FLEURS English clips (plus level-matched copies)
-and 80 more LibriSpeech clips. Every earlier file rebuilt byte for byte.
+### Arm C: Moonshine `base-es` (64.8 MB, ⚠️ non-commercial)
 
-**Only two English sources are re-measured:** `fleurs_en_norm` (clean) and
-`librispeech_other` (noisy). The very quiet FLEURS originals would add half
-again the phone time for a question the ranking does not need. The harness
-has a new `--sources` filter for this; it was validated on the emulator. That
-is 200 clips per repetition.
+Integrated into `SherpaOfflineArm` as `Model.MoonshineNonStreaming`, so it
+shares everything Phase 3 established: Silero VAD (sherpa-onnx), decode on a
+worker thread, 500 ms partials, `last_final_wait_ms`,
+`final_after_audio_end_ms`. Only the decode call differs:
+`Transcriber.transcribeWithoutStreaming()` from the Moonshine SDK, the
+runtime PLAN.md §5 names. Decisions, each checked against the Moonshine
+v0.1.5 C++ source (`core/transcriber.cpp`, `core/moonshine-model.cpp`):
 
-**Repetitions follow determinism.** Parakeet and Whisper give identical text
-every rep, so 2 reps (rep 0 discarded) are plenty. Moonshine small and medium
-differ between reps on 3–6 of 20 clips, because their streaming output
-depends on timing, so they get 3. Arm A, nearly deterministic, gets 2.
+- **`vad_threshold=0`.** `transcribeWithoutStreaming` runs Moonshine's own
+  VAD over its input before decoding. With 0 it only chunks at 15 s, so each
+  call decodes exactly the segment Silero cut. Moonshine's own FLEURS eval
+  script does the same. Every row records `max_lines_per_decode`; it must be 1
+  (it was, on all 100 emulator clips).
+- **Architecture 1 (`MOONSHINE_MODEL_ARCH_BASE`).** It sets the decoder's layer
+  count. Nothing checks it at load: 0 (tiny) loads and fails at the first decode.
+- **`max_tokens_per_second` left at 6.5.** Moonshine's documented value for
+  Latin scripts, and what its Spanish eval uses. An emulator ablation at 13
+  changed 3 of 100 clips (a clipped last word), one word in 1,767. The harness
+  can run such ablations: `--moonshine-options key=value,...` (arm C only;
+  rows get a distinct variant, e.g. `moonshine-base-es+max_tokens_per_second=13`).
+- **`return_audio_data=false`**, so segment audio is not copied back to Java.
+- Rows record `num_threads: null` for C: the SDK has no thread setting.
 
-**Two sessions, because the whole plan is ~75 battery points:**
+### Moonshine `small-streaming-es` (121.8 MB, MIT) — new, added to Arm B
 
-| Session | Run | Clips | Estimate |
-|---|---|---|---|
-| 1 | Moonshine medium, 3 reps (runs hottest, so start it cool) | 600 | ~2 h, ~28 pts |
-| 1 | Parakeet, 2 reps | 400 | ~70 min, ~17 pts |
-| 2 | Moonshine small, 3 reps | 600 | ~1 h 50, ~25 pts |
-| 2 | Arm A, 2 reps | 400 | ~85 min, ~6 pts |
+README finding 1 was wrong: Moonshine's Spanish streaming models exist, on
+its CDN (`download.moonshine.ai`), where the SDK's own catalog fetches them,
+not on HuggingFace. The owner chose to add `small-streaming-es` (not tiny).
+`fetch_models.py moonshine-small-es` downloads it and pins every file by
+SHA-256 (the CDN has no revisions). `MoonshineArm` now takes a variant's
+language from its suffix. Arm B, variant `moonshine-small-es`.
+
+With it, the §1 question has a third answer to price: **Moonshine for both
+languages**, two MIT models on one runtime (small-en 224 MB + small-es
+122 MB), against Parakeet (670 MB) and against Moonshine-en + Arm A.
+
+### Emulator validation (not published)
+
+`results/sdk_gphone64_x86_64-*-emuC` and `-emuBC-es`, 100 Spanish clips each:
+no errors, no empty rows, one line per decode for C. Emulator WER is a sanity
+check only (D1).
+
+---
+
+## Phase 4 — commands
+
+Spanish only, on the 100-clip Spanish set. **The first command installs the
+new APK** (it contains Arm C and small-es; `--no-build` uses the APK already
+built from the current source), pushes both models and the Spanish corpus.
+Arm C first, because PLAN.md names it; small-es second.
 
 ```bash
-S=fleurs_en_norm,librispeech_other
-
-# Session 1. The first command installs the new APK (sources filter) and
-# pushes the filtered corpus.
+# Session: ~30 battery points expected in total, so one charge should do.
+.venv/Scripts/python scripts/run_bench.py --device physical --no-build \
+    --push-models moonshine-base-es,moonshine-small-es \
+    --arms C:moonshine-base-es --langs es --buckets short --sources fleurs_es \
+    --reps 4 --label armC-es100 --timeout 10800
 .venv/Scripts/python scripts/run_bench.py --device physical \
-    --arms B:moonshine-medium-en --langs en --buckets short --sources $S \
-    --reps 3 --label armB-medium-en100 --no-build --timeout 10800
-.venv/Scripts/python scripts/run_bench.py --device physical \
-    --arms D:parakeet-tdt-v3-int8 --langs en --buckets short --sources $S \
-    --reps 2 --label armD-en100 --no-build --no-install --no-push --timeout 10800
-
-# Session 2, after a recharge
-.venv/Scripts/python scripts/run_bench.py --device physical \
-    --arms B:moonshine-small-en --langs en --buckets short --sources $S \
-    --reps 3 --label armB-small-en100 --no-build --no-install --no-push --timeout 10800
-.venv/Scripts/python scripts/run_bench.py --device physical \
-    --arms A --langs en --buckets short --sources $S \
-    --reps 2 --label armA-en100 --no-build --no-install --no-push --timeout 10800
+    --arms B:moonshine-small-es --langs es --buckets short --sources fleurs_es \
+    --reps 3 --label armB-small-es100 --no-build --no-install --no-push --timeout 10800
 
 .venv/Scripts/python scripts/compare.py --standard
+.venv/Scripts/python scripts/summarize.py
 ```
 
-Run the battery watchdog alongside each, started so that it waits for the app
-before checking (see Budget). Then update the English figures in the README,
-the Phase 2 and 3 summaries and this file. If English differences stay
-unresolved at 100 clips, that is the answer: the models are equivalent within
-the interval, and the choice falls to size, latency and memory.
+Reps: 4 for C as planned (400 clips); 3 for small-es, since Moonshine's
+streaming output varies a little between repetitions. Estimates: Arm C is
+unmeasured on the phone (a base-size encoder-decoder with partials; guess
+8–15 points); small-es ≈ 18 points (small-en cost 10.4 per 240 clips, and
+Spanish clips run ~40% longer).
 
-## Done before Phase 4 — Spanish on 100 clips
+Run each with the battery watchdog (see Budget). Wait for the phone to cool
+below ~33 °C between runs. `compare.py --standard` already holds the Phase 4
+Spanish pairs: A, C, D, E and B-es against each other.
 
-Twenty Spanish clips could not separate the arms, so the corpus gained 80
-Spanish clips (`fleurs-es-short-020` to `-099`, one recording per unused
-sentence, 3–10 s). Arm A (3 reps) and Parakeet (2 reps) were re-measured on
-all 100 on 2026-09-24: 7.39% and 4.47%. Results are in
-`results/*-armA-es100` and `results/*-armD-es100`. Whisper was not
-re-measured: it is calibration, and Whisper small costs ~40 battery points a
-run. Comparisons involving it use the original 20 clips, which
-`compare.py` picks automatically as the shared set.
-
-Two scorer changes came with it, both PC-side and self-tested. Each clip now
-counts once however many rows it has (`score.score_clips`), and five
-formatting rules read text the way it is spoken: clock times, "%", thousands
-separators, letters glued to digits ("M16"), dotted acronyms ("U.S."). The
-percent rule mattered most: Arm A writes "%" and had been losing words for
-it. All are in the README findings.
-
-## Phase 4 — Arm C (Moonshine `base-es`)
-
-`fetch_models.py moonshine-base-es` (64.8 MB). ⚠️ **Non-commercial licence**,
-experiment only; do not redistribute (models/MODELS.md).
-
-It is a legacy **non-streaming** Moonshine model, so it needs VAD segmentation
-like Arms D and E. The integration is an open design choice:
-
-- **Moonshine SDK, non-streaming.** `MoonshineArm`'s KDoc notes that
-  `loadFromFiles(path, 0)` selects the non-streaming layout, which looks for
-  `encoder_model.ort` + `decoder_model_merged.ort`, exactly what `base-es`
-  ships. Whether the SDK's `Transcriber` then segments by itself, or needs
-  audio fed per segment, is not established. PLAN.md §5 lists Arm C's runtime
-  as the Moonshine SDK.
-- **Reuse the Phase 3 pipeline.** `SherpaOfflineArm` already does VAD
-  segmentation, partial re-decoding and timing. sherpa-onnx has an
-  `OfflineMoonshineModelConfig`, but its fields (`preprocessor`, `encoder`,
-  `uncachedDecoder`, `cachedDecoder`, `mergedDecoder`) describe sherpa-onnx's
-  own ONNX exports, not obviously these two `.ort` files. Check before
-  assuming it can load them. Using it would also change Arm C's runtime from
-  the one PLAN.md names (D6).
-
-Either way, keep what Phase 3 established: decode off the feed thread, 500 ms
-partials, record `last_final_wait_ms` and `final_after_audio_end_ms`.
-Spanish only, on all 100 Spanish clips (4 reps: 400 clips). Then compare
-Spanish across A / C / D with `scripts/compare.py` on the shared 100 clips
-(E only on the original 20),
-which is PLAN.md §10 step 18.
+Then: README results (a Phase 4 section and the "against the bar" table),
+`summaries/phase-4-spanish.md`, the §1 verdict, and this file for Phase 5.
 
 ---
 
-## Lessons from Phase 3 that apply directly
+## Lessons that apply directly
 
-- **Partials cost more than the model.** Re-decoding open speech every 500 ms
-  multiplies compute and heat two to three times. Whisper small needed 0.53 of
-  real time for finals and 1.3 with partials. Report both; `summarize.py`
-  prints `rtf, finals only`. For a slow model, finals also queue behind a
-  running partial (up to 3.6 s for Whisper small).
-- **Check claims against the library source before writing them down.** Two
-  first-draft statements were wrong: the Kotlin VAD's 5 s
-  `maxSpeechDuration` does not hard-cut (it tightens the VAD), and the stale
-  battery temperature is not tied to charge-level changes.
-- **Report an interval, not two numbers.** Twenty clips could not tell
-  Parakeet from Arm A in Spanish; 100 could. Offline arms give identical text
-  every rep, so reps add no accuracy evidence. `scripts/compare.py --standard`
-  re-checks every comparison the README makes. English rankings among the
-  bundled models are still within noise on 20 clips.
-- **A scorer rule can favour one output style.** Years written as digits cost
-  Arm A four WER points on noisy English. When a new arm formats text
-  differently (numbers, names, punctuation), look at its worst clips before
-  trusting the pooled WER.
-- **Silero VAD finds quiet speech but late.** Both D and E lose the first word
-  on about half the very quiet clips. Compare on `fleurs_en_norm`.
-- **WER is deterministic for these arms.** Greedy decoding behind a
-  deterministic VAD gives byte-identical text every repetition. Timing still
-  varies with heat, so it is still reported per run.
-- **The emulator has ~0.75 GB free.** Swap models there one at a time.
-  Parakeet (670 MB) left 0.1 GB, below the emulator gate's 0.3 GB floor.
-  `--skip-preflight` was used **once, on the emulator only**, for that
-  validation run; never on the phone.
+- **Look at a new arm's worst clips before trusting its pooled WER.** It found
+  the years bias (Phase 3), and on the English re-measure it found Parakeet's
+  empty segments. For Arm C and small-es, check for clipped endings (the
+  token cap), empty finals, and formatting (numbers, "%", clock times).
+- **Report an interval, not two numbers.** Twenty clips misranked Parakeet
+  against Moonshine small in both English sources. `compare.py --standard`.
+- **Check claims against the library source.** It settled Arm C's design
+  (Moonshine's hidden VAD, the architecture value) and exposed the CDN.
+- **The model hub is not necessarily where an SDK gets its models.** Check the
+  SDK's own catalog.
+- **Partials cost more than the model** (Phase 3). Report `rtf, finals only`
+  from `summarize.py` alongside the total.
+- **Silero VAD cuts tightly.** Parakeet loses segments with no leading
+  silence. If Arm C shows empty finals, this is the first suspect; the PC
+  diagnostic for Parakeet is in README finding 21.
+- **The emulator has ~0.5 GB free now** (it holds `silero-vad`,
+  `moonshine-tiny-en`, `moonshine-base-es`, `moonshine-small-es`). Swap models
+  there one at a time.
 
 ---
 
 ## Budget and constraints
 
-**Measured cost per full run on the phone:**
+**Measured cost per run on the phone:**
 
 | Run | Clips | Time | Battery | Peak temp (as read) | Cooling pauses |
 |---|---|---|---|---|---|
 | Arm A | 240 | 39 min | 3 points | 29.2 °C | 0 |
-| Moonshine tiny | 240 | 39 min | 6 points | 30.7 °C | 0 |
 | Moonshine small | 240 | 39 min | 10 points | 33.5 °C | 0 |
 | Moonshine medium | 240 | 44 min | 11 points | 35.0 °C | 1 |
 | Whisper base | 320 | 87 min | 20 points | 35.2 °C | 7 |
@@ -223,37 +199,48 @@ which is PLAN.md §10 step 18.
 | Whisper small | 320 | 156 min | 39 points | 35.5 °C | 15 |
 | Arm A, Spanish 100 clips | 300 | 61 min | 5 points | 30.2 °C | 0 |
 | Parakeet, Spanish 100 clips | 200 | 41 min | 11 points | 33.2 °C | 0 |
-
-A watchdog that exits if the app is not running yet will quit during a long
-corpus push. Wait for the process first:
-
-```bash
-for i in $(seq 1 60); do MSYS_NO_PATHCONV=1 $A -s $D shell pidof io.github.davamix.asrbench >/dev/null 2>&1 && break; sleep 5; done
-```
+| Moonshine medium, English 100 | 600 | 132 min | 33 points | 35.0 °C | 7 |
+| Parakeet, English 100 | 400 | 81 min | 17 points | 35.0 °C | 3 |
+| Moonshine small, English 100 | 600 | 111 min | 26 points | 35.0 °C | 2 |
+| Arm A, English 100 | 400 | 64 min | 4 points | 28.2 °C | 0 |
 
 The gate needs battery 30–80% and not charging, and it checks the level only
-at start. §11.3 asks for 30–80% *throughout*, so run this watchdog alongside
-any long run. It force-stops only this app, and the run's last checkpoint
-survives:
+at start. §11.3 asks for 30–80% *throughout*, so run a watchdog alongside
+every long run. This wrapper runs one `run_bench.py` command with a watchdog
+that polls every minute for the whole run (not only while the app is up, so
+it cannot quit during `prepareDirs` or the corpus push) and force-stops only
+this app below 30%. The run's last checkpoint survives. Save it outside the
+repo (it needs the device address):
 
 ```bash
-A=D:/Android/Sdk/platform-tools/adb.exe; D=<ip:port>
-while MSYS_NO_PATHCONV=1 $A -s $D shell pidof io.github.davamix.asrbench >/dev/null 2>&1; do
-  lvl=$(MSYS_NO_PATHCONV=1 $A -s $D shell dumpsys battery | grep "level:" | tr -dc '0-9')
-  echo "$(date +%H:%M) level=$lvl"
-  [ "$lvl" -lt 30 ] && MSYS_NO_PATHCONV=1 $A -s $D shell am force-stop io.github.davamix.asrbench && break
-  sleep 60
-done
+#!/usr/bin/env bash
+# run_with_watchdog.sh <ip:port> <logname> -- <run_bench.py args...>
+set -u
+D="$1"; NAME="$2"; shift 3
+A=D:/Android/Sdk/platform-tools/adb.exe
+LOG="$(dirname "$0")/$NAME.log"; WLOG="$(dirname "$0")/$NAME.watchdog.log"
+cd "F:/Development/Samples/android-transcription-sample"
+( while true; do
+    out=$(MSYS_NO_PATHCONV=1 $A -s "$D" shell dumpsys battery 2>/dev/null)
+    lvl=$(echo "$out" | grep " level:" | tr -dc '0-9')
+    t=$(echo "$out" | grep " temperature:" | tr -dc '0-9')
+    echo "$(date +%H:%M:%S) level=$lvl temp=${t:0:2}.${t:2}" >> "$WLOG"
+    if [ -n "$lvl" ] && [ "$lvl" -lt 30 ]; then
+      MSYS_NO_PATHCONV=1 $A -s "$D" shell am force-stop io.github.davamix.asrbench; break
+    fi
+    sleep 60
+  done ) &
+WD=$!
+.venv/Scripts/python -u scripts/run_bench.py "$@" > "$LOG" 2>&1; rc=$?
+kill $WD 2>/dev/null; tail -25 "$LOG"; exit $rc
 ```
 
-**Temperatures lag.** The battery temperature the gate reads can be minutes
-old (README finding). A cooling pause can therefore run long, and a clip can
-start slightly above 35 °C. `dumpsys battery` has the same lag. The thermal
-HAL exposes no sensors on this phone, and the sysfs node is denied to shell.
+**Charging leaves the phone hot.** Straight off the charger it read 36.7 °C,
+above the 35 °C gate, and took ~8 minutes to read 32 °C. Unplug a while
+before a run.
 
-The phone ended the Spanish re-measure at 62%. Arm C is Spanish only (400
-clips for 4 reps) and `base-es` is small, so a run should cost less than
-Parakeet's, but it still needs 30–80% at the start.
+**Temperatures lag.** The battery temperature the gate reads can be minutes
+old (README finding). `dumpsys battery` has the same lag.
 
 ---
 
@@ -269,57 +256,30 @@ adb connect <ip>:<port>        # from Settings > Developer options > Wireless de
 .venv/Scripts/python scripts/devicelib.py --device physical
 ```
 
-The address changes between sessions. If `adb devices` shows the phone twice
-(once by IP, once by mDNS) that is normal — `devicelib` dedupes by hardware
-identity. The emulator is often attached too, so always pass `--device`.
-
-In Git Bash, prefix raw `adb shell` / `adb pull` calls that take device paths
-with `MSYS_NO_PATHCONV=1`. Otherwise `/sdcard/...` is rewritten to a Windows
-path. `run_bench.py` is unaffected.
+The address can change between sessions. `adb devices` shows the phone twice
+(by IP and by mDNS); `devicelib` dedupes. The emulator is often attached too,
+so always pass `--device`. In Git Bash, prefix raw `adb shell` / `adb pull`
+calls that take device paths with `MSYS_NO_PATHCONV=1`.
 
 ### Build prerequisite
 
 ```bash
 .venv/Scripts/python scripts/fetch_runtime.py   # sherpa-onnx AAR -> bench/app/libs/, SHA-256 checked
+.venv/Scripts/python scripts/fetch_models.py moonshine-base-es moonshine-small-es
 ```
-
-The Gradle build fails with a clear message if the AAR is missing.
-
-### Emulator first
-
-```bash
-D:/Android/Sdk/emulator/emulator.exe -avd Medium_Phone_API_36.0 &
-.venv/Scripts/python scripts/run_bench.py --device emulator --push-models <dir>
-.venv/Scripts/python scripts/run_bench.py --device emulator \
-    --arms <arm> --langs en,es --buckets short --reps 1 --label emu<arm> \
-    --session-cap-s 180
-```
-
-Emulator results are gitignored and never published. The emulator currently
-holds `silero-vad` and `whisper-small-int8`; remove the latter before pushing
-anything large.
 
 ### Measure, score, write up
 
 ```bash
-.venv/Scripts/python scripts/run_bench.py --device physical --push-models <dir>
-.venv/Scripts/python scripts/run_bench.py --device physical \
-    --arms <arm> --langs en,es --buckets short --reps 4 --label <label> \
-    --no-push --timeout 10800
-
 .venv/Scripts/python scripts/summarize.py            # all results, per variant
 .venv/Scripts/python scripts/summarize.py results/<dir>/<file>.json   # one run
+.venv/Scripts/python scripts/compare.py --standard   # paired bootstrap
 ```
 
-`--arms` knows `A`, `B[:variant]`, `D[:variant]` and `E[:variant]`. For D and E
-the variant is the model directory name (`parakeet-tdt-v3-int8`,
-`whisper-base-int8`, `whisper-small-int8`). `--partial-ms N` sets the partial
-re-decode interval for D and E (default 500; 0 = final text only).
-`summarize.py` groups by `extra.variant`.
-
-**Pilots:** after a full run supersedes a one-rep pilot, move the pilot's
-directory into `results/superseded/` and add a row to its README. Phase 3 ran
-no phone pilots.
+`--arms` knows `A`, `B[:variant]`, `C[:variant]`, `D[:variant]` and
+`E[:variant]`. `--sources` limits a run and its corpus push. `--partial-ms N`
+sets the partial cadence for C, D and E (default 500; 0 = finals only).
+`--moonshine-options k=v,...` overrides Moonshine options for arm C.
 
 **Long runs:** `adb am instrument` can outlive a host-side timeout. If the
 wrapper dies, the run usually continues on the device — check
@@ -330,25 +290,22 @@ last checkpoint is in the device's results dir, marked `complete: false`.
 
 ## Open (not blocking)
 
-- **Partials-off run.** Final latency without partials is only derived
-  (measured minus the wait behind a running partial). One run with
-  `--partial-ms 0` on Parakeet would measure it, and the compute and heat
-  saved.
-- **The 2/4/6/8 thread sweep** PLAN.md §6 asks for. It was impossible on
-  Moonshine (no thread setting). sherpa-onnx's `numThreads` is real, so
-  Parakeet can host it. `threads` is already an instrumentation argument.
-- **Session runs** (5–10 minutes continuous) for the surviving arms: PLAN.md
-  places them in Phase 5. Parakeet's worst clip used 0.85 of real time with
-  partials.
-- **A better thermal signal.** `PowerManager.getThermalHeadroom()` /
-  `getCurrentThermalStatus()` are app-visible (API 30+). Recording them per
-  row would show throttling directly, rather than through a lagging battery
-  temperature.
-- **Cooling time counts toward the 10-minute session cap**, so a run that
-  cooled for eight minutes then takes a two-minute break. Conservative, so it
-  was left alone.
-- From Phase 2: the Moonshine update-interval sweep, and why Arm A's Phase 1
-  English timing differed.
+- **Padded Parakeet on the phone.** Declined for now (see above). If the final
+  recommendation hinges on Parakeet vs Moonshine medium in noisy English, it
+  is the run that would settle it: ~17 points for English.
+- **Compound spelling.** "reelected" vs "re elected" costs 0.2–0.6 points per
+  arm; it makes small-vs-medium on noisy English unresolved. The scorer was
+  not changed (a generic join rule forgives real errors). A curated list is
+  possible but must not be tuned on these results.
+- **Moonshine's hidden decoder file.** English variants ship
+  `decoder_kv_with_attention.ort` (33 / 82 / 147 MB), loaded only for word
+  timestamps, so shipped size overstates what runs: 45 / 142 / 269 MB. The
+  README size figures still quote the shipped sizes; worth a line in the
+  final write-up.
+- **Partials-off run**, the **2/4/6/8 thread sweep** on Parakeet, **session
+  runs** (Phase 5), a **better thermal signal**
+  (`PowerManager.getThermalHeadroom()`), and the Moonshine update-interval
+  sweep: as before.
 
 ---
 
@@ -356,21 +313,26 @@ last checkpoint is in the device's results dir, marked `complete: false`.
 
 - **Nothing is bundled in the APK.** Models are pushed to
   `/sdcard/Android/data/io.github.davamix.asrbench/files/models/`. On the phone
-  now: all three Moonshine variants, `silero-vad`, both Whisper variants and
-  `parakeet-tdt-v3-int8` (~1.9 GB), and the 162-clip corpus. ~73 GB free, so
-  no need to remove any.
+  now: all three English Moonshine variants, `silero-vad`, both Whisper
+  variants and `parakeet-tdt-v3-int8` (~1.9 GB). **Not yet:** `moonshine-base-es`
+  and `moonshine-small-es` (the first Phase 4 command pushes them). ~73 GB free.
+- **The phone runs the pre-Phase-4 APK** (the English re-measure used it
+  throughout). The first Phase 4 command installs the new one.
 - **The app must create its own directories** before anything is pushed into
   them (`prepareDirs`, with `model_dirs`). `run_bench.py` handles this.
 - **Two ONNX Runtimes live in the APK**, Moonshine's and sherpa-onnx's
-  (statically linked). Do not switch to the regular sherpa-onnx AAR: its
-  `libonnxruntime.so` collides with Moonshine's (README finding).
-- **`SherpaOfflineArm` decodes on its own thread.** The feed does only the
-  VAD, so slip stays under 50 ms and is not a proxy for anything.
-  `rtf_sustained` there is VAD time plus all decode time over audio time.
+  (statically linked). Arm C uses both: sherpa-onnx for the VAD, Moonshine for
+  the decode.
+- **`SherpaOfflineArm` decodes on its own thread**, for C, D and E alike.
 - **Moonshine's `loadFromFiles(path, int)` second argument is the model
-  architecture** (5 = streaming, 0 = non-streaming), not flags.
-- **Scoring happens on the PC**, never on the device, so a scoring bug never
-  costs a re-run. Phase 3's year fix proved it again.
+  architecture** (`JNI.MOONSHINE_MODEL_ARCH_*`: 0 tiny, 1 base, 2–5
+  tiny/base/small/medium streaming). For streaming models any streaming value
+  works (dimensions come from `streaming_config.json`); for non-streaming it
+  must match.
+- **`pull_results` pulls every file in the device's results dir**, so each run
+  directory holds all earlier results too. `summarize.py` and `compare.py`
+  dedupe by file name.
+- **Scoring happens on the PC**, never on the device.
 
 ---
 
@@ -381,11 +343,6 @@ The phone is the owner's only handset, personal and irreplaceable.
 **Never:** root, bootloader unlock, `disable-verity`, fastboot, factory reset,
 disabling thermal throttling or forcing a CPU governor, `pm uninstall/clear` on
 anything but this app, or writes outside the two paths in §11.2.
-
-Disabling throttling is what benchmarking guides suggest constantly. It is
-refused here twice over: it risks hardware that cannot be replaced, and it is
-methodologically wrong, because live transcription runs hot for minutes and
-throttling is part of the phenomenon being measured.
 
 **The gate** (`scripts/devicelib.py`) refuses to start a run unless: ≥5 GB free,
 battery 30–80%, temperature <35 °C, **not charging**. It aborts mid-run at

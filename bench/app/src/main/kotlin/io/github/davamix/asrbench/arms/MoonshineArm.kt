@@ -16,7 +16,8 @@ import java.io.File
 import java.util.function.Consumer
 
 /**
- * Arm B -- Moonshine streaming, English. The streaming-native contender.
+ * Arm B -- Moonshine streaming, one model per language (English; Spanish
+ * from Phase 4). The streaming-native contender.
  *
  * Unlike Arm A this is a real streaming model running in *our* process, which
  * means two things the platform recognizer could not give us:
@@ -42,14 +43,18 @@ class MoonshineArm(
      *
      * The second parameter of `loadFromFiles(path, int)` is **not** a flags
      * bitfield despite sitting next to `setTranscribeFlags`; it is the model
-     * architecture. Passing 0 selects the non-streaming layout, which looks
-     * for `encoder_model.ort` + `decoder_model_merged.ort` -- the files the
-     * legacy `base-*` models ship -- and fails on a streaming variant with
-     * "Required encoder model file does not exist".
+     * architecture, one of `JNI.MOONSHINE_MODEL_ARCH_*`: 0 tiny, 1 base (the
+     * legacy non-streaming layout, `encoder_model.ort` +
+     * `decoder_model_merged.ort`), 2-5 tiny/base/small/medium streaming. A
+     * non-streaming value fails on a streaming variant with "Required encoder
+     * model file does not exist".
      *
-     * 5 is what `MicTranscriber` (the SDK's own streaming path) defaults to,
-     * which is how this was established: the value is not in any public
-     * constant, so it was read out of that class's bytecode.
+     * 5 (medium streaming) is what `MicTranscriber` defaults to, and it is
+     * used here for every variant. That is safe: in v0.1.5 any streaming
+     * value only selects the streaming loader, which takes the model's
+     * dimensions from its own `streaming_config.json`
+     * (core/moonshine-streaming-model.cpp). For the non-streaming layout the
+     * value does matter; see SherpaOfflineArm.Model.MoonshineNonStreaming.
      */
     private val arch: Int = STREAMING_ARCH,
 ) : Arm {
@@ -61,8 +66,13 @@ class MoonshineArm(
     private var transcriber: Transcriber? = null
     private var modelDir: File? = null
 
-    /** Moonshine streaming `.ort` assets exist for English only (§4.1). */
-    override fun supports(language: String): Boolean = language == "en"
+    /**
+     * Each variant is one language, named by its suffix. PLAN.md §4.1 said
+     * English only; Spanish streaming `.ort` files exist on Moonshine's CDN,
+     * where the SDK's own catalog fetches them (README finding 1).
+     */
+    override fun supports(language: String): Boolean =
+        language == variant.substringAfterLast('-')
 
     override fun load(context: Context): Long {
         val dir = File(context.getExternalFilesDir(null), "models/$variant")
@@ -238,11 +248,12 @@ class MoonshineArm(
         /** Streaming architecture; see the [arch] constructor parameter. */
         const val STREAMING_ARCH = 5
 
-        /** Sizes match `models/MODELS.md` at the pinned revision. */
+        /** Sizes match `models/MODELS.md` at the pinned revision or hashes. */
         fun variants(): Map<String, Double> = mapOf(
             "moonshine-tiny-en" to 77.7,
             "moonshine-small-en" to 224.1,
             "moonshine-medium-en" to 416.0,
+            "moonshine-small-es" to 121.8,
         )
     }
 }

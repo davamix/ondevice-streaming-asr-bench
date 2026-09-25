@@ -3,6 +3,9 @@ package io.github.davamix.asrbench.arms
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
+import ai.moonshine.voice.JNI
+import ai.moonshine.voice.Transcriber
+import ai.moonshine.voice.TranscriberOption
 import com.k2fsa.sherpa.onnx.FeatureConfig
 import com.k2fsa.sherpa.onnx.OfflineModelConfig
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
@@ -28,12 +31,12 @@ import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Arms D and E -- an offline model made live with Silero VAD, via sherpa-onnx.
+ * Arms C, D and E -- an offline model made live with Silero VAD.
  *
- * Neither Parakeet (D) nor Whisper (E) is streaming-native. Both take a whole
- * utterance and return its text. This arm is the standard way to put such a
- * model behind a live microphone, and the way sherpa-onnx's own
- * "simulate streaming" Android example does it:
+ * None of Moonshine `base-es` (C), Parakeet (D) or Whisper (E) is
+ * streaming-native. Each takes a whole utterance and returns its text. This
+ * arm is the standard way to put such a model behind a live microphone, and
+ * the way sherpa-onnx's own "simulate streaming" Android example does it:
  *
  *  - **Silero VAD cuts the paced audio into utterances.** A segment closes
  *    after [VAD_MIN_SILENCE_S] of silence, and that segment is decoded once
@@ -59,6 +62,18 @@ import java.util.concurrent.atomic.AtomicInteger
  *    (`last_final_wait_ms`), so the cost of showing partials can be separated
  *    from the cost of the model.
  *
+ * **Arm C decodes with the Moonshine SDK, not sherpa-onnx.** PLAN.md §5 names
+ * the Moonshine SDK as Arm C's runtime, and sherpa-onnx's Moonshine loader
+ * expects its own ONNX exports, not the `.ort` files `base-es` ships. So the
+ * VAD, the partial cadence and the timing are shared with D and E, and only
+ * the decode call differs: `Transcriber.transcribeWithoutStreaming()`. That
+ * call runs Moonshine's own Silero VAD over whatever it is given before
+ * decoding (core/transcriber.cpp, v0.1.5). Here it is given a segment this
+ * VAD has already cut, so its VAD is switched off with `vad_threshold=0`,
+ * which Moonshine documents as "disables VAD": every call then decodes
+ * exactly the audio it is handed, as one line, like D and E do. Moonshine has
+ * no thread setting (README finding 8), so for C the thread count is nominal.
+ *
  * Models load from `files/models/<variant>` at the revisions pinned in
  * `models/MODELS.md`. Nothing downloads itself (D8).
  */
@@ -73,7 +88,21 @@ class SherpaOfflineArm(
     private val threads: Int,
     /** 0 disables partials: text appears only when the VAD closes a segment. */
     private val partialIntervalMs: Long = DEFAULT_PARTIAL_INTERVAL_MS,
+    /**
+     * Arm C only: Moonshine options to set on top of [MOONSHINE_OPTIONS], for
+     * ablations such as a higher `max_tokens_per_second`. A non-empty map
+     * renames the variant, so an ablation never pools with the main run.
+     */
+    private val moonshineOverrides: Map<String, String> = emptyMap(),
 ) : Arm {
+
+    /** What rows record as `variant`: the model, plus any ablation. */
+    private val variantKey = if (moonshineOverrides.isEmpty()) variant
+        else variant + moonshineOverrides.entries.joinToString("") { "+${it.key}=${it.value}" }
+
+    private val moonshineOptions: List<TranscriberOption> =
+        MOONSHINE_OPTIONS.filter { it.name !in moonshineOverrides } +
+            moonshineOverrides.map { TranscriberOption(it.key, it.value) }
 
     /** What to load, and which arm of the matrix it belongs to. */
     sealed class Model(val armId: String, val sizeMb: Double, val modelType: String) {
@@ -91,23 +120,46 @@ class SherpaOfflineArm(
             val joiner: String,
             val tokens: String,
         ) : Model("D", sizeMb, "nemo_transducer")
+
+        /**
+         * A legacy non-streaming Moonshine model (`encoder_model.ort` +
+         * `decoder_model_merged.ort`), decoded by the Moonshine SDK.
+         *
+         * [arch] sets the decoder's layer count and head sizes, so it must
+         * match the model: `MOONSHINE_MODEL_ARCH_BASE` (1) for `base-es`.
+         * Nothing checks it at load; with the tiny value (0) the files load
+         * and the first decode fails its input-count check (v0.1.5 source).
+         */
+        class MoonshineNonStreaming(
+            sizeMb: Double,
+            val arch: Int,
+            val languages: Set<String>,
+        ) : Model("C", sizeMb, "moonshine_non_streaming")
     }
 
     override val id = model.armId
-    override val label = variant
-    override val runtime = "sherpa-onnx $SHERPA_VERSION (ONNX Runtime, static) + Silero VAD"
+    override val label = variantKey
+    override val runtime = when (model) {
+        is Model.MoonshineNonStreaming ->
+            "$MOONSHINE_RUNTIME + Silero VAD via sherpa-onnx $SHERPA_VERSION"
+        else -> "sherpa-onnx $SHERPA_VERSION (ONNX Runtime, static) + Silero VAD"
+    }
     override val diskSizeMb = model.sizeMb
 
     private var recognizer: OfflineRecognizer? = null
     private var config: OfflineRecognizerConfig? = null
+    private var moonshine: Transcriber? = null
     private var vad: Vad? = null
     private var worker: ExecutorService? = null
     private var currentLanguage: String? = null
     private var rssAfterLoadMb: Double? = null
     private var peakRssAfterLoadMb: Double? = null
 
-    /** Whisper (multilingual) and Parakeet v3 both cover en and es. */
-    override fun supports(language: String): Boolean = language == "en" || language == "es"
+    /** Whisper (multilingual) and Parakeet v3 cover en and es; base-es only es. */
+    override fun supports(language: String): Boolean = when (model) {
+        is Model.MoonshineNonStreaming -> language in model.languages
+        else -> language == "en" || language == "es"
+    }
 
     override fun load(context: Context): Long {
         val root = File(context.getExternalFilesDir(null), "models")
@@ -127,6 +179,54 @@ class SherpaOfflineArm(
             return f.absolutePath
         }
 
+        val t0 = SystemClock.uptimeMillis()
+        if (model is Model.MoonshineNonStreaming) {
+            // The same files the loader requires, checked here so a missing
+            // one names itself instead of surfacing as a native exception.
+            listOf("encoder_model.ort", "decoder_model_merged.ort", "tokenizer.bin")
+                .forEach { path(it) }
+            val t = Transcriber(moonshineOptions)
+            t.loadFromFiles(dir.absolutePath, model.arch)
+            check(t.isLoaded) { "Transcriber.loadFromFiles reported not loaded for $variant" }
+            moonshine = t
+        } else {
+            val cfg = sherpaConfig(model, ::path)
+            // A null AssetManager makes the constructor load from file paths.
+            recognizer = OfflineRecognizer(null, cfg)
+            config = cfg
+        }
+        val v = Vad(
+            null,
+            VadModelConfig(
+                sileroVadModelConfig = SileroVadModelConfig(
+                    model = vadFile.absolutePath,
+                    threshold = VAD_THRESHOLD,
+                    minSilenceDuration = VAD_MIN_SILENCE_S,
+                    minSpeechDuration = VAD_MIN_SPEECH_S,
+                    windowSize = VAD_WINDOW,
+                    maxSpeechDuration = VAD_MAX_SPEECH_S,
+                ),
+                sampleRate = Wav.REQUIRED_SAMPLE_RATE,
+                numThreads = 1,
+                provider = "cpu",
+            ),
+        )
+        val ms = SystemClock.uptimeMillis() - t0
+
+        vad = v
+        currentLanguage = "en"
+        worker = Executors.newSingleThreadExecutor { r ->
+            Thread(r, "sherpa-decode").apply { isDaemon = true }
+        }
+        rssAfterLoadMb = Telemetry.currentRssMb()
+        peakRssAfterLoadMb = Telemetry.peakRssMb()
+        Log.i(TAG, "loaded $variant (${model.modelType}, $threads threads) in ${ms}ms; " +
+            "rss=${rssAfterLoadMb}MB peak=${peakRssAfterLoadMb}MB")
+        return ms
+    }
+
+    /** Recognizer config for the sherpa-onnx models (D and E). */
+    private fun sherpaConfig(model: Model, path: (String) -> String): OfflineRecognizerConfig {
         val modelConfig = when (model) {
             is Model.Whisper -> OfflineModelConfig(
                 whisper = OfflineWhisperModelConfig(
@@ -153,49 +253,16 @@ class SherpaOfflineArm(
                 numThreads = threads,
                 provider = "cpu",
             )
+            is Model.MoonshineNonStreaming -> error("$variant is not a sherpa-onnx model")
         }
         // The feature dimension here is a placeholder: both model families
         // read theirs from the model's own metadata (Parakeet v3 uses 128
         // mel bins, Whisper 80) and override it.
-        val cfg = OfflineRecognizerConfig(
+        return OfflineRecognizerConfig(
             featConfig = FeatureConfig(sampleRate = Wav.REQUIRED_SAMPLE_RATE, featureDim = 80),
             modelConfig = modelConfig,
             decodingMethod = "greedy_search",
         )
-
-        val t0 = SystemClock.uptimeMillis()
-        // A null AssetManager makes both constructors load from file paths.
-        val rec = OfflineRecognizer(null, cfg)
-        val v = Vad(
-            null,
-            VadModelConfig(
-                sileroVadModelConfig = SileroVadModelConfig(
-                    model = vadFile.absolutePath,
-                    threshold = VAD_THRESHOLD,
-                    minSilenceDuration = VAD_MIN_SILENCE_S,
-                    minSpeechDuration = VAD_MIN_SPEECH_S,
-                    windowSize = VAD_WINDOW,
-                    maxSpeechDuration = VAD_MAX_SPEECH_S,
-                ),
-                sampleRate = Wav.REQUIRED_SAMPLE_RATE,
-                numThreads = 1,
-                provider = "cpu",
-            ),
-        )
-        val ms = SystemClock.uptimeMillis() - t0
-
-        recognizer = rec
-        config = cfg
-        vad = v
-        currentLanguage = "en"
-        worker = Executors.newSingleThreadExecutor { r ->
-            Thread(r, "sherpa-decode").apply { isDaemon = true }
-        }
-        rssAfterLoadMb = Telemetry.currentRssMb()
-        peakRssAfterLoadMb = Telemetry.peakRssMb()
-        Log.i(TAG, "loaded $variant (${model.modelType}, $threads threads) in ${ms}ms; " +
-            "rss=${rssAfterLoadMb}MB peak=${peakRssAfterLoadMb}MB")
-        return ms
     }
 
     override fun transcribe(
@@ -204,8 +271,9 @@ class SherpaOfflineArm(
         language: String,
         threads: Int,
     ): ArmResult {
-        val rec = recognizer
-            ?: return ArmResult.failed("recognizer not loaded", audio.durationMs)
+        if (recognizer == null && moonshine == null) {
+            return ArmResult.failed("model not loaded", audio.durationMs)
+        }
         val v = vad ?: return ArmResult.failed("vad not loaded", audio.durationMs)
         val exec = worker ?: return ArmResult.failed("worker not started", audio.durationMs)
 
@@ -217,20 +285,45 @@ class SherpaOfflineArm(
             if (model is Model.Whisper && language != currentLanguage) {
                 val cfg = config!!
                 cfg.modelConfig.whisper.language = language
-                rec.setConfig(cfg)
+                recognizer!!.setConfig(cfg)
                 currentLanguage = language
             }
             v.reset()
             v.clear()
 
-            runClip(rec, v, exec, audio)
+            runClip(v, exec, audio)
         } catch (e: Throwable) {
             ArmResult.failed("${e.javaClass.simpleName}: ${e.message}", audio.durationMs)
         }
     }
 
+    /** One decode's output. [lines] is how many lines Moonshine returned. */
+    private class Decoded(val text: String, val lang: String, val lines: Int)
+
+    /** Decode one whole utterance. Worker thread only. */
+    private fun decode(samples: FloatArray, sampleRate: Int): Decoded {
+        moonshine?.let { t ->
+            val transcript = t.transcribeWithoutStreaming(samples, sampleRate)
+                ?: error("transcribeWithoutStreaming returned no transcript")
+            // One line is expected, since Moonshine's own VAD is off; the
+            // count is recorded so that stays checked rather than assumed.
+            val lines = transcript.lines.orEmpty()
+            val text = lines.joinToString(" ") { it.text.orEmpty().trim() }.trim()
+            return Decoded(text, "", lines.size)
+        }
+        val rec = checkNotNull(recognizer) { "recognizer not loaded" }
+        val s = rec.createStream()
+        try {
+            s.acceptWaveform(samples, sampleRate)
+            rec.decode(s)
+            val r = rec.getResult(s)
+            return Decoded(r.text.trim(), r.lang, 1)
+        } finally {
+            s.release()
+        }
+    }
+
     private fun runClip(
-        rec: OfflineRecognizer,
         v: Vad,
         exec: ExecutorService,
         audio: Wav.Audio,
@@ -251,17 +344,10 @@ class SherpaOfflineArm(
         var lastSegEnd = 0
         var lastPartialSubmit = 0L
 
-        fun decode(samples: FloatArray): Pair<String, String> {
-            val s = rec.createStream()
-            try {
-                s.acceptWaveform(samples, audio.sampleRate)
-                rec.decode(s)
-                val r = rec.getResult(s)
-                return r.text.trim() to r.lang
-            } finally {
-                s.release()
+        fun decode(samples: FloatArray): Decoded =
+            decode(samples, audio.sampleRate).also {
+                st.maxLinesPerDecode = maxOf(st.maxLinesPerDecode, it.lines)
             }
-        }
 
         // Worker thread only.
         fun show(partial: String?) {
@@ -280,7 +366,9 @@ class SherpaOfflineArm(
             pending += exec.submit(Runnable {
                 try {
                     val t0 = SystemClock.uptimeMillis()
-                    val (text, lang) = decode(seg.samples)
+                    val d = decode(seg.samples)
+                    val text = d.text
+                    val lang = d.lang
                     val t1 = SystemClock.uptimeMillis()
                     st.finalDecodes++
                     st.finalDecodeMs += t1 - t0
@@ -307,7 +395,7 @@ class SherpaOfflineArm(
                     // Stale: this segment was finalized while the job waited.
                     if (st.finalized > index) return@Runnable
                     val t0 = SystemClock.uptimeMillis()
-                    val (text, _) = decode(samples)
+                    val text = decode(samples).text
                     st.partialDecodes++
                     st.partialDecodeMs += SystemClock.uptimeMillis() - t0
                     if (st.finalized > index) return@Runnable
@@ -406,9 +494,11 @@ class SherpaOfflineArm(
             error = st.error
                 ?: if (timedOut) "timed out waiting for decodes after ${drainEnd - speechEnd}ms" else null,
             extra = mapOf(
-                "variant" to variant,
+                "variant" to variantKey,
                 "model_type" to model.modelType,
-                "num_threads" to this.threads,
+                // Null for Arm C: the Moonshine SDK has no thread setting, so
+                // ONNX Runtime's default pool applies (README finding 8).
+                "num_threads" to this.threads.takeIf { moonshine == null },
                 "partial_interval_ms" to partialIntervalMs,
                 "vad" to "silero thr=$VAD_THRESHOLD silence=${VAD_MIN_SILENCE_S}s " +
                     "speech=${VAD_MIN_SPEECH_S}s max=${VAD_MAX_SPEECH_S}s win=$VAD_WINDOW",
@@ -444,7 +534,12 @@ class SherpaOfflineArm(
                 "rss_mb" to Telemetry.currentRssMb(),
                 "rss_after_load_mb" to rssAfterLoadMb,
                 "peak_rss_after_load_mb" to peakRssAfterLoadMb,
-            ),
+            ) + if (moonshine != null) mapOf(
+                "moonshine_options" to
+                    moonshineOptions.joinToString(",") { "${it.name}=${it.value}" },
+                // Must be 1: more would mean Moonshine re-segmented the audio.
+                "max_lines_per_decode" to st.maxLinesPerDecode,
+            ) else emptyMap(),
         )
     }
 
@@ -458,6 +553,8 @@ class SherpaOfflineArm(
         vad = null
         runCatching { recognizer?.release() }
         recognizer = null
+        runCatching { moonshine?.close() }
+        moonshine = null
     }
 
     /** Shared between the feed thread and the worker. */
@@ -479,6 +576,7 @@ class SherpaOfflineArm(
         @Volatile var lastFinalDecodeMs: Long? = null
         @Volatile var lastFinalWaitMs: Long? = null
         @Volatile var lang: String? = null
+        @Volatile var maxLinesPerDecode = 0
     }
 
     companion object {
@@ -486,6 +584,25 @@ class SherpaOfflineArm(
 
         /** Must match scripts/fetch_runtime.py. */
         const val SHERPA_VERSION = "1.13.8"
+
+        /** Arm C's decoder; the same SDK as Arm B (see MoonshineArm). */
+        const val MOONSHINE_RUNTIME = "ai.moonshine:moonshine-voice:0.1.5 (ONNX Runtime)"
+
+        /**
+         * Arm C's Moonshine options. Everything else is the SDK default,
+         * including `max_tokens_per_second` 6.5, which Moonshine says needs
+         * raising only for non-Latin scripts.
+         *
+         *  - `vad_threshold=0`: Moonshine's own VAD off, so each call decodes
+         *    exactly the segment it is given (see the class comment).
+         *  - `return_audio_data=false`: do not copy every segment's audio back
+         *    into Java. It is never read, and a partial would copy it twice
+         *    a second.
+         */
+        val MOONSHINE_OPTIONS = listOf(
+            TranscriberOption("vad_threshold", "0"),
+            TranscriberOption("return_audio_data", "false"),
+        )
 
         /**
          * 500 ms, the Moonshine SDK's default update interval, so the two
@@ -534,6 +651,10 @@ class SherpaOfflineArm(
             ),
             "parakeet-tdt-v3-int8" to Model.NemoTransducer(
                 670.5, "encoder.int8.onnx", "decoder.int8.onnx", "joiner.int8.onnx", "tokens.txt",
+            ),
+            // Non-commercial licence: experiment only (models/MODELS.md).
+            "moonshine-base-es" to Model.MoonshineNonStreaming(
+                64.8, JNI.MOONSHINE_MODEL_ARCH_BASE, setOf("es"),
             ),
         )
     }

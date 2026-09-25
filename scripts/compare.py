@@ -5,8 +5,8 @@
     compare.py --source librispeech_other B:moonshine-small-en D:parakeet-tdt-v3-int8
     compare.py --standard            # the comparisons the README quotes
 
-An arm is `A`, `B:<variant>`, `D:<variant>` or `E:<variant>`, as for
-run_bench.py. Only clips both arms were measured on are compared, and each
+An arm is `A`, `B:<variant>`, `C:<variant>`, `D:<variant>` or
+`E:<variant>`, as for run_bench.py. Only clips both arms were measured on are compared, and each
 clip counts once however many rows it has (see score.score_clips).
 
 **Why clips, not rows, are the sample.** The offline arms produce identical
@@ -39,6 +39,15 @@ STANDARD = [
     ("fleurs_es", "A", "D:parakeet-tdt-v3-int8"),
     ("fleurs_es", "E:whisper-small-int8", "D:parakeet-tdt-v3-int8"),
     ("fleurs_es", "E:whisper-base-int8", "A"),
+    # Phase 4: the cheap Spanish option against the free one and the big one.
+    # Whisper was measured on the original 20 Spanish clips only.
+    ("fleurs_es", "A", "C:moonshine-base-es"),
+    ("fleurs_es", "C:moonshine-base-es", "D:parakeet-tdt-v3-int8"),
+    ("fleurs_es", "E:whisper-small-int8", "C:moonshine-base-es"),
+    # Phase 4: Moonshine's Spanish streaming model, found on its CDN.
+    ("fleurs_es", "A", "B:moonshine-small-es"),
+    ("fleurs_es", "B:moonshine-small-es", "D:parakeet-tdt-v3-int8"),
+    ("fleurs_es", "C:moonshine-base-es", "B:moonshine-small-es"),
     ("librispeech_other", "A", "B:moonshine-small-en"),
     ("librispeech_other", "B:moonshine-small-en", "D:parakeet-tdt-v3-int8"),
     ("librispeech_other", "B:moonshine-medium-en", "D:parakeet-tdt-v3-int8"),
@@ -48,6 +57,7 @@ STANDARD = [
     ("fleurs_en_norm", "B:moonshine-small-en", "B:moonshine-medium-en"),
     ("fleurs_en_norm", "E:whisper-small-int8", "D:parakeet-tdt-v3-int8"),
     ("fleurs_en_norm", "A", "D:parakeet-tdt-v3-int8"),
+    ("fleurs_en_norm", "A", "B:moonshine-small-en"),
 ]
 
 

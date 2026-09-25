@@ -227,8 +227,11 @@ def main() -> int:
                          "harness refuses to raise it); used to exercise the "
                          "per-break checkpoint on the emulator")
     ap.add_argument("--partial-ms", type=int, default=None,
-                    help="arms D/E: re-decode open speech for partial text "
+                    help="arms C/D/E: re-decode open speech for partial text "
                          "every N ms (default 500; 0 = final text only)")
+    ap.add_argument("--moonshine-options", metavar="K=V,...",
+                    help="arm C: Moonshine option overrides for an ablation, e.g. "
+                         "max_tokens_per_second=13; rows get a distinct variant")
     ap.add_argument("--skip-preflight", action="store_true")
     ap.add_argument("--timeout", type=int, default=3600)
     args = ap.parse_args()
@@ -316,6 +319,8 @@ def main() -> int:
         extras["session_cap_s"] = str(args.session_cap_s)
     if args.partial_ms is not None:
         extras["partial_ms"] = str(args.partial_ms)
+    if args.moonshine_options:
+        extras["moonshine_options"] = args.moonshine_options
     run_instrumentation(dev, "benchmark", extras, timeout_s=args.timeout)
     pull_results(dev, label)
 

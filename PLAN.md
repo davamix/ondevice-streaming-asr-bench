@@ -112,6 +112,13 @@ dumps get scrubbed before committing. See §11.6.
 
 ### 4.1 Moonshine v2 — strong for English, blocked for Spanish ⚠️
 
+> **Corrected 2026-09-24 (Phase 4).** The blocker below was wrong. Spanish
+> streaming `.ort` files exist (`small-streaming-es` 121.8 MB,
+> `tiny-streaming-es` 32.3 MB, MIT). They are on the vendor's CDN,
+> `download.moonshine.ai`, which is where the SDK's own catalog downloads
+> from, and not in the HF assets repo checked here. `small-streaming-es` was
+> added to Arm B in Phase 4. See README finding 1.
+
 Moonshine v2 (open-weights release Feb 2026) is streaming-native, MIT-licensed, ONNX
 Runtime-based, with first-class Android support. For English it is the frontrunner.
 

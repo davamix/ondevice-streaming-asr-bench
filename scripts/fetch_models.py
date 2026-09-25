@@ -4,6 +4,10 @@
 Downloads into models/<arm>/ (gitignored). Weights are never committed: see
 PLAN.md D8. Sizes and revisions here must stay in sync with models/MODELS.md.
 
+Most models come from HuggingFace at a pinned revision. Moonshine's Spanish
+streaming model exists only on the vendor's CDN, which has no revisions, so it
+is pinned by the SHA-256 of every file instead, and a mismatch is refused.
+
     fetch_models.py --list              # what is available, and what it costs
     fetch_models.py moonshine-tiny-en   # fetch one
     fetch_models.py --arm B             # fetch everything an arm needs
@@ -12,8 +16,10 @@ PLAN.md D8. Sizes and revisions here must stay in sync with models/MODELS.md.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import shutil
 import sys
+import urllib.request
 from pathlib import Path
 
 from huggingface_hub import hf_hub_download, snapshot_download
@@ -40,6 +46,25 @@ SPECS: dict[str, dict] = {
         "arm": "B", "repo": MOONSHINE_REPO, "rev": MOONSHINE_REV,
         "prefix": "model/medium-streaming-en/quantized_26_08_21",
         "size_mb": 416.0, "licence": "MIT", "langs": "en",
+    },
+    # ── Arm B, Spanish: Moonshine streaming, from the vendor CDN ────────
+    # Not in moonshine-voice-assets at any revision. The v0.1.5 SDK's own
+    # catalog (core/moonshine-model-catalog.cpp) downloads it from here. The
+    # dated directory is never overwritten, per that file.
+    "moonshine-small-es": {
+        "arm": "B",
+        "url": "https://download.moonshine.ai/model/small-streaming-es/quantized_26_08_24",
+        "sha256": {
+            "adapter.ort": "04b54114c8aab534222922640f7ca0882948ff9f6ed76777f6e184e55a8e8b15",
+            "cross_kv.ort": "4bfd0a641d72ccdae22751f86bbb2e25ff70c1fba4f81213f2415a1accff9618",
+            "decoder_kv.ort": "5b77c3d6baf801ef925a5bc54d7eb3db0c35ebbb86f8eaf5390d7f5bb42fef37",
+            "encoder.ort": "a9b8d6d5d9348d0e319cceffdb0196ef622df8e4e9f3fb4797dcd8dfafd50857",
+            "frontend.model.ort": "69c76287f49db365aa278d4908ec450e69ca1b4bfb7e836159d963d623ee0c13",
+            "frontend.weights.ort": "2f5a0eb5f3004c9447810d74274a352746319a32144e31d95ef410f425b84dda",
+            "streaming_config.json": "12d16c7f5ea6734d197b79baf47914ea7e996d6fca8d303a19aca10d0617cecc",
+            "tokenizer.bin": "5fbb7d4314dcb18e03c5f975609e4a4cd572b22b01d2b2accb1b3e6830696f36",
+        },
+        "size_mb": 121.8, "licence": "MIT", "langs": "es",
     },
     # ── Arm C: Moonshine base-es (NON-COMMERCIAL) ───────────────────────
     "moonshine-base-es": {
@@ -82,6 +107,34 @@ SPECS: dict[str, dict] = {
 }
 
 
+def sha256_of(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def fetch_pinned_urls(spec: dict, dest: Path) -> None:
+    """Download each file under spec['url'] and refuse any hash mismatch."""
+    for fname, want in spec["sha256"].items():
+        target = dest / fname
+        if target.exists() and sha256_of(target) == want:
+            continue
+        part = dest / (fname + ".part")
+        # The CDN answers Python's default User-Agent with 403.
+        req = urllib.request.Request(f"{spec['url']}/{fname}",
+                                     headers={"User-Agent": "fetch_models.py"})
+        with urllib.request.urlopen(req) as r, part.open("wb") as f:
+            shutil.copyfileobj(r, f)
+        got = sha256_of(part)
+        if got != want:
+            part.unlink()
+            raise SystemExit(f"  ! {fname}: SHA-256 {got} does not match the pin "
+                             f"{want}. Upstream changed; nothing was kept.")
+        part.replace(target)
+
+
 def fetch_one(name: str) -> Path:
     spec = SPECS[name]
     dest = MODELS / name
@@ -91,7 +144,9 @@ def fetch_one(name: str) -> Path:
         print(f"  ! {name} is {spec['licence']} -- experiment only, do not "
               f"redistribute or ship.")
 
-    if "prefix" in spec:
+    if "url" in spec:
+        fetch_pinned_urls(spec, dest)
+    elif "prefix" in spec:
         # Moonshine: a directory of .ort components. Pull just that subtree.
         snapshot_download(
             repo_id=spec["repo"], revision=spec["rev"],

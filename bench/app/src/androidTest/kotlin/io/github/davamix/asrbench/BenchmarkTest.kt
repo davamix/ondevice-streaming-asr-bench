@@ -307,10 +307,19 @@ class BenchmarkTest {
         // in minutes rather than an hour.
         val sessionCapMs = minOf(arg("session_cap_s", "600").toLong(), 600L) * 1000
 
-        // Arms D and E only: how often open speech is re-decoded for partial
-        // text. 0 shows text only when the VAD closes a segment.
+        // Arms C, D and E only: how often open speech is re-decoded for
+        // partial text. 0 shows text only when the VAD closes a segment.
         val partialMs = arg("partial_ms",
             SherpaOfflineArm.DEFAULT_PARTIAL_INTERVAL_MS.toString()).toLong()
+
+        // Arm C only: Moonshine option overrides for an ablation, e.g.
+        // "max_tokens_per_second=13". Rows then carry a distinct variant.
+        val moonshineOverrides = argList("moonshine_options", "").associate {
+            val (k, v) = it.split('=', limit = 2).also { p ->
+                require(p.size == 2) { "moonshine_options entry '$it' is not key=value" }
+            }
+            k.trim() to v.trim()
+        }
 
         // Arm B is selected per variant: "B:moonshine-small-en", or plain
         // "B" for every variant that has been pushed to the device.
@@ -337,10 +346,11 @@ class BenchmarkTest {
                         MoonshineArm(v, MoonshineArm.variants()[v] ?: 0.0)
                     }
                 }
-                // D (Parakeet) and E (Whisper): "E:whisper-base-int8", or
-                // plain "E" for every pushed variant. One variant per run is
-                // the protocol: each one loaded holds its weights in memory.
-                "D", "E" -> {
+                // C (Moonshine base-es), D (Parakeet) and E (Whisper):
+                // "E:whisper-base-int8", or plain "E" for every pushed
+                // variant. One variant per run is the protocol: each one
+                // loaded holds its weights in memory.
+                "C", "D", "E" -> {
                     val known = SherpaOfflineArm.variants().filterValues { it.armId == id }
                     val wanted = if (detail.isNotEmpty()) {
                         listOf(detail)
@@ -357,11 +367,12 @@ class BenchmarkTest {
                         val model = requireNotNull(known[v]) {
                             "unknown arm $id variant '$v'; known: ${known.keys}"
                         }
-                        SherpaOfflineArm(v, model, threads, partialMs)
+                        SherpaOfflineArm(v, model, threads, partialMs,
+                            if (id == "C") moonshineOverrides else emptyMap())
                     }
                 }
                 else -> throw IllegalArgumentException(
-                    "arm $id is not implemented yet. Implemented: A, B, D, E"
+                    "unknown arm $id. Implemented: A, B, C, D, E"
                 )
             }
         }

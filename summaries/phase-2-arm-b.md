@@ -14,6 +14,20 @@ Measured 2026-09-23. English only, because Moonshine publishes no Spanish
 streaming model in a deployable format. Full method and reproduction steps are
 in the [README](../README.md).
 
+> **Corrected in Phase 4.** "Moonshine publishes no Spanish streaming model in
+> a deployable format" was wrong. It publishes `small-streaming-es` and
+> `tiny-streaming-es` on its CDN, where the SDK downloads from, not on
+> HuggingFace, where this was checked. Phase 4 measures `small-streaming-es`.
+> See [the finding](../README.md#moonshines-spanish-streaming-models-are-on-its-cdn-not-on-huggingface).
+
+> **Revised before Phase 4.** Small, medium and Arm A were re-measured on 100
+> clips per source. On noisy speech: Arm A 27.09%, small 8.92%, medium
+> 7.02%; on clean, level-matched speech: 9.72%, 7.36%, 4.71%. Medium's lead
+> over small is now resolved on both (2.7 points clean, 1.9 noisy, the noisy
+> one only just), and small's lead over Arm A on clean speech is real but
+> slim. The verdict stands. The table is updated; tiny is still on 20 clips.
+> See [English on 100 clips](../README.md#english-on-100-clips-per-source).
+
 > **Revised in Phase 3.** Noisy-English WER for Arm A was published as 33.33%
 > and for tiny as 15.77%. Both arms write some years as digits, and the scorer
 > read "1848" as "one thousand eight hundred forty eight" against a reference
@@ -31,8 +45,8 @@ is the median, measured from the moment the audio ends.
 
 | English | Arm A (0 MB) | tiny (78 MB) | small (224 MB) | medium (416 MB) |
 |---|---|---|---|---|
-| WER, **noisy** (LibriSpeech `test-other`) | 29.31% | 14.43% | 8.72% | **6.26%** |
-| WER, **clean** (FLEURS, level-matched) | 12.60% | 11.25% | 7.71% | **5.62%** |
+| WER, **noisy** (LibriSpeech `test-other`), 100 clips | 27.09% | 14.43%¹ | 8.92% | **7.02%** |
+| WER, **clean** (FLEURS, level-matched), 100 clips | 9.72% | 11.25%¹ | 7.36% | **4.71%** |
 | WER, clean but **very quiet** (FLEURS, original) | **9.69%** | 30.05% | 27.29% | 25.31% |
 | Time to **first** text, noisy / clean | 1012 / 1259 ms | 1058 / 1064 ms | 1191 / 1655 ms | 1241 / 1285 ms |
 | Time to **final** text, noisy / clean | **68 / 76 ms** | 84 / 0 ms | 442 / 144 ms | 662 / 414 ms |
@@ -42,6 +56,9 @@ is the median, measured from the moment the audio ends.
 
 Four repetitions per variant (tiny twice), 60 English clips each: 20 noisy,
 20 clean, and the same 20 clean clips at their original, very quiet level.
+¹ Tiny: the original 20 clips. The other noisy and level-matched WERs cover
+100 clips per source, from a re-measure before Phase 4; the other rows are
+the Phase 2 runs.
 
 ---
 
@@ -94,9 +111,11 @@ from *"nothing was heard"*.
 
 ### Clean speech at normal level: small and medium lead
 
-Level-matched, tiny and Arm A are close (11.25% vs 12.60%), and Arm A's
-figure is inflated by one clip where it returned only the last clause of the
-sentence. Small (7.71%) and medium (5.62%) are clearly ahead of both.
+Level-matched, tiny and Arm A are close on the original 20 clips (11.25% vs
+12.60%), and Arm A's figure is inflated by one clip where it returned only
+the last clause of the sentence. On 100 clips, Arm A scores 9.72%, small
+7.36% and medium 4.71%. Medium is clearly ahead; small's lead over Arm A is
+real but slim.
 
 ---
 
@@ -113,7 +132,7 @@ keeps up with real time with room to spare, for 224 MB.
 | Responsiveness | **No win.** First text ~1–1.7 s for every arm; final text slows with size. |
 | Very quiet audio | **Arm A.** Moonshine can return nothing, silently. |
 | Size | **Small is the knee.** Medium buys ~2 points for +192 MB and slower finals. |
-| Spanish | **Not applicable.** No deployable Spanish streaming model exists. |
+| Spanish | **Not measured here.** A Spanish streaming model exists on Moonshine's CDN (see the note above); Phase 4 measures it. |
 
 What stays open: whether a shorter update interval can bring Moonshine's
 first text forward without breaking real time, how the larger variants behave
