@@ -19,8 +19,10 @@ medium is the most accurate English model measured
 ([English on 100 clips](#english-on-100-clips-per-source)). Phase 4 also
 found that Moonshine's Spanish streaming model exists after all
 ([finding](#moonshines-spanish-streaming-models-are-on-its-cdn-not-on-huggingface)).
-Arm C and Moonshine Spanish are next. Revised figures are marked where they
-occur.
+Arm C (Moonshine `base-es`, 65 MB) is level with Parakeet in Spanish (5.09%)
+but too slow to be live on this phone: final text 2.5 s after the speaker
+stops ([Arm C](#arm-c-moonshine-base-es-spanish-65-mb)). Moonshine's Spanish
+streaming model is next. Revised figures are marked where they occur.
 
 ---
 
@@ -31,7 +33,7 @@ occur.
 | [Why this is not obvious](#why-this-is-not-obvious) | Why live ASR is a different problem from batch ASR, and the English/Spanish asymmetry the experiment exists to price |
 | [Hardware under test](#hardware-under-test) | The phone, its SoC, and why no published number comes from an emulator |
 | [The matrix](#the-matrix) | The five arms, with current status per arm |
-| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), [Arm B: Moonshine](#arm-b-moonshine-streaming-english), [Arms D and E: Parakeet and Whisper](#arms-d-and-e-offline-models-made-live-both-languages), and [English on 100 clips per source](#english-on-100-clips-per-source) |
+| [**Results**](#results) | **The measured numbers.** Plus [the three things worth stopping on](#three-things-worth-stopping-on), [reproducibility](#reproducibility), why [`rtf_sustained` is blank for Arm A](#rtf_sustained-is-blank-for-arm-a-and-slip-does-not-stand-in-for-it), the [decision gate](#decision-gate-planmd-10-phase-1), [Arm B: Moonshine](#arm-b-moonshine-streaming-english), [Arms D and E: Parakeet and Whisper](#arms-d-and-e-offline-models-made-live-both-languages), [English on 100 clips per source](#english-on-100-clips-per-source), and [Arm C: Moonshine `base-es`](#arm-c-moonshine-base-es-spanish-65-mb) |
 | [Metrics](#metrics) | What is measured and why RTF alone would mislead |
 | [Method](#method-paced-file-fed-streaming) | Paced file-fed streaming — the one implementation detail everything rests on |
 | [Corpus](#corpus) | How the audio was built, and the concatenation trick for scored continuous speech |
@@ -131,7 +133,7 @@ the quantity of interest.
 |---|---|---|---|---|---|---|---|---|
 | A | Android on-device recognizer | native | ✅ | ✅ | **0 MB** | platform | The bar to beat | ✅ **measured, both** |
 | B | Moonshine streaming tiny/small/medium | native | ✅ | ❌ | 78 / 224 / 416 MB | `ai.moonshine:moonshine-voice` | EN frontrunner | ✅ **measured, all three sizes** |
-| C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ⬜ not started |
+| C | Moonshine `base-es` (VAD-segmented) | no | ❌ | ✅ | 64.8 MB | same | ES cheap option ⚠️ non-commercial | ✅ **measured, Spanish** |
 | D | Parakeet TDT 0.6b v3 int8 (VAD-segmented) | no | ✅ | ✅ | 670 MB | sherpa-onnx | One-model-for-both candidate | ✅ **measured, both** |
 | E | Whisper small + base int8 (VAD-segmented) | no | ✅ | ✅ | 375 / 161 MB | sherpa-onnx | Known baseline / calibration | ✅ **measured, both sizes, both languages** |
 
@@ -636,6 +638,74 @@ Which gaps are real (`scripts/compare.py`, paired bootstrap over clips):
    against medium on noisy speech becomes unresolved (−0.2 to +3.4). The
    scorer was not changed, because a generic rule would also forgive real
    errors like "a way" for "away".
+
+### Arm C: Moonshine `base-es`, Spanish (65 MB)
+
+The cheap Spanish option: Moonshine's legacy non-streaming base model, under
+a **non-commercial** licence ([licences](#model-licences)). It runs in the
+same pipeline as Arms D and E: Silero VAD, a partial every 500 ms, decoding
+on its own thread
+([`SherpaOfflineArm`](bench/app/src/main/kotlin/io/github/davamix/asrbench/arms/SherpaOfflineArm.kt)).
+Only the decode call differs: the Moonshine SDK's `transcribeWithoutStreaming()`,
+the runtime PLAN.md names for this arm. Two settings were checked against the
+SDK's v0.1.5 source:
+
+- **Moonshine's own VAD is off** (`vad_threshold=0`). That call runs its own
+  VAD over its input before decoding. Off, it decodes exactly the segment
+  Silero cut, as Moonshine's own FLEURS evaluation does. Every row records how
+  many lines a decode returned; it was always one.
+- **The architecture value is 1 (base).** It sets the decoder's shape, and
+  nothing checks it at load: the tiny value loads the files and fails at the
+  first decode.
+
+Measured 2026-09-25 on the 100 Spanish clips. The run was planned at four
+repetitions and stopped after two (206 rows), because it cost far more
+battery than expected. Its text was identical in both repetitions on all 100
+clips, byte for byte, and on the 49 clips checked against the emulator as
+well. So more repetitions would have added timing evidence, not accuracy.
+
+| Spanish, 100 clips | Arm A (0 MB) | **Arm C, `base-es` (65 MB)** | Parakeet (670 MB) |
+|---|---|---|---|
+| WER | 7.39% | **5.09%** | 4.47% |
+| CER | 3.55% | 2.05% | 1.76% |
+| Final text | **0 ms** | 2504 ms | **0 ms** |
+| First text | **2009 ms** | 2648 ms | 2372 ms |
+| Compute, with partials (finals only) | — | **1.16** (0.45) | 0.58 (0.21) |
+| Peak RSS | 124 MB² | 872 MB | 1027 MB |
+| Battery per 240 clips | 4 pts | **28 pts** | 13 pts |
+| Cooling pauses at the 35 °C gate | 0 | **8** in 78 min | 0 |
+
+² Our harness only; the recognizer's own memory is in Google's process.
+
+| Spanish WER, 100 clips | A − B | 95% interval | |
+|---|---|---|---|
+| Arm A − Arm C | +2.3 | −0.0 to +5.1 | not resolved, only just |
+| Arm C − Parakeet | +0.6 | −0.5 to +1.8 | not resolved |
+| Whisper small − Arm C (original 20 clips) | +5.4 | +1.9 to +9.8 | resolved |
+
+**What Arm C answers:**
+
+1. **Its accuracy is excellent for its size.** It is level with Parakeet at a
+   tenth of the disk, and 2.3 points ahead of the platform recognizer, an
+   interval that just touches zero.
+2. **It is not live on this phone.** A final decode takes a median 2.2 s
+   (up to 3.7 s) and a partial 1.1 s. That is longer than the 500 ms
+   interval, so the decode thread never idles while someone speaks, and a
+   final waits a median 0.85 s behind a running partial. Final text lands
+   2.5 s after the speaker stops; with partials off it would still be
+   ~1.6 s (derived from the wait, not measured). This is Whisper small's
+   profile, in a model a sixth its size on disk. Why a 58-million-parameter model
+   decodes this slowly here was not established. The SDK exposes no thread
+   setting ([finding](#moonshine-015-has-no-thread-count-setting)).
+3. **It runs hot and costs battery.** Eight cooling pauses in 78 minutes,
+   and 28 battery points per 240 clips, second only to Whisper small.
+4. **Its memory is not small.** 283 MB after loading, but the first decode
+   took the process to ~780 MB, and it peaked at 872 MB, close to Moonshine
+   medium. Where the extra half gigabyte goes was not established.
+
+So for a live app Arm C does not work as the cheap Spanish option.
+For transcribing after the user stops speaking, it is the most accurate
+option per megabyte measured, with a licence that forbids shipping it.
 
 ## Metrics
 

@@ -1,6 +1,6 @@
 # Handover — next phase to run
 
-**Currently: Phase 4 — measure Arm C (Moonshine `base-es`) and Moonshine
+**Currently: Phase 4 — Arm C is measured; measure Moonshine
 `small-streaming-es` on the phone, then compare Spanish across A / B-es / C /
 D / E and answer PLAN.md §1.**
 
@@ -10,8 +10,8 @@ completes; finished phases are written up in [`summaries/`](summaries/).
 **For:** a fresh session picking this up with no prior context.
 
 Phases 0–3 are complete. English has been re-measured on 100 clips per
-source. Phase 4's code is written and validated on the emulator; only the
-phone runs remain.
+source. Phase 4: Arm C was measured on the phone on 2026-09-25; one phone
+run remains (`small-streaming-es`), then the write-up.
 
 ---
 
@@ -23,10 +23,9 @@ phone runs remain.
 > and exact commands, and the three summaries in `summaries/` for what Phases
 > 1–3 established. `README.md` has the full results and findings.
 >
-> Phases 0–3 and the English re-measure are complete. Phase 4 is integrated
-> and emulator-validated: run Arm C (Moonshine `base-es`) and Moonshine
-> `small-streaming-es` on the phone on the 100-clip Spanish set (commands in
-> HANDOVER.md). Then compare Spanish across Arms A, B-es, C, D and E with
+> Phases 0–3 and the English re-measure are complete, and Phase 4's Arm C
+> (Moonshine `base-es`) is measured. Run Moonshine `small-streaming-es` on
+> the phone on the 100-clip Spanish set (command in HANDOVER.md). Then compare Spanish across Arms A, B-es, C, D and E with
 > `scripts/compare.py --standard`, answer the PLAN.md §1 question, and write
 > the Phase 4 summary. Update the README results as numbers come in.
 >
@@ -46,8 +45,10 @@ phone runs remain.
 | Phase 3 (Arms D, E) | ✅ complete, revised since — [summary](summaries/phase-3-arms-d-e.md) |
 | Spanish on 100 clips (Arm A, Parakeet) | ✅ 2026-09-24 |
 | English on 100 clips (Moonshine small, medium, Parakeet, Arm A) | ✅ 2026-09-24/25 |
-| Phase 4 code (Arm C, Moonshine `small-streaming-es`) | ✅ written, emulator-validated, **not yet on the phone** |
-| Phase 4 phone runs | ⬜ **next** |
+| Phase 4 code (Arm C, Moonshine `small-streaming-es`) | ✅ written, emulator-validated, installed on the phone |
+| Phase 4: Arm C on the phone | ✅ 2026-09-25, 2 reps (stopped early by design, see below) |
+| Phase 4: `small-streaming-es` on the phone | ⬜ **next** |
+| Phase 4 write-up (§1 verdict, `summaries/phase-4-spanish.md`) | ⬜ after it |
 | Phase 5 (analysis, sessions, mic check) | ⬜ not started |
 
 Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push after each phase)
@@ -56,7 +57,7 @@ Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public, push afte
 
 | | Arm A (0 MB) | Moonshine small (224 MB) | Moonshine medium (416 MB) | Parakeet (670 MB) |
 |---|---|---|---|---|
-| Spanish, 100 clips | 7.39% | — (B-es next) | — | **4.47%** |
+| Spanish, 100 clips | 7.39% | — (small-es next) | — | **4.47%** (Arm C, 65 MB: 5.09%) |
 | English noisy, 100 clips | 27.09% | 8.92% | **7.02%** | 9.34% |
 | English clean, level-matched, 100 clips | 9.72% | 7.36% | **4.71%** | 4.97% |
 | Final text, clean / noisy (100-clip runs) | **69 / 81 ms** | 222 / 486 ms | 539 / 772 ms | 250 / 349 ms |
@@ -77,6 +78,24 @@ published numbers are the stack as sherpa-onnx ships it (its own
 simulate-streaming app does not pad either).
 
 ---
+
+## Phase 4 — Arm C result (2026-09-25)
+
+**5.09% WER** on the 100 Spanish clips: level with Parakeet (+0.6, CI −0.5 to
++1.8) and ahead of Arm A by 2.3 points (CI −0.04 to +5.1, just short of
+resolved). **But not live on this phone:** a final decode takes 2.2 s, a
+partial 1.1 s (longer than the 500 ms cadence), compute is 1.16× real time
+with partials (0.45 finals only), and final text lands 2.5 s after the
+speaker stops. 8 cooling pauses in 78 minutes; 24 battery points for 206
+rows; peak RSS 872 MB (283 after load). Written up in the README
+("Arm C: Moonshine `base-es`").
+
+**Planned 4 reps, stopped after 2 by the owner's choice**: it would have
+needed ~48 battery points. Rep 0 and rep 1 text were byte-identical on all
+100 clips (and matched the emulator), so more reps add timing only. The
+stop was a force-stop during the break right after the checkpoint at 206
+rows; the result file is that checkpoint (`complete: false`), and
+`summarize.py` prints a warning for it. That is expected.
 
 ## Phase 4 — what was built
 
@@ -128,17 +147,13 @@ check only (D1).
 
 ## Phase 4 — commands
 
-Spanish only, on the 100-clip Spanish set. **The first command installs the
-new APK** (it contains Arm C and small-es; `--no-build` uses the APK already
-built from the current source), pushes both models and the Spanish corpus.
-Arm C first, because PLAN.md names it; small-es second.
+Arm C is done (it was run with `--no-build --push-models
+moonshine-base-es,moonshine-small-es`, which installed the Phase 4 APK and
+pushed both models and the Spanish corpus). What remains needs no install
+and no push:
 
 ```bash
-# Session: ~30 battery points expected in total, so one charge should do.
-.venv/Scripts/python scripts/run_bench.py --device physical --no-build \
-    --push-models moonshine-base-es,moonshine-small-es \
-    --arms C:moonshine-base-es --langs es --buckets short --sources fleurs_es \
-    --reps 4 --label armC-es100 --timeout 10800
+# ~18 battery points expected; start at up to 80%, cooled below ~33 °C.
 .venv/Scripts/python scripts/run_bench.py --device physical \
     --arms B:moonshine-small-es --langs es --buckets short --sources fleurs_es \
     --reps 3 --label armB-small-es100 --no-build --no-install --no-push --timeout 10800
@@ -147,11 +162,9 @@ Arm C first, because PLAN.md names it; small-es second.
 .venv/Scripts/python scripts/summarize.py
 ```
 
-Reps: 4 for C as planned (400 clips); 3 for small-es, since Moonshine's
-streaming output varies a little between repetitions. Estimates: Arm C is
-unmeasured on the phone (a base-size encoder-decoder with partials; guess
-8–15 points); small-es ≈ 18 points (small-en cost 10.4 per 240 clips, and
-Spanish clips run ~40% longer).
+3 reps for small-es, since Moonshine's streaming output varies a little
+between repetitions. Estimate ≈ 18 points (small-en cost 10.4 per 240 clips,
+and Spanish clips run ~40% longer).
 
 Run each with the battery watchdog (see Budget). Wait for the phone to cool
 below ~33 °C between runs. `compare.py --standard` already holds the Phase 4
@@ -203,6 +216,7 @@ Then: README results (a Phase 4 section and the "against the bar" table),
 | Parakeet, English 100 | 400 | 81 min | 17 points | 35.0 °C | 3 |
 | Moonshine small, English 100 | 600 | 111 min | 26 points | 35.0 °C | 2 |
 | Arm A, English 100 | 400 | 64 min | 4 points | 28.2 °C | 0 |
+| Arm C, Spanish 100 (stopped after 2 reps) | 206 | 78 min | 24 points | 35.2 °C | 8 |
 
 The gate needs battery 30–80% and not charging, and it checks the level only
 at start. §11.3 asks for 30–80% *throughout*, so run a watchdog alongside
@@ -313,11 +327,11 @@ last checkpoint is in the device's results dir, marked `complete: false`.
 
 - **Nothing is bundled in the APK.** Models are pushed to
   `/sdcard/Android/data/io.github.davamix.asrbench/files/models/`. On the phone
-  now: all three English Moonshine variants, `silero-vad`, both Whisper
-  variants and `parakeet-tdt-v3-int8` (~1.9 GB). **Not yet:** `moonshine-base-es`
-  and `moonshine-small-es` (the first Phase 4 command pushes them). ~73 GB free.
-- **The phone runs the pre-Phase-4 APK** (the English re-measure used it
-  throughout). The first Phase 4 command installs the new one.
+  now: all three English Moonshine variants, `moonshine-base-es`,
+  `moonshine-small-es`, `silero-vad`, both Whisper variants and
+  `parakeet-tdt-v3-int8` (~2.1 GB). ~73 GB free.
+- **The phone runs the Phase 4 APK** (installed 2026-09-25 for Arm C). The
+  English re-measure ran on the one before it.
 - **The app must create its own directories** before anything is pushed into
   them (`prepareDirs`, with `model_dirs`). `run_bench.py` handles this.
 - **Two ONNX Runtimes live in the APK**, Moonshine's and sherpa-onnx's
