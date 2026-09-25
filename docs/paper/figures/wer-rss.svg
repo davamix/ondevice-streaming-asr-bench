@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="686" height="550" viewBox="0 0 686 550" role="img" font-family='system-ui, -apple-system, "Segoe UI", sans-serif'>
+<title>Accuracy against peak memory</title><desc>WER against peak memory (rss), mb for every stack, in three panels: Spanish, clean English and noisy English. Lower and further left is better.</desc>
+<rect width="686" height="550" fill="#ffffff"/>
+<circle cx="399.0" cy="326.0" r="6.5" fill="#ffffff"/>
+<circle cx="399.0" cy="326.0" r="4.5" fill="#2a78d6"/>
+<text x="410.0" y="330.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">Parakeet: one model,</text>
+<text x="410.0" y="346.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">both languages</text>
+<circle cx="399.0" cy="368.0" r="6.5" fill="#ffffff"/>
+<circle cx="399.0" cy="368.0" r="4.5" fill="#eb6834"/>
+<text x="410.0" y="372.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine streaming:</text>
+<text x="410.0" y="388.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">one model per language</text>
+<circle cx="399.0" cy="410.0" r="6.5" fill="#ffffff"/>
+<circle cx="399.0" cy="410.0" r="4.5" fill="#898781"/>
+<text x="410.0" y="414.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">Other stacks</text>
+<circle cx="399.0" cy="436.0" r="6.5" fill="#ffffff"/>
+<circle cx="399.0" cy="436.0" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<text x="410.0" y="440.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">Hollow: 20 clips per source;</text>
+<text x="410.0" y="456.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">filled: 100</text>
+<text x="50.0" y="16.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="bold">Spanish</text>
+<line x1="50.0" y1="226.0" x2="340.0" y2="226.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="230.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">0%</text>
+<line x1="50.0" y1="192.7" x2="340.0" y2="192.7" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="196.7" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">5%</text>
+<line x1="50.0" y1="159.3" x2="340.0" y2="159.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="163.3" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">10%</text>
+<line x1="50.0" y1="126.0" x2="340.0" y2="126.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="130.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">15%</text>
+<line x1="50.0" y1="92.7" x2="340.0" y2="92.7" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="96.7" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">20%</text>
+<line x1="50.0" y1="59.3" x2="340.0" y2="59.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="63.3" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">25%</text>
+<line x1="50.0" y1="26.0" x2="340.0" y2="26.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="30.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">30%</text>
+<line x1="50.0" y1="226.0" x2="340.0" y2="226.0" stroke="#c3c2b7" stroke-width="1"/>
+<text x="122.5" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">500</text>
+<text x="303.8" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">1000</text>
+<text x="195.0" y="264.0" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal">Peak memory (RSS), MB</text>
+<circle cx="257.4" cy="192.1" r="6.5" fill="#ffffff"/>
+<circle cx="257.4" cy="192.1" r="4.5" fill="#898781"/>
+<circle cx="148.6" cy="127.8" r="6.5" fill="#ffffff"/>
+<circle cx="148.6" cy="127.8" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="302.7" cy="151.1" r="6.5" fill="#ffffff"/>
+<circle cx="302.7" cy="151.1" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="173.2" cy="177.7" r="6.5" fill="#ffffff"/>
+<circle cx="173.2" cy="177.7" r="4.5" fill="#eb6834"/>
+<circle cx="316.1" cy="196.2" r="6.5" fill="#ffffff"/>
+<circle cx="316.1" cy="196.2" r="4.5" fill="#2a78d6"/>
+<text x="257.4" y="211.1" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">base-es (C)</text>
+<text x="157.6" y="131.8" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Whisper base</text>
+<text x="302.7" y="140.1" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Whisper small</text>
+<text x="173.2" y="166.7" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Moonshine small-es</text>
+<text x="316.1" y="185.2" font-size="11" fill="#0b0b0b" text-anchor="middle" font-weight="bold">Parakeet</text>
+<text x="384.0" y="16.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="bold">English, clean</text>
+<line x1="384.0" y1="226.0" x2="674.0" y2="226.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="192.7" x2="674.0" y2="192.7" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="159.3" x2="674.0" y2="159.3" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="126.0" x2="674.0" y2="126.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="92.7" x2="674.0" y2="92.7" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="59.3" x2="674.0" y2="59.3" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="26.0" x2="674.0" y2="26.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="226.0" x2="674.0" y2="226.0" stroke="#c3c2b7" stroke-width="1"/>
+<text x="456.5" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">500</text>
+<text x="637.8" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">1000</text>
+<text x="529.0" y="264.0" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal">Peak memory (RSS), MB</text>
+<circle cx="482.6" cy="146.8" r="6.5" fill="#ffffff"/>
+<circle cx="482.6" cy="146.8" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="636.7" cy="190.6" r="6.5" fill="#ffffff"/>
+<circle cx="636.7" cy="190.6" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="447.4" cy="151.0" r="6.5" fill="#ffffff"/>
+<circle cx="447.4" cy="151.0" r="3.5" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+<circle cx="550.8" cy="176.9" r="6.5" fill="#ffffff"/>
+<circle cx="550.8" cy="176.9" r="4.5" fill="#eb6834"/>
+<circle cx="625.8" cy="194.6" r="6.5" fill="#ffffff"/>
+<circle cx="625.8" cy="194.6" r="4.5" fill="#eb6834"/>
+<circle cx="650.1" cy="192.9" r="6.5" fill="#ffffff"/>
+<circle cx="650.1" cy="192.9" r="4.5" fill="#2a78d6"/>
+<text x="491.6" y="150.8" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Whisper base</text>
+<text x="636.7" y="179.6" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Whisper small</text>
+<text x="447.4" y="170.0" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Moonshine tiny</text>
+<text x="550.8" y="165.9" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Moonshine small</text>
+<text x="619.8" y="211.6" font-size="11" fill="#52514e" text-anchor="end" font-weight="normal">Moonshine medium</text>
+<text x="650.1" y="211.9" font-size="11" fill="#0b0b0b" text-anchor="middle" font-weight="bold">Parakeet</text>
+<text x="50.0" y="290.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="bold">English, noisy</text>
+<line x1="50.0" y1="500.0" x2="340.0" y2="500.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="504.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">0%</text>
+<line x1="50.0" y1="466.7" x2="340.0" y2="466.7" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="470.7" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">5%</text>
+<line x1="50.0" y1="433.3" x2="340.0" y2="433.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="437.3" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">10%</text>
+<line x1="50.0" y1="400.0" x2="340.0" y2="400.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="404.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">15%</text>
+<line x1="50.0" y1="366.7" x2="340.0" y2="366.7" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="370.7" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">20%</text>
+<line x1="50.0" y1="333.3" x2="340.0" y2="333.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="337.3" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">25%</text>
+<line x1="50.0" y1="300.0" x2="340.0" y2="300.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="304.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">30%</text>
+<line x1="50.0" y1="500.0" x2="340.0" y2="500.0" stroke="#c3c2b7" stroke-width="1"/>
+<text x="122.5" y="518.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">500</text>
+<text x="303.8" y="518.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">1000</text>
+<text x="195.0" y="538.0" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal">Peak memory (RSS), MB</text>
+<circle cx="148.6" cy="347.9" r="6.5" fill="#ffffff"/>
+<circle cx="148.6" cy="347.9" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="302.7" cy="403.8" r="6.5" fill="#ffffff"/>
+<circle cx="302.7" cy="403.8" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="113.4" cy="403.8" r="6.5" fill="#ffffff"/>
+<circle cx="113.4" cy="403.8" r="3.5" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+<circle cx="216.8" cy="440.5" r="6.5" fill="#ffffff"/>
+<circle cx="216.8" cy="440.5" r="4.5" fill="#eb6834"/>
+<circle cx="291.8" cy="453.2" r="6.5" fill="#ffffff"/>
+<circle cx="291.8" cy="453.2" r="4.5" fill="#eb6834"/>
+<circle cx="316.1" cy="437.7" r="6.5" fill="#ffffff"/>
+<circle cx="316.1" cy="437.7" r="4.5" fill="#2a78d6"/>
+<text x="157.6" y="351.9" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Whisper base</text>
+<text x="302.7" y="392.8" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Whisper small</text>
+<text x="122.4" y="407.8" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine tiny</text>
+<text x="216.8" y="429.5" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Moonshine small</text>
+<text x="291.8" y="472.2" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Moonshine medium</text>
+<text x="316.1" y="426.7" font-size="11" fill="#0b0b0b" text-anchor="middle" font-weight="bold">Parakeet</text>
+</svg>

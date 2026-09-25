@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>One model or two? Live on-device speech recognition in English and Spanish on a mid-range Android phone</title>
+<meta name="author" content="Daniel Valcarce">
+<meta name="description" content="A controlled comparison of five on-device speech-to-text stacks, live, in English and Spanish, on a Snapdragon 870 phone.">
+<style>
+  /* Print layout for A4. Built to PDF by scripts/build_paper.py. */
+  @page {
+    size: A4;
+    margin: 22mm 21mm 20mm 21mm;
+    @top-right {
+      content: "One model or two? Live on-device ASR in English and Spanish";
+      font: 7.5pt "Segoe UI", Calibri, sans-serif; color: #6f6e69;
+    }
+    @bottom-center {
+      content: counter(page);
+      font: 8.5pt "Segoe UI", Calibri, sans-serif; color: #52514e;
+    }
+  }
+  @page :first {
+    @top-right { content: none; }
+  }
+  :root {
+    --ink: #111110; --ink2: #3d3c39; --muted: #6f6e69;
+    --rule: #b9b8b0; --hair: #deddd6; --accent: #1f5fa8;
+  }
+  html { background: #fff; }
+  body {
+    margin: 0; color: var(--ink);
+    font-family: Cambria, "Cambria Math", Georgia, "Times New Roman", serif;
+    font-size: 10pt; line-height: 1.42;
+    text-align: justify; hyphens: auto;
+    font-variant-numeric: lining-nums;
+  }
+  p { margin: 0 0 0.55em; orphans: 3; widows: 3; }
+  a { color: var(--accent); text-decoration: none; }
+  h1, h2, h3, .label, table, figcaption, .meta, .kw, .abstract h2 {
+    font-family: "Segoe UI", Calibri, "Helvetica Neue", Arial, sans-serif;
+  }
+  h1 {
+    font-size: 19pt; line-height: 1.2; font-weight: 600; text-align: left;
+    margin: 0 0 8pt; letter-spacing: -0.2px; hyphens: none;
+  }
+  h2 {
+    font-size: 12pt; font-weight: 600; margin: 15pt 0 5pt; text-align: left;
+    break-after: avoid; hyphens: none;
+  }
+  h3 {
+    font-size: 10pt; font-weight: 600; margin: 10pt 0 3pt; text-align: left;
+    break-after: avoid; hyphens: none;
+  }
+  h2 + p, h3 + p { break-before: avoid; }
+  .meta { font-size: 9pt; color: var(--ink2); margin: 0 0 2pt; text-align: left; }
+  .meta a { color: var(--ink2); }
+  .abstract {
+    margin: 14pt 0 8pt; padding: 9pt 12pt;
+    border-top: 1.2pt solid var(--ink); border-bottom: 0.6pt solid var(--rule);
+  }
+  .abstract h2 { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 4pt; }
+  .abstract p { font-size: 9.5pt; }
+  .kw { font-size: 8.5pt; color: var(--ink2); text-align: left; margin-top: 4pt; }
+  .question {
+    margin: 7pt 22pt 9pt; font-style: italic; text-align: left;
+  }
+  ul, ol { margin: 0 0 0.6em; padding-left: 1.3em; }
+  li { margin-bottom: 0.25em; }
+  code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 8.6pt; }
+  sup { font-size: 70%; line-height: 0; }
+
+  /* Tables: booktabs style, no vertical rules. */
+  .tbl { margin: 8pt 0 10pt; break-inside: avoid; }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 8.2pt; line-height: 1.3;
+    font-variant-numeric: tabular-nums; text-align: left;
+  }
+  thead th {
+    font-weight: 600; border-top: 1pt solid var(--ink); border-bottom: 0.6pt solid var(--ink);
+    padding: 3pt 4pt; vertical-align: bottom;
+  }
+  tbody td { padding: 2.2pt 4pt; border-bottom: 0.4pt solid var(--hair); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 1pt solid var(--ink); }
+  td.n, th.n { text-align: right; white-space: nowrap; }
+  tr.group td { font-weight: 600; background: #f4f3ef; }
+  tr.hl td { font-weight: 600; }
+  .caption, figcaption {
+    font-size: 8.3pt; line-height: 1.35; color: var(--ink2); text-align: left;
+  }
+  .tbl .caption { margin-bottom: 4pt; }
+  .tbl .note { font-size: 7.6pt; color: var(--muted); margin-top: 3pt; text-align: left; line-height: 1.3; }
+  .caption b, figcaption b { color: var(--ink); }
+
+  figure { margin: 8pt 0 12pt; break-inside: avoid; }
+  figure img { display: block; width: 100%; height: auto; }
+  figure.tradeoff img { width: 82%; margin: 0 auto; }
+  figure.tradeoff figcaption { width: 82%; margin-left: auto; margin-right: auto; }
+  .nw { white-space: nowrap; }
+  td code, th code { white-space: nowrap; }
+  code { hyphens: none; }
+  table { hyphens: manual; }
+  .keep { break-after: avoid; }
+  figcaption { margin-top: 4pt; }
+
+  .callout {
+    border-left: 2.5pt solid var(--accent); padding: 4pt 0 4pt 10pt; margin: 8pt 0 10pt;
+    break-inside: avoid;
+  }
+  .refs { font-size: 8.6pt; line-height: 1.35; text-align: left; }
+  .refs li { margin-bottom: 3pt; }
+  .appendix { break-before: page; }
+  .nobreak { break-inside: avoid; }
+  .small { font-size: 8.8pt; }
+</style>
+</head>
+<body>
+
+<h1>One model or two? Live on-device speech recognition in English and Spanish on a mid-range Android phone</h1>
+<p class="meta">Daniel Valcarce</p>
+<p class="meta">Version 1.0 · 25 September 2026</p>
+<p class="meta">Code, corpus builder and every result:
+<a href="https://github.com/davamix/ondevice-streaming-asr-bench">github.com/davamix/ondevice-streaming-asr-bench</a>, tag <code>v1.0</code></p>
+
+<div class="abstract">
+<h2>Abstract</h2>
+<p>An app that transcribes speech live, entirely on the phone, in English and Spanish, can ship one
+model for both languages or one model per language. English has strong open streaming models; Spanish
+had no deployable streaming model when this study began. We price that asymmetry on a 2021 mid-range
+phone (Snapdragon 870, 6&nbsp;GB of RAM). Five deployable stacks were compared: Android’s on-device
+recognizer, Moonshine streaming (English tiny, small, medium; Spanish small), Moonshine <code>base-es</code>,
+Parakeet TDT 0.6b v3 and Whisper base and small. All heard identical audio paced to the wall clock:
+100 clips per source from FLEURS English and Spanish and LibriSpeech <code>test-other</code>, plus
+continuous six-minute sessions and a live-microphone check. One model suffices. Parakeet reaches
+4.47% word error rate (WER) in Spanish, about 40% fewer errors than any per-language option
+(7.2–7.4%), and is level with the best English model on clean speech (4.97% against 4.71%). It
+sustains 0.6 of real time over six minutes of continuous speech without drift. It costs 670&nbsp;MB
+of disk and about 1.1&nbsp;GB of memory, and without half a second of silence padding per segment it
+drops whole sentences. Moonshine small in English and Spanish (346&nbsp;MB) is the smaller, cooler
+alternative, with Spanish no better than the free platform recognizer’s. That recognizer, in turn,
+misses one word in four on noisy English. A live microphone reproduced the file-fed method’s text
+exactly, and showed its latencies to be about 0.2&nbsp;s optimistic.</p>
+<p class="kw"><b>Keywords:</b> on-device speech recognition; streaming ASR; live transcription latency;
+Android; Spanish; Parakeet; Moonshine; Whisper; benchmarking methodology</p>
+</div>
+
+<h2>1&nbsp;&nbsp;Introduction</h2>
+
+<p>A speech-to-text feature that runs entirely on the phone avoids the network, the server bill,
+and the question of sending a user’s voice elsewhere. Making it <em>live</em>, with text appearing
+while the user speaks, changes what a good model is. A model with a real-time factor of 0.3 can
+still feel slow if it needs the whole utterance before it emits anything. It feels broken if it
+keeps rewriting text the user has already read. The numbers that decide a live product are
+latency-shaped: how soon text appears after speech starts, how soon it is final after speech stops,
+how often displayed text is revised, and whether the model keeps up with the microphone over minutes
+rather than seconds.</p>
+
+<p>This study asks one product question, for one app that must transcribe English and Spanish:</p>
+<p class="question">Can one model serve both English and Spanish at acceptable live latency on a
+mid-range phone, or do we ship a different model per language?</p>
+
+<p>The two languages are not in the same position. English has strong open streaming models:
+Moonshine’s streaming models [5] cover English from 78&nbsp;MB. When the study began, no
+deployable streaming model for Spanish was known. sherpa-onnx [8] offers no Spanish streaming
+transducer, and Moonshine’s Spanish streaming weights appeared to exist only in a training format.
+They turned out to be on the vendor’s content network (§2.2). The Spanish options were the
+platform’s own recognizer, or offline models made live by cutting the audio with a voice activity
+detector (VAD): Parakeet TDT 0.6b v3 [4, 6], which covers 25 European languages, and Whisper [3].
+The experiment exists to price that asymmetry. The size budget was deliberately left open, so
+that the accuracy-against-megabytes curve could inform it.</p>
+
+<p class="keep">The contributions are:</p>
+<ul>
+<li>a controlled comparison of five deployable stacks (a model plus the runtime that executes it),
+nine configurations in all, on one Snapdragon 870 phone, in English and Spanish, on clean and
+noisy speech, with byte-identical audio paced to the wall clock (§3, §4);</li>
+<li>an answer: one model suffices, and it is Parakeet, with its costs and those of the
+per-language alternative quantified (§6);</li>
+<li>continuous six-minute sessions, which show that no surviving stack falls behind real time or
+throttles, and a live-microphone check of the file-fed method, which measures its timing bias
+at about 0.2&nbsp;s (§4.4, §4.5);</li>
+<li>eleven measurement and integration pitfalls met during the study, most of which changed a
+number that had already been published (§5);</li>
+<li>the harness, corpus builder, scorer and every result file, pinned to model and dataset
+revisions (Appendix B).</li>
+</ul>
+
+<h2>2&nbsp;&nbsp;Setup</h2>
+
+<h3>2.1&nbsp;&nbsp;Device</h3>
+
+<div class="tbl">
+<div class="caption"><b>Table 1.</b> Device under test.</div>
+<table>
+<tbody>
+<tr><td style="width:22%">Device</td><td>Xiaomi <code>M2012K11AG</code> (Poco F3 / Mi 11i)</td></tr>
+<tr><td>System on chip</td><td>Qualcomm SM8250, Snapdragon 870</td></tr>
+<tr><td>CPU</td><td>1× Cortex-A77 at 3.19&nbsp;GHz, 3× A77 at 2.42&nbsp;GHz, 4× A55 at 1.80&nbsp;GHz</td></tr>
+<tr><td>Memory</td><td>6&nbsp;GB, of which about 2&nbsp;GB typically available</td></tr>
+<tr><td>Software</td><td>Android 13 (API 33), <code>arm64-v8a</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>API 33 matters twice. It provides <code>SpeechRecognizer.createOnDeviceSpeechRecognizer</code>,
+a recognizer the app does not have to ship, and <code>EXTRA_AUDIO_SOURCE</code>, which lets that
+recognizer be fed from a file instead of the microphone.</p>
+
+<p>The phone is its owner’s personal, daily-use handset, and every run followed a safety policy.
+Runs start only below 35&nbsp;°C battery temperature, unplugged, with the battery between 30 and
+80%, and abort at 43&nbsp;°C. Continuous inference is capped at 10 minutes, with 2-minute breaks.
+Nothing is rooted, and thermal throttling is never disabled. The last rule is also a
+methodological choice: live transcription runs hot for minutes, so throttling is part of what is
+being measured. An emulator was used to test the harness only; no number reported here comes from
+it.</p>
+
+<h3>2.2&nbsp;&nbsp;Stacks under test</h3>
+
+<p>The unit of comparison is the deployable stack, because the runtime cannot be held constant
+across these options. Moonshine ships its own SDK, the platform recognizer is a black box running in
+another process, and sherpa-onnx runs the rest. Differences are therefore attributed to stacks, not
+to models.</p>
+
+<div class="tbl">
+<div class="caption"><b>Table 2.</b> The five stacks. “VAD + re-decode”: an offline model made live
+as described in §3.2.</div>
+<table>
+<thead><tr><th>Arm</th><th>Stack</th><th>How it is live</th><th>Languages</th><th class="n">Disk</th><th>Licence</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>Android on-device recognizer (API 33)</td><td class="nw">native streaming</td><td>en, es (language packs)</td><td class="n">0&nbsp;MB</td><td>platform</td></tr>
+<tr><td>B</td><td>Moonshine v2 streaming tiny, small, medium (en); small (es); SDK <code>moonshine-voice</code> 0.1.5</td><td class="nw">native streaming</td><td>one per model</td><td class="n">78 / 224 / 416&nbsp;MB;<br>es 122&nbsp;MB</td><td>MIT</td></tr>
+<tr><td>C</td><td>Moonshine <code>base-es</code>, Moonshine SDK, Silero VAD</td><td class="nw">VAD + re-decode</td><td>es</td><td class="n">65&nbsp;MB</td><td class="nw">non-commercial</td></tr>
+<tr><td>D</td><td>Parakeet TDT 0.6b v3, int8, sherpa-onnx 1.13.8, Silero VAD</td><td class="nw">VAD + re-decode</td><td>25, incl. en, es</td><td class="n">670&nbsp;MB</td><td class="nw">CC-BY-4.0</td></tr>
+<tr><td>E</td><td>Whisper base and small, multilingual, int8, sherpa-onnx 1.13.8, Silero VAD</td><td class="nw">VAD + re-decode</td><td>en, es (told which)</td><td class="n">161 / 375&nbsp;MB</td><td>MIT</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Arm E is a calibration baseline: Whisper expects 30-second windows and is not built for live use.
+Two options were excluded before testing. Vosk has no punctuation or casing and is weak on noisy
+speech. Whisper large-v3-turbo carries about 1.6&nbsp;GB of weights against about 2&nbsp;GB of
+available memory. Moonshine’s Spanish streaming model was first believed not to exist in a
+deployable format. It was found on the vendor’s content network, where the SDK’s own model
+catalogue fetches it, and was added in the fourth of five phases. Every model is loaded from disk
+at a pinned revision, and nothing downloads itself (Appendix B).</p>
+
+<h2>3&nbsp;&nbsp;Method</h2>
+
+<h3>3.1&nbsp;&nbsp;Paced file-fed streaming</h3>
+
+<p>Every measured run is fed from a file, never from a microphone: nobody can say the same
+sentence twice identically, so microphone input would confound every comparison with the speaker’s
+delivery. To make a file behave like a microphone, 16&nbsp;kHz mono 16-bit audio is released in
+100&nbsp;ms frames on the wall clock, and frame <i>k</i> is not handed over before
+<i>k</i>·100&nbsp;ms have passed. Every stack hears byte-identical input, repeatably. Arm A receives
+the frames through a pipe via <code>EXTRA_AUDIO_SOURCE</code>, with a fresh recognizer per clip;
+Arm B receives them through the Moonshine SDK’s <code>addAudio()</code>; Arms C–E feed them to a
+VAD.</p>
+
+<p>The feeder releases frame <i>k</i> at the start of its 100&nbsp;ms slot, while a microphone can
+deliver it only at the end, so every stack receives audio up to one frame early. The head start is
+the same for every stack and does not affect comparisons. §4.5 measures its effect on absolute
+latency.</p>
+
+<h3>3.2&nbsp;&nbsp;Offline models made live</h3>
+
+<p>Arms C, D and E follow the pattern of sherpa-onnx’s own simulated-streaming example. Silero VAD
+[9] (threshold 0.5, minimum silence 0.25&nbsp;s, minimum speech 0.25&nbsp;s) cuts the paced audio into
+utterances, and each closed segment is decoded once for its final text. While speech is still open,
+the audio so far is re-decoded every 500&nbsp;ms and shown as partial text. That is the Moonshine
+SDK’s update interval, so both kinds of stack refresh text on the same cadence. A partial is skipped
+if the previous decode is still running, and decoding runs on its own thread, so the feed never
+stalls. The VAD’s maximum speech duration is 20&nbsp;s; the Kotlin API’s default of 5&nbsp;s would
+split most of the corpus’s sentences at a breath. The sherpa-onnx arms use four inference threads.
+The Moonshine SDK exposes no thread setting, so ONNX Runtime’s default applies to Arms B and C.</p>
+
+<h3>3.3&nbsp;&nbsp;Corpus</h3>
+
+<div class="tbl">
+<div class="caption"><b>Table 3.</b> Corpus. Short clips are one utterance each; the sessions are
+continuous speech.</div>
+<table>
+<thead><tr><th>Source</th><th>Language</th><th>Condition</th><th class="n">Clips</th><th class="n">Reference words</th><th class="n">Length</th></tr></thead>
+<tbody>
+<tr><td>FLEURS <code>en_us</code>, test [1]</td><td>English</td><td>clean read speech, level-matched</td><td class="n">100</td><td class="n">1,710</td><td class="n">3–8&nbsp;s</td></tr>
+<tr><td>LibriSpeech <code>test-other</code> [2]</td><td>English</td><td>noisy read speech</td><td class="n">100</td><td class="n">1,489</td><td class="n">3–8&nbsp;s</td></tr>
+<tr><td>FLEURS <code>es_419</code>, test [1]</td><td>Spanish</td><td>clean read speech</td><td class="n">100</td><td class="n">1,767</td><td class="n">3–10&nbsp;s</td></tr>
+<tr><td>Session, English</td><td>English</td><td>34 FLEURS utterances, level-matched</td><td class="n">1</td><td class="n">772</td><td class="n">6.1&nbsp;min</td></tr>
+<tr><td>Session, Spanish</td><td>Spanish</td><td>27 FLEURS utterances</td><td class="n">1</td><td class="n">719</td><td class="n">6.2&nbsp;min</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>FLEURS was chosen so that English and Spanish would share a corpus, and LibriSpeech
+<code>test-other</code> adds the noisy case FLEURS lacks. FLEURS’s English recordings turned out to
+be about 40&nbsp;dB quieter than its Spanish ones (§5.1). Every English FLEURS figure here uses a
+level-matched copy, each clip lifted by one static gain to −23&nbsp;dBFS RMS, unless it is marked
+“very quiet”. Sessions are built by joining unused clips with 0.5–1.5&nbsp;s of silence, which gives
+continuous speech with an exact reference transcript. Clip selection is seeded, and every rebuild
+reproduced every earlier file byte for byte.</p>
+
+<h3>3.4&nbsp;&nbsp;Metrics</h3>
+<ul>
+<li><b>WER and CER</b>, scored on a PC with jiwer [11]; the phone emits text only. Normalisation
+lowercases, strips punctuation and spells out digits, reading English four-digit numbers from 1100
+to 1999 as years, and clock times, percentages and thousands as spoken. It keeps Spanish accents.
+Corpus WER is total edits over total reference words. An empty hypothesis counts every reference
+word as deleted, and each clip counts once however many runs measured it.</li>
+<li><b>Final text</b>: time from the end of the audio to the final text, clamped at zero, so text
+already final when the audio ends counts as 0. In sessions it is taken per utterance, from the end
+of that utterance.</li>
+<li><b>First text</b>: time from speech onset to the first text shown. Onset is estimated on the PC
+as the first 20&nbsp;ms frame within 25&nbsp;dB of the clip’s loudest.</li>
+<li><b>Revisions</b>: words already shown that were later changed or removed, from the longest
+common prefix of successive hypotheses. Pure extension costs nothing.</li>
+<li><b>Compute share</b>: time the stack spent computing, on the feed path and on decode threads,
+partials included, over the audio’s duration. Above 1.0 a stack cannot keep up with a microphone.
+Over a continuous session this is the sustained real-time factor, <code>rtf_sustained</code>;
+sessions also record it per 30&nbsp;s of audio.</li>
+<li><b>Peak memory</b>: the process’s resident high-water mark, harness included. Arm A’s
+recognizer runs in Google’s process, so only the harness’s own ~115&nbsp;MB is visible for it.</li>
+<li><b>Battery points and battery temperature.</b> Battery temperature is the only temperature this
+phone exposes to an app, and it can lag by minutes (§5.11).</li>
+</ul>
+
+<h3>3.5&nbsp;&nbsp;Protocol and statistics</h3>
+
+<p>Runs used two to four repetitions. The first was discarded as a cold start, and arm order was
+randomised per repetition. The VAD arms and Moonshine’s Spanish model gave identical text in every
+repetition, so repetitions add evidence about timing, not accuracy. Accuracy rests on the number of
+clips, which is why each source grew from 20 to 100 (§5.5). WER differences between two stacks are
+tested with a paired bootstrap over clips and reported as 95% intervals. Latencies are medians.
+Sessions ran once per language per stack, so they are indicative. A drift over a session is tested
+with a Spearman rank correlation against position and a permutation test.</p>
+
+<h2>4&nbsp;&nbsp;Results</h2>
+
+<h3>4.1&nbsp;&nbsp;Accuracy</h3>
+
+<div class="tbl">
+<div class="caption"><b>Table 4.</b> Word error rate, with character error rate in parentheses, per
+stack and condition. 100 clips per source unless marked. Best per column in bold.</div>
+<table>
+<thead><tr><th>Stack</th><th class="n">Disk</th><th class="n">Spanish</th><th class="n">English, clean</th><th class="n">English, noisy</th></tr></thead>
+<tbody>
+<tr><td>A &nbsp;Platform recognizer</td><td class="n">0&nbsp;MB</td><td class="n">7.39% (3.55)</td><td class="n">9.72% (5.22)</td><td class="n">27.09% (20.11)</td></tr>
+<tr><td>B &nbsp;Moonshine tiny-en</td><td class="n">78&nbsp;MB</td><td class="n">—</td><td class="n">11.25% (5.76)*</td><td class="n">14.43% (6.44)*</td></tr>
+<tr><td>B &nbsp;Moonshine small-en</td><td class="n">224&nbsp;MB</td><td class="n">—</td><td class="n">7.36% (3.01)</td><td class="n">8.92% (4.19)</td></tr>
+<tr><td>B &nbsp;Moonshine medium-en</td><td class="n">416&nbsp;MB</td><td class="n">—</td><td class="n"><b>4.71%</b> (1.73)</td><td class="n"><b>7.02%</b> (3.58)</td></tr>
+<tr><td>B &nbsp;Moonshine small-es</td><td class="n">122&nbsp;MB</td><td class="n">7.24% (2.27)</td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td>C &nbsp;Moonshine base-es</td><td class="n">65&nbsp;MB</td><td class="n">5.09% (2.05)</td><td class="n">—</td><td class="n">—</td></tr>
+<tr class="hl"><td>D &nbsp;Parakeet TDT 0.6b v3</td><td class="n">670&nbsp;MB</td><td class="n"><b>4.47%</b> (1.76)</td><td class="n">4.97% (2.30)</td><td class="n">9.34% (5.57)</td></tr>
+<tr><td>E &nbsp;Whisper base</td><td class="n">161&nbsp;MB</td><td class="n">14.73% (4.35)*</td><td class="n">11.88% (6.64)*</td><td class="n">22.82% (9.62)*</td></tr>
+<tr><td>E &nbsp;Whisper small</td><td class="n">375&nbsp;MB</td><td class="n">11.24% (4.22)*</td><td class="n">5.31% (2.39)*</td><td class="n">14.43% (6.19)*</td></tr>
+</tbody>
+</table>
+<div class="note">* The original 20 clips per source only. On the very quiet original FLEURS English
+recordings (20 clips) the platform recognizer scores 9.69%, Moonshine small 27.29%, medium 25.31%,
+Whisper small 10.31% and Parakeet 14.69% (§5.1).</div>
+</div>
+
+<p><b>Spanish.</b> Parakeet is the most accurate option, at 4.47%. It beats the platform recognizer
+by 2.9 points and Moonshine’s Spanish streaming model by 2.8, both resolved (Table 5): about 40%
+fewer errors than any per-language option. Moonshine <code>small-es</code> is level with the platform
+recognizer (7.24% against 7.39%). Moonshine publishes 4.9% for it, on different data, decoding whole
+utterances; that did not carry over to this corpus and pipeline. Arm C is level with Parakeet at a
+tenth of the disk, but it is not live (§4.2), and its licence forbids shipping it.</p>
+
+<p><b>English.</b> Moonshine medium is the most accurate English model (4.71% clean, 7.02% noisy).
+Parakeet is level with it on clean speech and 2.3 points behind on noisy speech, a gap the data do
+not resolve. Much of that gap is one failure mode, which padding fixes (§5.7). The platform
+recognizer is competitive on clean speech (9.72%), but it misses about one word in four on noisy
+speech (27.09%), 18 points worse than Moonshine small.</p>
+
+<div class="tbl">
+<div class="caption"><b>Table 5.</b> Paired comparisons of WER (percentage points; positive means
+the first stack makes more errors), paired bootstrap over clips, 100 clips.</div>
+<table>
+<thead><tr><th>Comparison</th><th class="n">Difference</th><th class="n">95% interval</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr class="group"><td colspan="4">Spanish</td></tr>
+<tr><td>Platform − Parakeet</td><td class="n">+2.9</td><td class="n">+0.6 to +5.8</td><td>Parakeet better</td></tr>
+<tr><td>Moonshine small-es − Parakeet</td><td class="n">+2.8</td><td class="n">+1.3 to +4.3</td><td>Parakeet better</td></tr>
+<tr><td>Moonshine small-es − base-es (C)</td><td class="n">+2.2</td><td class="n">+0.5 to +3.8</td><td>C better</td></tr>
+<tr><td>Platform − Moonshine small-es</td><td class="n">+0.1</td><td class="n">−2.7 to +3.5</td><td>not resolved</td></tr>
+<tr><td>Platform − base-es (C)</td><td class="n">+2.3</td><td class="n">−0.0 to +5.1</td><td>not resolved, only just</td></tr>
+<tr><td>base-es (C) − Parakeet</td><td class="n">+0.6</td><td class="n">−0.5 to +1.8</td><td>not resolved</td></tr>
+<tr class="group"><td colspan="4">English</td></tr>
+<tr><td>Platform − Moonshine small, noisy</td><td class="n">+18.2</td><td class="n">+12.9 to +23.7</td><td>Moonshine better</td></tr>
+<tr><td>Platform − Moonshine small, clean</td><td class="n">+2.4</td><td class="n">+0.1 to +5.1</td><td>Moonshine better, barely</td></tr>
+<tr><td>Platform − Parakeet, clean</td><td class="n">+4.8</td><td class="n">+2.6 to +7.4</td><td>Parakeet better</td></tr>
+<tr><td>Moonshine small − medium, clean</td><td class="n">+2.7</td><td class="n">+1.5 to +3.9</td><td>medium better</td></tr>
+<tr><td>Moonshine small − medium, noisy</td><td class="n">+1.9</td><td class="n">+0.0 to +3.8</td><td>medium better, barely</td></tr>
+<tr><td>Moonshine small − Parakeet, clean</td><td class="n">+2.4</td><td class="n">+1.3 to +3.6</td><td>Parakeet better</td></tr>
+<tr><td>Moonshine small − Parakeet, noisy</td><td class="n">−0.4</td><td class="n">−2.8 to +1.7</td><td>not resolved</td></tr>
+<tr><td>Moonshine medium − Parakeet, clean</td><td class="n">−0.3</td><td class="n">−1.2 to +0.7</td><td>not resolved</td></tr>
+<tr><td>Moonshine medium − Parakeet, noisy</td><td class="n">−2.3</td><td class="n">−5.1 to +0.2</td><td>not resolved</td></tr>
+</tbody>
+</table>
+</div>
+
+
+<h3>4.2&nbsp;&nbsp;Latency</h3>
+
+<div class="tbl">
+<div class="caption"><b>Table 6.</b> Latency medians. Final text: from the end of the audio,
+clamped at zero. First text: from speech onset. Revisions: median words rewritten per clip. Values
+are Spanish / clean English / noisy English where a stack covers them.</div>
+<table>
+<thead><tr><th>Stack</th><th class="n">Final text, ms</th><th class="n">First text, ms</th><th class="n">Revisions</th></tr></thead>
+<tbody>
+<tr><td>A &nbsp;Platform recognizer</td><td class="n">0 / 69 / 81</td><td class="n">711 / 730 / 752</td><td class="n">6 / 8 / 8</td></tr>
+<tr><td>B &nbsp;Moonshine tiny-en</td><td class="n">— / 0 / 84</td><td class="n">— / 745 / 625</td><td class="n">— / 16 / 10</td></tr>
+<tr><td>B &nbsp;Moonshine small-en</td><td class="n">— / 222 / 486</td><td class="n">— / 968 / 818</td><td class="n">— / 8 / 8</td></tr>
+<tr><td>B &nbsp;Moonshine medium-en</td><td class="n">— / 539 / 772</td><td class="n">— / 996 / 810</td><td class="n">— / 7 / 8</td></tr>
+<tr><td>B &nbsp;Moonshine small-es</td><td class="n">0 / — / —</td><td class="n">738 / — / —</td><td class="n">14 / — / —</td></tr>
+<tr><td>C &nbsp;Moonshine base-es</td><td class="n">2504 / — / —</td><td class="n">1328 / — / —</td><td class="n">8 / — / —</td></tr>
+<tr class="hl"><td>D &nbsp;Parakeet</td><td class="n">0 / 250 / 349</td><td class="n">980 / 1528 / 1366</td><td class="n">12 / 12 / 8</td></tr>
+<tr><td>E &nbsp;Whisper base</td><td class="n">471 / 618 / 678</td><td class="n">1098 / 1196 / 1133</td><td class="n">14 / 9 / 16</td></tr>
+<tr><td>E &nbsp;Whisper small</td><td class="n">2750 / 2683 / 2424</td><td class="n">1721 / 1833 / 1787</td><td class="n">2 / 4 / 5</td></tr>
+</tbody>
+</table>
+<div class="note">From a live microphone, add about 0.2&nbsp;s to every final and first text figure
+(§4.5). Medians are from the runs the project README reports; the pooled medians over every run
+(<code>results/README.md</code>) differ by at most a few tens of milliseconds.</div>
+</div>
+
+<p><b>Final text is quick for every live stack.</b> It takes 0–350&nbsp;ms for Parakeet and
+0–81&nbsp;ms for the platform recognizer. Moonshine takes 0–772&nbsp;ms, rising with model size,
+because each model pass takes about 200, 450 and 550&nbsp;ms for tiny, small and medium. Arm C and
+Whisper small take 2.4–2.8&nbsp;s: their decodes are slower than the 500&nbsp;ms partial interval,
+so the decode thread never idles while someone speaks, and final decodes queue behind partials.</p>
+
+<p><b>First text is where the VAD arms are weakest.</b> From speech onset, Parakeet shows text in
+1.0–1.5&nbsp;s, against 0.6–1.0&nbsp;s for Moonshine and about 0.7&nbsp;s for the platform
+recognizer. A partial has to wait for the VAD to declare speech (at least 0.25&nbsp;s of it), then
+one 500&nbsp;ms interval, then a decode. Moonshine’s first text is paced by its SDK’s 0.5&nbsp;s
+update interval, not by its roughly 80&nbsp;ms of algorithmic lookahead: 108 of 114 first-text times
+for Moonshine tiny fell within 100&nbsp;ms of 40&nbsp;+&nbsp;<i>k</i>·500&nbsp;ms. Spanish is not slower to
+show text on any stack; it only looked so when timed from the start of the clip (§5.6).</p>
+
+
+<h3>4.3&nbsp;&nbsp;Compute, memory and heat</h3>
+
+<div class="tbl">
+<div class="caption"><b>Table 7.</b> Cost per clip. Compute is the share of real time spent
+computing with 500&nbsp;ms partials, and with final text only in parentheses. Battery is per 240
+clips; cooling pauses are counted per run, with the run’s length.</div>
+<table>
+<thead><tr><th>Stack</th><th class="n">Compute</th><th class="n">Peak memory</th><th class="n">Battery</th><th class="n">Cooling pauses (run)</th></tr></thead>
+<tbody>
+<tr><td>A &nbsp;Platform recognizer</td><td class="n">—</td><td class="n">— (in Google’s process)</td><td class="n">2–4 points</td><td class="n">0 (39–64&nbsp;min)</td></tr>
+<tr><td>B &nbsp;Moonshine tiny-en</td><td class="n">0.40–0.42</td><td class="n">363–475&nbsp;MB</td><td class="n">6 points</td><td class="n">0 (39&nbsp;min)</td></tr>
+<tr><td>B &nbsp;Moonshine small-en</td><td class="n">0.72–0.73</td><td class="n">605–760&nbsp;MB</td><td class="n">10 points</td><td class="n">0–2 (39–111&nbsp;min)</td></tr>
+<tr><td>B &nbsp;Moonshine medium-en</td><td class="n">0.80–0.82</td><td class="n">933–967&nbsp;MB</td><td class="n">11–13 points</td><td class="n">1–7 (44–132&nbsp;min)</td></tr>
+<tr><td>B &nbsp;Moonshine small-es</td><td class="n">0.43</td><td class="n">640&nbsp;MB</td><td class="n">9 points</td><td class="n">0 (61&nbsp;min)</td></tr>
+<tr><td>C &nbsp;Moonshine base-es</td><td class="n">1.16 (0.45)</td><td class="n">872&nbsp;MB</td><td class="n">28 points</td><td class="n">8 (78&nbsp;min)</td></tr>
+<tr class="hl"><td>D &nbsp;Parakeet</td><td class="n">0.52–0.62 (0.20–0.23)</td><td class="n">1027–1034&nbsp;MB</td><td class="n">10–13 points</td><td class="n">0–3 (41–81&nbsp;min)</td></tr>
+<tr><td>E &nbsp;Whisper base</td><td class="n">0.76–0.88 (0.27–0.30)</td><td class="n">572&nbsp;MB</td><td class="n">15 points</td><td class="n">7 (87&nbsp;min)</td></tr>
+<tr><td>E &nbsp;Whisper small</td><td class="n">1.24–1.36 (0.52–0.59)</td><td class="n">997&nbsp;MB</td><td class="n">29 points</td><td class="n">15 (156&nbsp;min)</td></tr>
+</tbody>
+</table>
+<div class="note">Peak memory is a process high-water mark that includes the harness. A cooling
+pause is a clip that had to wait for the 35&nbsp;°C start gate. Ranges span the runs made with each
+stack.</div>
+</div>
+
+<p><b>Showing live text costs more than the model.</b> Final decodes alone need 0.20–0.23 of real
+time for Parakeet, and re-decoding the open utterance every 500&nbsp;ms raises that to 0.52–0.62.
+Whisper small goes past 1.0 (§5.8). <b>Memory did not bite.</b> Parakeet had been flagged in
+advance as the stack most likely to fail on memory, with 1.5–2&nbsp;GB expected. It peaked at about
+1.03&nbsp;GB per clip, loaded in 2.6&nbsp;s, and neither crashed nor was killed in more than 900
+clips. <b>Heat follows compute.</b> Whisper small paused to cool 15 times in 156 minutes and Arm C
+8 times in 78, while Moonshine <code>small-es</code> never passed 31.7&nbsp;°C.</p>
+
+
+<h3>4.4&nbsp;&nbsp;Sustained six-minute sessions</h3>
+
+<p>A stack can keep up clip by clip and still fall behind the microphone once the phone is hot, and
+then never catch up. The stacks that survived the per-clip comparison were therefore run on one
+continuous session per language: 34 English utterances in 6.1 minutes and 27 Spanish ones in 6.2,
+fed in real time, one stack per run, with a 2-minute break between the two sessions. The phone was
+unplugged and idle on its home screen, and its system log confirms nobody used it during these runs
+(§5.10). Every 30&nbsp;s of audio the harness recorded compute, feeder delay, battery temperature,
+memory and phone use, and for every final segment it recorded when the text was committed.</p>
+
+<figure>
+<img src="figures/sessions.svg" alt="Share of real time spent computing per 30 seconds across the English and Spanish sessions.">
+<figcaption><b>Figure 1.</b> Share of real time spent computing, per 30&nbsp;s of audio, across one
+continuous session per language. Above 1.0 a stack falls behind the microphone for good. None came
+near it.</figcaption>
+</figure>
+
+<div class="tbl">
+<div class="caption"><b>Table 8.</b> Six-minute sessions. “Drift” asks whether final-text lag rises
+or falls with position in the session (Spearman rank correlation, permutation test).</div>
+<table>
+<thead><tr><th>Session</th><th class="n">Compute, session (per clip)</th><th class="n">Worst 30&nbsp;s</th><th class="n">Final text, median / p90</th><th>Drift</th><th class="n">Temperature</th><th class="n">WER</th></tr></thead>
+<tbody>
+<tr><td class="nw">Parakeet, English</td><td class="n">0.59 (0.62)</td><td class="n">0.73</td><td class="n">0 / 366&nbsp;ms</td><td class="nw">none (p&nbsp;=&nbsp;0.27)</td><td class="n">32.5 → 35.0&nbsp;°C</td><td class="n">11.14%*</td></tr>
+<tr><td class="nw">Parakeet, Spanish</td><td class="n">0.61 (0.56)</td><td class="n">0.73</td><td class="n">23 / 416&nbsp;ms</td><td class="nw">none (p&nbsp;=&nbsp;0.24)</td><td class="n">34.2 → 35.7&nbsp;°C</td><td class="n"><b>6.26%</b></td></tr>
+<tr><td class="nw">Moonshine small-en</td><td class="n">0.70 (0.73)</td><td class="n">0.77</td><td class="n">0 / 646&nbsp;ms</td><td class="nw">none (p&nbsp;=&nbsp;0.97)</td><td class="n">33.0 → 35.2&nbsp;°C</td><td class="n">7.25%</td></tr>
+<tr><td class="nw">Moonshine small-es</td><td class="n">0.45 (0.43)</td><td class="n">0.51</td><td class="n">0 / 178&nbsp;ms</td><td class="nw">none (p&nbsp;=&nbsp;0.47)</td><td class="n">33.2 → 33.5&nbsp;°C</td><td class="n">8.62%</td></tr>
+<tr><td class="nw">Moonshine medium-en</td><td class="n">0.78 (0.81)</td><td class="n">0.91</td><td class="n">220 / 919&nbsp;ms</td><td class="nw">none (p&nbsp;=&nbsp;0.41)</td><td class="n">33.2 → 36.7&nbsp;°C</td><td class="n"><b>6.74%</b></td></tr>
+</tbody>
+</table>
+<div class="note">* 8.3% had one sentence that came back empty been transcribed (§5.7). The platform
+recognizer scored 6.54% on the same Spanish session. Session sentences are not the short clips’
+sentences, so session WER compares stacks on the same audio, not with Table 4.</div>
+</div>
+
+<p><b>Nothing falls behind.</b> Over six continuous minutes every stack used what it used per clip,
+within 0.05 of real time, and its worst 30 seconds stayed well below real time. Moonshine stalls its
+feeder by up to 1.6&nbsp;s while it decodes, because it decodes inside <code>addAudio()</code>, but
+the delay did not accumulate. <b>Nothing throttled.</b> Final-text lag shows no trend in any session.
+Parakeet’s English compute does rise through its session, from about 0.5 to 0.7, but that is the
+audio: its later sentences are longer, and every partial re-decodes everything said so far. Its
+decode speed per second of audio actually improved slightly (105 to 92&nbsp;ms), and its Spanish
+session, run next on a warmer phone, is flat. The platform never reported a thermal status above
+“none”. <b>Memory creeps up.</b> Every stack ended a session 35–170&nbsp;MB above its level at 30
+seconds, and Parakeet reached 1.11&nbsp;GB across its two sessions. The growth is not steady (Moonshine
+medium’s fell back by 100&nbsp;MB mid-session), and its cause was not established.</p>
+
+<h3>4.5&nbsp;&nbsp;The real-microphone check</h3>
+
+<p>Every measured run rests on the claim that pacing a file shows a model what a live microphone
+would. The check tests it directly. The phone’s owner read six corpus sentences aloud while one stack
+transcribed the microphone live (<code>AudioRecord</code>, <code>VOICE_RECOGNITION</code> source,
+the same 100&nbsp;ms frames). The recording was kept, and the same samples then went through the same
+stack again, file-fed exactly as in every measured run. There were four takes of 60&nbsp;s:
+Parakeet and Moonshine small, in English and in Spanish.</p>
+
+<div class="tbl">
+<div class="caption"><b>Table 9.</b> Live microphone against file-fed, same recording, same stack.
+Compute and feeder delay are given as live / file-fed.</div>
+<table>
+<thead><tr><th></th><th>Parakeet, en</th><th>Parakeet, es</th><th>Moonshine small-en</th><th>Moonshine small-es</th></tr></thead>
+<tbody>
+<tr><td>Text</td><td><b>identical</b></td><td><b>identical</b></td><td>2 of 82 words differ</td><td><b>identical</b></td></tr>
+<tr><td>Compute</td><td>0.39 / 0.37</td><td>0.34 / 0.33</td><td>0.54 / 0.54</td><td>0.31 / 0.31</td></tr>
+<tr><td>Feeder delay, worst</td><td>20 / 20&nbsp;ms</td><td>19 / 28&nbsp;ms</td><td>923 / 798&nbsp;ms</td><td>517 / 498&nbsp;ms</td></tr>
+<tr><td>Segments</td><td>identical</td><td>identical</td><td>differ slightly</td><td>differ slightly</td></tr>
+<tr><td>Final text later live (median)</td><td><b>+210&nbsp;ms</b></td><td><b>+208&nbsp;ms</b></td><td>+132&nbsp;ms</td><td>+256&nbsp;ms</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><b>The simulation holds for text and compute.</b> Parakeet produced byte-identical text from the
+live microphone and from the file, and so did Moonshine in Spanish. Moonshine’s English differed by
+two words, within the small repetition-to-repetition variation its English streaming already showed.
+Compute matched within 0.02 everywhere. <b>Live text arrives about 0.2&nbsp;s later.</b> With
+identical segments, Parakeet’s VAD closed each one 0.19–0.20&nbsp;s later relative to the audio,
+and its text committed 0.21&nbsp;s later. About 0.1&nbsp;s of that is the feeder’s one-frame head start
+(§3.1), and the rest is the phone’s capture path. Every first-text and final-text figure in this
+paper is therefore about 0.2&nbsp;s optimistic for a live microphone, equally for every file-fed
+stack. <b>This microphone is quiet.</b> Speech reached the model at −39 to −42&nbsp;dBFS RMS, about
+17&nbsp;dB below the level-matched corpus and 20&nbsp;dB above the very quiet FLEURS English, and
+Moonshine produced text for every line. The takes are the owner’s voice; they stay private and are
+not scored.</p>
+
+
+<h3>4.6&nbsp;&nbsp;Trade-offs</h3>
+
+<p>Figures 2–4 draw the per-clip results of §4.1–4.3 as costs against accuracy, one panel per
+condition. Lower and further left is better. Blue is Parakeet, orange Moonshine’s streaming
+models, gray the other stacks; hollow points were measured on 20 clips per source, filled ones on
+100. The recommendation in §6 reads off them: in Spanish, only Parakeet sits low; in English,
+Moonshine medium and Parakeet share the bottom, at different sizes; and nothing bundled is as
+cheap as the platform recognizer, which fails on noisy English.</p>
+<figure class="tradeoff">
+<img src="figures/wer-disk.svg" alt="WER against disk size, for Spanish, clean English and noisy English.">
+<figcaption><b>Figure 2.</b> Accuracy against size on disk. Lower and further left is better.
+Parakeet (670&nbsp;MB) is the most accurate in Spanish and near the most accurate in English. The
+platform recognizer (0&nbsp;MB) is competitive except on noisy English.</figcaption>
+</figure>
+<figure class="tradeoff">
+<img src="figures/wer-final.svg" alt="WER against time to final text.">
+<figcaption><b>Figure 3.</b> Accuracy against time to final text after speech ends. Parakeet,
+Moonshine and the platform recognizer finish within 0.8&nbsp;s. Arm C (<code>base-es</code>) and Whisper small
+take 2.4–2.8&nbsp;s.</figcaption>
+</figure>
+<figure class="tradeoff">
+<img src="figures/wer-rss.svg" alt="WER against peak memory.">
+<figcaption><b>Figure 4.</b> Accuracy against peak memory, per model. The platform recognizer is
+not shown: it runs in Google’s process. The horizontal axis starts at 300&nbsp;MB.</figcaption>
+</figure>
+
+<h2>5&nbsp;&nbsp;Pitfalls</h2>
+
+<p>Most of the following changed a number that had already been published. None of the eleven is
+exotic, which is the reason for listing them.</p>
+
+<h3>5.1&nbsp;&nbsp;Recording level is a variable</h3>
+<p>FLEURS was chosen so that English and Spanish would be “the same corpus, recorded the same way”.
+On loudness they are not: the English test recordings sit at a median of −62.6&nbsp;dBFS RMS,
+against −22.2 for Spanish and −23.6 for LibriSpeech. The difference is inherited from the dataset.
+The platform recognizer copes (9.69% on the quiet clips). Moonshine returns no text, and no error,
+on some of them: Moonshine tiny left 15 of 120 rows blank and scored 30.05%. The same clips lifted
+by a static gain left none blank and scored 11.25%. The six-minute English session, built before
+this was known, had 25 of its 34 utterances below −50&nbsp;dBFS, and was level-matched before any
+session was run.</p>
+
+<h3>5.2&nbsp;&nbsp;An empty transcript is every word missed</h3>
+<p>The first scorer skipped rows that returned no text. That removed their words from the
+denominator, so a stack that heard nothing scored better for it: Moonshine tiny’s pilot scored 19.3%
+that way and 26.9% in fact.</p>
+
+<h3>5.3&nbsp;&nbsp;Filtering “bad” rows can flatter what is measured</h3>
+<p>It is tempting to drop rows in which the feeder fell behind schedule. But that delay is the
+recognizer refusing input, and it happens most on the audio the recognizer finds hardest. In one
+run, dropping those rows made the platform recognizer’s final-text latency on noisy English look
+2.8 times better (315 to 114&nbsp;ms), by keeping only the easy third. Headline figures use every
+row.</p>
+
+<h3>5.4&nbsp;&nbsp;Formatting is not recognition</h3>
+<p>The scorer read “1848” as “one thousand eight hundred forty eight”, while LibriSpeech’s
+references say “eighteen forty eight”. Stacks that write years as digits lost about four WER points
+on noisy English (the platform recognizer: 33.33% to 29.31% on 20 clips once fixed). Clock times,
+percent signs and thousands separators followed. Each rule applies to reference and hypothesis
+alike.</p>
+
+<h3>5.5&nbsp;&nbsp;Twenty clips could not rank the stacks</h3>
+<p>Deterministic stacks produce the same text in every repetition, so four repetitions of 20 clips
+are 20 clips of evidence. On 20 Spanish clips, Parakeet’s lead over the platform recognizer was
++1.55 points with a 95% interval of −2.70 to +5.18; on 100 clips it is +2.91, from +0.55 to +5.81.
+Some 20-clip point estimates between English models reversed on 100 clips.</p>
+
+<h3>5.6&nbsp;&nbsp;Measure from the event the metric is named after</h3>
+<p>Every stack looked 0.6–0.9&nbsp;s slower to show Spanish text than English. The FLEURS Spanish clips
+open with a median 1.31&nbsp;s of silence, against 0.32–0.46&nbsp;s for the English sources, and first
+text was timed from the start of the clip. From speech onset, the platform recognizer shows text in
+about 0.7&nbsp;s in both languages.</p>
+
+<h3>5.7&nbsp;&nbsp;Parakeet can return nothing for a VAD segment</h3>
+<p>On some segments Parakeet’s final decode is empty, although partial text was on screen moments
+earlier. Silero VAD starts a segment close to speech onset, and Parakeet then receives audio that
+begins almost mid-syllable. A PC reproduction of the same pipeline, with the same model files, shows
+what padding does: half a second of leading silence moves noisy English from 9.47% to 7.12%, clean
+English from 5.26% to 4.68% and Spanish from 4.13% to 4.02%. Empty segments fall from 8 to 2.
+Trailing silence alone makes things worse (12.09%). In the English session, one 6.9&nbsp;s segment
+of 55 came back empty: a whole 22-word sentence. With the padding it decodes word for word. Padded
+Parakeet was not measured on the phone.</p>
+
+<h3>5.8&nbsp;&nbsp;Live partials multiply an offline model’s compute</h3>
+<p>Re-decoding the open utterance every 500&nbsp;ms takes Parakeet from 0.20–0.23 to 0.52–0.60 of real
+time, Whisper base from 0.27–0.30 to 0.76–0.88, and Whisper small from 0.52–0.59 to 1.24–1.36.
+Above 1.0 the decode thread never idles while someone speaks. A final that arrives during a partial
+has to wait for it: a median of 44–134&nbsp;ms for Parakeet, and 790–1112&nbsp;ms for Whisper small.
+The partial cadence is a dial between how live the text looks and how hot the phone gets.</p>
+
+<h3>5.9&nbsp;&nbsp;The file feed runs ahead of a microphone</h3>
+<p>The feeder releases each frame at the start of its slot (§3.1). This was known in principle from
+early on, when the “end of speech” timestamp was corrected, and treated as a small, uniform
+optimism. The microphone check measured it together with the capture path: 0.2&nbsp;s in all. A new
+harness should release each frame at the end of its slot. The published figures are left as
+measured, so that runs stay comparable.</p>
+
+<h3>5.10&nbsp;&nbsp;The phone under test is also someone’s phone</h3>
+<p>One session run overlapped a video call. It read 0.57 of real time where the per-clip runs read
+0.43, with the battery at 38.0&nbsp;°C, the highest reading of the study, and nothing in the row showed
+the cause. Clearing the recent apps killed that run and another. The system log showed both, and both
+runs were discarded. The harness now records screen and call state, and waits out a call before each
+clip. The second episode also showed the cost of a large model: with about 850&nbsp;MB resident, opening
+two apps put the phone into memory thrashing, and the low-memory killer ended 21 cached apps in
+17&nbsp;seconds.</p>
+
+<h3>5.11&nbsp;&nbsp;Integration notes</h3>
+<ul>
+<li>Moonshine’s SDK runs inference inside <code>addAudio()</code>, stalling the caller for the length
+of a model pass. A live app must not call it from the thread that reads the microphone.</li>
+<li>Moonshine’s Spanish streaming models are on the vendor’s content network, not on HuggingFace.</li>
+<li>Moonshine’s and sherpa-onnx’s Android archives both ship <code>libonnxruntime.so</code>, in different
+builds. Picking one at packaging would give one SDK the other’s runtime; sherpa-onnx’s static-link
+build avoids the collision.</li>
+<li>sherpa-onnx’s Kotlin VAD defaults to a 5&nbsp;s maximum speech duration, which splits most
+sentences at a breath.</li>
+<li>The battery temperature an app can read can be minutes old: one reading sat unchanged for 5.5
+minutes, then dropped 4&nbsp;°C in 15 seconds.</li>
+<li>The platform recognizer can return only the last clause of an utterance, and its English
+language pack had to be installed through the API; the Settings screen did not work.</li>
+<li>On MIUI, an instrumented app cannot open its own activity from the background; opening it through
+the shell works.</li>
+</ul>
+
+<h2>6&nbsp;&nbsp;Discussion and recommendation</h2>
+
+<div class="tbl">
+<div class="caption"><b>Table 10.</b> The live stacks an app could ship. First text is from speech
+onset, file-fed; add about 0.2&nbsp;s for a live microphone. Memory is per model, as an app would
+load one language at a time.</div>
+<table>
+<thead><tr><th style="width:23%">Live stack</th><th class="n">Disk</th><th class="n">Spanish WER</th><th class="n">English WER, clean / noisy</th><th class="n">Final text</th><th class="n">First text</th><th class="n">Peak memory</th><th class="n">Compute, 6&nbsp;min</th></tr></thead>
+<tbody>
+<tr class="hl"><td>Parakeet (one model)</td><td class="n">670&nbsp;MB</td><td class="n">4.47%</td><td class="n">4.97 / 9.34%</td><td class="n">0–350&nbsp;ms</td><td class="n">1.0–1.5&nbsp;s</td><td class="n">1.03–1.11&nbsp;GB</td><td class="n">0.59–0.61</td></tr>
+<tr><td>Moonshine small-en<br>+ small-es</td><td class="n">346&nbsp;MB</td><td class="n">7.24%</td><td class="n">7.36 / 8.92%</td><td class="n">0–490&nbsp;ms</td><td class="n">0.7–1.0&nbsp;s</td><td class="n">0.64–0.76&nbsp;GB</td><td class="n">0.45–0.70</td></tr>
+<tr><td>Moonshine medium-en<br>+ small-es</td><td class="n">538&nbsp;MB</td><td class="n">7.24%</td><td class="n">4.71 / 7.02%</td><td class="n">0–770&nbsp;ms</td><td class="n">0.7–1.0&nbsp;s</td><td class="n">0.97&nbsp;GB</td><td class="n">0.45–0.78</td></tr>
+<tr><td>Moonshine small-en<br>+ platform (es)</td><td class="n">224&nbsp;MB<br>+ pack</td><td class="n">7.39%</td><td class="n">7.36 / 8.92%</td><td class="n">0–490&nbsp;ms</td><td class="n">0.7–1.0&nbsp;s</td><td class="n">0.76&nbsp;GB</td><td class="n">0.70 (en)</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout">
+<p><b>One model can serve both languages live on this phone, and it is Parakeet.</b> Ship it as the
+one model, and pad every VAD segment with about half a second of leading silence.</p>
+</div>
+
+<p>What one model buys is Spanish accuracy. Parakeet makes about 40% fewer Spanish errors than any
+per-language option, and it serves English within reach of the best: level with Moonshine medium on
+clean speech, and 2.3 points behind on noisy speech, a gap that padding is expected to close. Over six
+continuous minutes it used 0.6 of real time with no drift. Its costs are 670&nbsp;MB of disk, about
+1.1&nbsp;GB resident, which on a 6&nbsp;GB phone pushes other apps out of memory, and first text
+1.0–1.5&nbsp;s after speech starts. The padding is not optional polish: unpadded, it silently drops
+whole sentences.</p>
+
+<p>What two models buy is size, first-text speed and heat, not Spanish accuracy. Moonshine small in
+both languages is half Parakeet’s disk, MIT-licensed, one runtime, the coolest bundled stack, and
+shows first text 0.2–0.6&nbsp;s sooner. Its Spanish, however, is no better than the free platform
+recognizer’s. If disk, memory or heat matter more than Spanish accuracy, it is the choice. Moonshine
+medium is the most accurate English model, for 192&nbsp;MB more.</p>
+
+<p><b>The platform recognizer does not make bundling a model unnecessary.</b> It is free and fast,
+and its Spanish is as good as Moonshine’s. But it misses one word in four on noisy English, it needs
+an on-device language pack the user may not have, and it belongs to Google, not to the app.</p>
+
+<p>Beyond the choice of model, a live app built on these results should decode off the capture thread
+(Moonshine blocks its caller for up to 1.6&nbsp;s), tune the partial cadence per model rather than
+leave it at a default, budget for about 1&nbsp;GB of memory with Parakeet, and expect about 0.2&nbsp;s
+more latency from a live microphone than any file-fed figure shows.</p>
+
+<h2>7&nbsp;&nbsp;Limitations</h2>
+<ul>
+<li><b>One phone.</b> Timing, memory and heat are properties of this handset and this operating
+system build.</li>
+<li><b>Read speech, one corpus per condition.</b> Spanish is clean read speech only; there is no
+noisy Spanish source to match LibriSpeech, and no conversational speech in either language.</li>
+<li><b>Sample sizes.</b> Accuracy rests on 100 clips per source; Whisper and Moonshine tiny were
+measured on 20. Sessions ran once per language and stack, for six minutes, inside a 10-minute safety
+cap; a longer session could still find throttling or more memory growth.</li>
+<li><b>Padded Parakeet was not measured on the phone.</b> The recommendation to pad rests on a PC
+reproduction of the pipeline and on the sentence the session dropped.</li>
+<li><b>Stacks, not models.</b> Runtimes differ, and Moonshine’s SDK exposes no thread setting.</li>
+<li><b>Temperatures lag</b>, and this phone reports no thermal headroom to apps.</li>
+<li><b>The microphone check</b> is one reader, in one room, on one phone. It validates the method;
+it does not measure accuracy on real voices.</li>
+</ul>
+
+<h2>8&nbsp;&nbsp;Conclusion</h2>
+
+<p>On a 2021 mid-range phone, one open model can transcribe English and Spanish live, entirely
+on-device. Parakeet TDT 0.6b v3 is the most accurate Spanish option measured, competitive in English,
+and keeps well ahead of real time over continuous speech. It needs 670&nbsp;MB of disk, about 1&nbsp;GB of
+memory, and half a second of silence in front of every segment. Per-language models buy a smaller,
+cooler app, not better Spanish. The method itself held up under a live microphone, with one
+correction: live text arrives about 0.2&nbsp;s later than a paced file suggests.</p>
+
+<h2>References</h2>
+<ol class="refs">
+<li>A. Conneau et al. FLEURS: Few-shot learning evaluation of universal representations of speech.
+IEEE Spoken Language Technology Workshop (SLT), 2022. Dataset: <code>google/fleurs</code>, CC-BY-4.0.</li>
+<li>V. Panayotov, G. Chen, D. Povey and S. Khudanpur. LibriSpeech: an ASR corpus based on public
+domain audio books. ICASSP, 2015. Dataset: <code>openslr/librispeech_asr</code>, CC-BY-4.0.</li>
+<li>A. Radford et al. Robust speech recognition via large-scale weak supervision (Whisper). ICML, 2023.</li>
+<li>H. Xu et al. Efficient sequence transduction by jointly predicting tokens and durations (TDT).
+ICML, 2023.</li>
+<li>N. Jeffries et al. Moonshine: speech recognition for live transcription and voice commands.
+arXiv, 2024. Moonshine v2 streaming models and SDK: Moonshine AI, <code>moonshine-voice</code> 0.1.5.</li>
+<li>NVIDIA. Parakeet TDT 0.6b v3, model card, HuggingFace <code>nvidia/parakeet-tdt-0.6b-v3</code>. ONNX
+int8 export used here: <code>csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8</code>.</li>
+<li>Android Open Source Project. <code>SpeechRecognizer.createOnDeviceSpeechRecognizer</code> and
+<code>RecognizerIntent.EXTRA_AUDIO_SOURCE</code>, API level 33.</li>
+<li>k2-fsa. sherpa-onnx, release 1.13.8. <code>github.com/k2-fsa/sherpa-onnx</code>.</li>
+<li>Silero Team. Silero VAD. ONNX model: <code>onnx-community/silero-vad</code>.</li>
+<li>Microsoft. ONNX Runtime. <code>onnxruntime.ai</code>.</li>
+<li>jiwer: evaluate automatic speech recognition. <code>github.com/jitsi/jiwer</code>.</li>
+</ol>
+
+<div class="appendix">
+<h2>Appendix A&nbsp;&nbsp;Reproducing the results</h2>
+
+<p>Everything needed is in the repository at tag <code>v1.0</code>. Weights and audio are not
+redistributed: scripts fetch them at pinned revisions and rebuild the corpus deterministically.
+Scoring runs on a PC; the phone emits text and timings only. All scripts are in
+<code>scripts/</code> and run with the project’s Python environment.</p>
+
+<div class="tbl small">
+<table>
+<thead><tr><th style="width:20%">Step</th><th>Command</th></tr></thead>
+<tbody>
+<tr><td>Corpus</td><td><code>scripts/fetch_corpus.py</code> then <code>scripts/build_corpus.py</code></td></tr>
+<tr><td>Models and runtime</td><td><code>scripts/fetch_models.py --arm B</code> (C, D, E likewise); <code>scripts/fetch_runtime.py</code></td></tr>
+<tr><td>Plumbing, emulator</td><td><code>scripts/run_bench.py --device emulator --plumbing</code></td></tr>
+<tr><td>Short clips, phone</td><td><code>run_bench.py --device physical --arms D:parakeet-tdt-v3-int8 --langs en,es</code></td></tr>
+<tr><td>Sessions</td><td>the same, plus <code>--buckets session --sources fleurs_en_norm,fleurs_es --reps 1</code></td></tr>
+<tr><td>Microphone check</td><td><code>run_bench.py --device physical --mic D:parakeet-tdt-v3-int8 --langs en</code></td></tr>
+<tr><td>Score and compare</td><td><code>scripts/summarize.py</code>, <code>scripts/compare.py --standard</code>, <code>scripts/session_report.py</code></td></tr>
+<tr><td>Figures</td><td><code>scripts/plot_tradeoffs.py</code>; this paper: <code>scripts/build_paper.py</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The harness refuses to start unless storage, battery level, temperature and charging state are in
+range. It checks again before every clip and every 30&nbsp;s during a session-length clip, waits out
+calls, and pauses before any clip that would take continuous inference past 10 minutes.</p>
+
+<h2>Appendix B&nbsp;&nbsp;Provenance</h2>
+
+<div class="tbl small">
+<table>
+<thead><tr><th style="width:26%">Artefact</th><th>Source</th><th>Pinned revision</th></tr></thead>
+<tbody>
+<tr><td>Moonshine streaming en, <span class="nw">base-es</span></td><td>HF <code>moonshine-ai/moonshine-voice-assets</code>, set <code>quantized_26_08_21</code></td><td><code>0bf2f2e5</code></td></tr>
+<tr><td>Moonshine small-streaming-es</td><td><code>download.moonshine.ai</code>, <code>quantized_26_08_24</code></td><td>SHA-256 per file</td></tr>
+<tr><td>Parakeet TDT 0.6b v3 int8</td><td>HF <code>csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8</code></td><td><code>2bda32ec</code></td></tr>
+<tr><td>Whisper small, base</td><td>HF <code>csukuangfj/sherpa-onnx-whisper-small</code>, <code>-base</code></td><td><code>8f3c18b3</code>, <code>bb53ee20</code></td></tr>
+<tr><td>Silero VAD</td><td>HF <code>onnx-community/silero-vad</code></td><td><code>e71cae96</code></td></tr>
+<tr><td>sherpa-onnx</td><td>GitHub release 1.13.8, static-link AAR</td><td>SHA-256 <code>b22c3fc1…</code></td></tr>
+<tr><td>FLEURS <code>en_us</code>, <code>es_419</code></td><td>HF <code>google/fleurs</code></td><td><code>70bb2e84</code></td></tr>
+<tr><td>LibriSpeech <code>test-other</code></td><td>HF <code>openslr/librispeech_asr</code></td><td><code>71cacbfb</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="small">Full hashes, file lists and sizes are in <code>models/MODELS.md</code> and
+<code>corpus/SOURCES.md</code>. Model licences: MIT (Moonshine streaming, Whisper, Silero VAD),
+CC-BY-4.0 (Parakeet), Moonshine Community Licence, non-commercial (Moonshine <code>base-es</code>, an
+experiment only). The corpus sources are CC-BY-4.0.</p>
+</div>
+
+</body>
+</html>

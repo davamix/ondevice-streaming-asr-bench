@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="686" height="550" viewBox="0 0 686 550" role="img" font-family='system-ui, -apple-system, "Segoe UI", sans-serif'>
+<title>Accuracy against size on disk</title><desc>WER against disk, mb for every stack, in three panels: Spanish, clean English and noisy English. Lower and further left is better.</desc>
+<rect width="686" height="550" fill="#ffffff"/>
+<circle cx="399.0" cy="326.0" r="6.5" fill="#ffffff"/>
+<circle cx="399.0" cy="326.0" r="4.5" fill="#2a78d6"/>
+<text x="410.0" y="330.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">Parakeet: one model,</text>
+<text x="410.0" y="346.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">both languages</text>
+<circle cx="399.0" cy="368.0" r="6.5" fill="#ffffff"/>
+<circle cx="399.0" cy="368.0" r="4.5" fill="#eb6834"/>
+<text x="410.0" y="372.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine streaming:</text>
+<text x="410.0" y="388.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">one model per language</text>
+<circle cx="399.0" cy="410.0" r="6.5" fill="#ffffff"/>
+<circle cx="399.0" cy="410.0" r="4.5" fill="#898781"/>
+<text x="410.0" y="414.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">Other stacks</text>
+<circle cx="399.0" cy="436.0" r="6.5" fill="#ffffff"/>
+<circle cx="399.0" cy="436.0" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<text x="410.0" y="440.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">Hollow: 20 clips per source;</text>
+<text x="410.0" y="456.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="normal">filled: 100</text>
+<text x="50.0" y="16.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="bold">Spanish</text>
+<line x1="50.0" y1="226.0" x2="340.0" y2="226.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="230.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">0%</text>
+<line x1="50.0" y1="192.7" x2="340.0" y2="192.7" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="196.7" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">5%</text>
+<line x1="50.0" y1="159.3" x2="340.0" y2="159.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="163.3" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">10%</text>
+<line x1="50.0" y1="126.0" x2="340.0" y2="126.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="130.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">15%</text>
+<line x1="50.0" y1="92.7" x2="340.0" y2="92.7" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="96.7" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">20%</text>
+<line x1="50.0" y1="59.3" x2="340.0" y2="59.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="63.3" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">25%</text>
+<line x1="50.0" y1="26.0" x2="340.0" y2="26.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="30.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">30%</text>
+<line x1="50.0" y1="226.0" x2="340.0" y2="226.0" stroke="#c3c2b7" stroke-width="1"/>
+<text x="50.0" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">0</text>
+<text x="132.9" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">200</text>
+<text x="215.7" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">400</text>
+<text x="298.6" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">600</text>
+<text x="195.0" y="264.0" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal">Disk, MB</text>
+<circle cx="50.0" cy="176.7" r="6.5" fill="#ffffff"/>
+<circle cx="50.0" cy="176.7" r="4.5" fill="#898781"/>
+<circle cx="76.8" cy="192.1" r="6.5" fill="#ffffff"/>
+<circle cx="76.8" cy="192.1" r="4.5" fill="#898781"/>
+<circle cx="116.5" cy="127.8" r="6.5" fill="#ffffff"/>
+<circle cx="116.5" cy="127.8" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="205.5" cy="151.1" r="6.5" fill="#ffffff"/>
+<circle cx="205.5" cy="151.1" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="100.5" cy="177.7" r="6.5" fill="#ffffff"/>
+<circle cx="100.5" cy="177.7" r="4.5" fill="#eb6834"/>
+<circle cx="327.8" cy="196.2" r="6.5" fill="#ffffff"/>
+<circle cx="327.8" cy="196.2" r="4.5" fill="#2a78d6"/>
+<text x="56.0" y="167.7" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Platform (A)</text>
+<text x="82.8" y="209.1" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">base-es (C)</text>
+<text x="125.5" y="131.8" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Whisper base</text>
+<text x="214.5" y="155.1" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Whisper small</text>
+<text x="109.5" y="181.7" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine small-es</text>
+<text x="327.8" y="185.2" font-size="11" fill="#0b0b0b" text-anchor="middle" font-weight="bold">Parakeet</text>
+<text x="384.0" y="16.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="bold">English, clean</text>
+<line x1="384.0" y1="226.0" x2="674.0" y2="226.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="192.7" x2="674.0" y2="192.7" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="159.3" x2="674.0" y2="159.3" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="126.0" x2="674.0" y2="126.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="92.7" x2="674.0" y2="92.7" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="59.3" x2="674.0" y2="59.3" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="26.0" x2="674.0" y2="26.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="384.0" y1="226.0" x2="674.0" y2="226.0" stroke="#c3c2b7" stroke-width="1"/>
+<text x="384.0" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">0</text>
+<text x="466.9" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">200</text>
+<text x="549.7" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">400</text>
+<text x="632.6" y="244.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">600</text>
+<text x="529.0" y="264.0" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal">Disk, MB</text>
+<circle cx="384.0" cy="161.2" r="6.5" fill="#ffffff"/>
+<circle cx="384.0" cy="161.2" r="4.5" fill="#898781"/>
+<circle cx="450.5" cy="146.8" r="6.5" fill="#ffffff"/>
+<circle cx="450.5" cy="146.8" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="539.5" cy="190.6" r="6.5" fill="#ffffff"/>
+<circle cx="539.5" cy="190.6" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="416.2" cy="151.0" r="6.5" fill="#ffffff"/>
+<circle cx="416.2" cy="151.0" r="3.5" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+<circle cx="476.8" cy="176.9" r="6.5" fill="#ffffff"/>
+<circle cx="476.8" cy="176.9" r="4.5" fill="#eb6834"/>
+<circle cx="556.3" cy="194.6" r="6.5" fill="#ffffff"/>
+<circle cx="556.3" cy="194.6" r="4.5" fill="#eb6834"/>
+<circle cx="661.8" cy="192.9" r="6.5" fill="#ffffff"/>
+<circle cx="661.8" cy="192.9" r="4.5" fill="#2a78d6"/>
+<text x="390.0" y="178.2" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Platform (A)</text>
+<text x="459.5" y="150.8" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Whisper base</text>
+<text x="539.5" y="179.6" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Whisper small</text>
+<text x="413.2" y="130.0" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine tiny</text>
+<text x="482.8" y="167.9" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine small</text>
+<text x="556.3" y="213.6" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Moonshine medium</text>
+<text x="652.8" y="196.9" font-size="11" fill="#0b0b0b" text-anchor="end" font-weight="bold">Parakeet</text>
+<text x="50.0" y="290.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="bold">English, noisy</text>
+<line x1="50.0" y1="500.0" x2="340.0" y2="500.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="504.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">0%</text>
+<line x1="50.0" y1="466.7" x2="340.0" y2="466.7" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="470.7" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">5%</text>
+<line x1="50.0" y1="433.3" x2="340.0" y2="433.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="437.3" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">10%</text>
+<line x1="50.0" y1="400.0" x2="340.0" y2="400.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="404.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">15%</text>
+<line x1="50.0" y1="366.7" x2="340.0" y2="366.7" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="370.7" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">20%</text>
+<line x1="50.0" y1="333.3" x2="340.0" y2="333.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="337.3" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">25%</text>
+<line x1="50.0" y1="300.0" x2="340.0" y2="300.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="42.0" y="304.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">30%</text>
+<line x1="50.0" y1="500.0" x2="340.0" y2="500.0" stroke="#c3c2b7" stroke-width="1"/>
+<text x="50.0" y="518.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">0</text>
+<text x="132.9" y="518.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">200</text>
+<text x="215.7" y="518.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">400</text>
+<text x="298.6" y="518.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">600</text>
+<text x="195.0" y="538.0" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal">Disk, MB</text>
+<circle cx="50.0" cy="319.4" r="6.5" fill="#ffffff"/>
+<circle cx="50.0" cy="319.4" r="4.5" fill="#898781"/>
+<circle cx="116.5" cy="347.9" r="6.5" fill="#ffffff"/>
+<circle cx="116.5" cy="347.9" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="205.5" cy="403.8" r="6.5" fill="#ffffff"/>
+<circle cx="205.5" cy="403.8" r="3.5" fill="#ffffff" stroke="#898781" stroke-width="2"/>
+<circle cx="82.2" cy="403.8" r="6.5" fill="#ffffff"/>
+<circle cx="82.2" cy="403.8" r="3.5" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+<circle cx="142.8" cy="440.5" r="6.5" fill="#ffffff"/>
+<circle cx="142.8" cy="440.5" r="4.5" fill="#eb6834"/>
+<circle cx="222.3" cy="453.2" r="6.5" fill="#ffffff"/>
+<circle cx="222.3" cy="453.2" r="4.5" fill="#eb6834"/>
+<circle cx="327.8" cy="437.7" r="6.5" fill="#ffffff"/>
+<circle cx="327.8" cy="437.7" r="4.5" fill="#2a78d6"/>
+<text x="59.0" y="323.4" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Platform (A)</text>
+<text x="125.5" y="351.9" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Whisper base</text>
+<text x="214.5" y="407.8" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Whisper small</text>
+<text x="91.2" y="407.8" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine tiny</text>
+<text x="142.8" y="429.5" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Moonshine small</text>
+<text x="222.3" y="442.2" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Moonshine medium</text>
+<text x="327.8" y="426.7" font-size="11" fill="#0b0b0b" text-anchor="middle" font-weight="bold">Parakeet</text>
+</svg>

@@ -23,10 +23,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "figures"
+PAPER = ROOT / "docs" / "paper" / "figures"
 
 # ── Theme ────────────────────────────────────────────────────────────────
 THEMES = {
     "light": dict(surface="#fcfcfb", ink="#0b0b0b", ink2="#52514e", muted="#898781",
+                  grid="#e1e0d9", axis="#c3c2b7", parakeet="#2a78d6",
+                  moonshine="#eb6834", other="#898781", ref="#d03b3b"),
+    # For the paper: white paper, the light theme's inks and series.
+    "print": dict(surface="#ffffff", ink="#0b0b0b", ink2="#52514e", muted="#6f6e69",
                   grid="#e1e0d9", axis="#c3c2b7", parakeet="#2a78d6",
                   moonshine="#eb6834", other="#898781", ref="#d03b3b"),
     "dark": dict(surface="#1a1a19", ink="#ffffff", ink2="#c3c2b7", muted="#898781",
@@ -72,11 +77,20 @@ LABEL_SPOTS = [(9, 4, "start"), (0, -11, "middle"), (0, 19, "middle"),
                (6, 17, "start"), (-6, 17, "end"), (0, -17, "middle"),
                (0, 25, "middle"), (-3, -21, "start"), (3, -21, "end"),
                (-3, 29, "start"), (3, 29, "end")]
-LABEL_CHAR_W, LABEL_H = 6.1, 11   # 11 px system sans, estimated
+LABEL_CHAR_W, LABEL_H = 6.5, 11   # 11 px system sans, estimated generously (bold is wider)
+
+
+# Where the greedy placer's least-bad choice still reads as one label, a
+# fixed spot: (figure, condition, stack) -> (dx, dy, anchor).
+FIXED_LABELS = {
+    ("wer-final", "noisy", "Parakeet"): (0, -11, "middle"),
+    ("wer-final", "noisy", "Moonshine small"): (9, 4, "start"),
+}
 
 
 def place_labels(pts: list[tuple], xmin: float, xmax: float,
-                 ymin: float, ymax: float) -> dict[str, tuple[int, int, str]]:
+                 ymin: float, ymax: float,
+                 fixed: dict | None = None) -> dict[str, tuple[int, int, str]]:
     """Put each label where it overlaps no other label or marker.
 
     `pts` are (name, x, y) in draw order of priority. The first spot that
@@ -108,13 +122,22 @@ def place_labels(pts: list[tuple], xmin: float, xmax: float,
         return sum(max(0, min(r[2], o[2]) - max(r[0], o[0])) *
                    max(0, min(r[3], o[3]) - max(r[1], o[1])) for o in others)
 
+    fixed = fixed or {}
+    for name, x, y in pts:
+        if name in fixed:
+            boxes.append(box(x, y, name, fixed[name]))
+            out[name] = fixed[name]
     for i, (name, x, y) in enumerate(pts):
+        if name in fixed:
+            continue
         best, best_cost = None, None
         for spot in LABEL_SPOTS:
             r = box(x, y, name, spot)
             outside = (max(0, xmin - r[0]) + max(0, r[2] - xmax) +
                        max(0, ymin - r[1]) + max(0, r[3] - ymax)) * 100
-            cost = (outside + overlap(r, boxes) + ambiguous(r, i)
+            # Labels keep a few pixels apart; touching reads as one label.
+            padded = (r[0] - 4, r[1] - 1, r[2] + 4, r[3] + 1)
+            cost = (outside + overlap(padded, boxes) + ambiguous(r, i)
                     + overlap(r, marks[:i] + marks[i + 1:]))
             if best_cost is None or cost < best_cost:
                 best, best_cost = spot, cost
@@ -194,37 +217,70 @@ def legend(svg: Svg, x: float, y: float) -> None:
 
 
 # ── Trade-off figures ────────────────────────────────────────────────────
+def legend_column(svg: Svg, x: float, y: float) -> None:
+    """The legend stacked, for the print layout's empty fourth cell."""
+    t = svg.t
+    items = [("Parakeet: one model,", t["parakeet"], False, "both languages"),
+             ("Moonshine streaming:", t["moonshine"], False, "one model per language"),
+             ("Other stacks", t["other"], False, None),
+             ("Hollow: 20 clips per source;", t["other"], True, "filled: 100")]
+    for label, color, hollow, line2 in items:
+        svg.dot(x + 5, y - 4, color, hollow=hollow)
+        svg.text(x + 16, y, label, size=12)
+        if line2:
+            y += 16
+            svg.text(x + 16, y, line2, size=12)
+        y += 26
+
+
 def tradeoff(key: str, cost: str, xmax: float, xlabel: str, theme: str,
              title: str, xmin: float = 0.0) -> None:
+    """Three panels: in a row on the web, in a 2 x 2 grid for print.
+
+    The print variant is for the paper (docs/paper/): an A4 text column is
+    ~640 px wide, and a row of three panels scaled into it would print its
+    labels at ~5 pt. As a grid, with the legend in the fourth cell, they
+    print at ~8 pt.
+    """
     t = THEMES[theme]
-    pw, ph = 290, 290                     # plot area per panel
-    left, top, gap = 56, 78, 34
-    w = left + 3 * pw + 2 * gap + 24
-    h = top + ph + 64
+    grid = theme == "print"
     ymax = 30.0
+    if grid:
+        pw, ph, left, top, gap, vgap = 290, 200, 50, 26, 44, 74
+        w = left + 2 * pw + gap + 12
+        h = top + 2 * ph + vgap + 50
+    else:
+        pw, ph, left, top, gap, vgap = 290, 290, 56, 78, 34, 0
+        w = left + 3 * pw + 2 * gap + 24
+        h = top + ph + 64
     svg = Svg(w, h, t, title,
               f"WER against {xlabel.lower()} for every stack, in three panels: "
               "Spanish, clean English and noisy English. Lower and further left is better.")
-    svg.text(left - 40, 26, title, size=16, fill=t["ink"], weight="bold")
-    legend(svg, left - 40, 52)
+    if grid:
+        legend_column(svg, left + pw + gap + 10, top + ph + vgap + 30)
+    else:
+        svg.text(left - 40, 26, title, size=16, fill=t["ink"], weight="bold")
+        legend(svg, left - 40, 52)
 
     for i, (cond, name) in enumerate(PANELS):
-        x0 = left + i * (pw + gap)
+        col, row = (i % 2, i // 2) if grid else (i, 0)
+        x0 = left + col * (pw + gap)
+        y0 = top + row * (ph + vgap)
         X = lambda v: x0 + (v - xmin) / (xmax - xmin) * pw   # noqa: E731
-        Y = lambda v: top + ph - v / ymax * ph    # noqa: E731
-        svg.text(x0, top - 10, name, size=13, fill=t["ink"], weight="bold")
+        Y = lambda v: y0 + ph - v / ymax * ph    # noqa: E731
+        svg.text(x0, y0 - 10, name, size=13, fill=t["ink"], weight="bold")
         for yt in nice_ticks(ymax, 6):
             svg.line(x0, Y(yt), x0 + pw, Y(yt), t["grid"])
-            if i == 0:
+            if col == 0:
                 svg.text(x0 - 8, Y(yt) + 4, f"{yt:g}%", size=11, fill=t["muted"],
                          anchor="end", tabular=True)
         svg.line(x0, Y(0), x0 + pw, Y(0), t["axis"])
         for xt in nice_ticks(xmax, 4):
             if xt < xmin:
                 continue
-            svg.text(X(xt), top + ph + 18, f"{xt:g}", size=11, fill=t["muted"],
+            svg.text(X(xt), y0 + ph + 18, f"{xt:g}", size=11, fill=t["muted"],
                      anchor="middle", tabular=True)
-        svg.text(x0 + pw / 2, top + ph + 38, xlabel, size=12, anchor="middle")
+        svg.text(x0 + pw / 2, y0 + ph + 38, xlabel, size=12, anchor="middle")
 
         pts = []
         for sname, fam, disk, rss, conds in STACKS:
@@ -240,14 +296,20 @@ def tradeoff(key: str, cost: str, xmax: float, xlabel: str, theme: str,
         pts.sort(key=lambda p: order[p[1]])
         for sname, fam, px, py, clips in pts:
             svg.dot(px, py, t[fam], hollow=clips < 100)
+        right = x0 + pw + (gap / 2 - 2 if col == 0 or not grid else 10)
+        fixed = {n: spot for (k, c, n), spot in FIXED_LABELS.items()
+                 if k == key and c == cond}
         spots = place_labels([(n, px, py) for n, _, px, py, _ in reversed(pts)],
-                             x0 - 4, x0 + pw + gap / 2 - 2, top + 2, top + ph - 2)
+                             x0 - 4, right, y0 + 2, y0 + ph - 2, fixed)
         for sname, fam, px, py, clips in pts:
             dx, dy, anchor = spots[sname]
             svg.text(px + dx, py + dy, sname, size=11,
                      fill=t["ink"] if fam == "parakeet" else t["ink2"],
                      anchor=anchor, weight="bold" if fam == "parakeet" else "normal")
-    svg.save(OUT / f"{key}-{theme}.svg")
+    if grid:
+        svg.save(PAPER / f"{key}.svg")
+    else:
+        svg.save(OUT / f"{key}-{theme}.svg")
 
 
 # ── Session figure ───────────────────────────────────────────────────────
@@ -280,20 +342,24 @@ def session_rows() -> dict:
 
 def sessions(theme: str) -> None:
     t = dict(THEMES[theme])
-    t["medium"] = "#1baf7a" if theme == "light" else "#199e70"
+    t["medium"] = "#199e70" if theme == "dark" else "#1baf7a"
     rows = session_rows()
-    pw, ph, left, top, gap = 420, 250, 56, 84, 30
-    w, h = left + 2 * pw + gap + 16, top + ph + 64
+    paper = theme == "print"
+    # For print the caption carries the title, and narrower panels keep the
+    # labels near 8 pt in an A4 column.
+    pw, ph, left, top, gap = (330, 210, 44, 26, 26) if paper else (420, 250, 56, 84, 30)
+    w, h = left + 2 * pw + gap + (36 if paper else 16), top + ph + 64
     # x runs past the session's end to leave room for the end labels.
     ymax, xmax = 1.2, 8.4
     svg = Svg(w, h, t, "Six-minute sessions: compute per 30 seconds",
               "Share of real time each stack spent computing, per 30 s of audio, "
               "across one continuous 6-minute session per language. Above 1.0 a "
               "stack falls behind the microphone. No stack came near it.")
-    svg.text(left - 40, 26, "Six minutes of continuous speech: share of real time spent computing",
-             size=16, fill=t["ink"], weight="bold")
-    svg.text(left - 40, 46, "Per 30 s of audio, one session per language. Above 1.0 the "
-             "stack falls behind the microphone for good.", size=12)
+    if not paper:
+        svg.text(left - 40, 26, "Six minutes of continuous speech: share of real time "
+                 "spent computing", size=16, fill=t["ink"], weight="bold")
+        svg.text(left - 40, 46, "Per 30 s of audio, one session per language. Above 1.0 "
+                 "the stack falls behind the microphone for good.", size=12)
     for i, (lang, name) in enumerate([("en", "English session"), ("es", "Spanish session")]):
         x0 = left + i * (pw + gap)
         X = lambda v: x0 + v / xmax * pw          # noqa: E731
@@ -331,7 +397,7 @@ def sessions(theme: str) -> None:
             y = max(y, last + 14)
             last = y
             svg.text(x + 6, y + 4, label, size=11, fill=t["ink2"])
-    svg.save(OUT / f"sessions-{theme}.svg")
+    svg.save(PAPER / "sessions.svg" if paper else OUT / f"sessions-{theme}.svg")
 
 
 def main() -> int:
@@ -344,7 +410,8 @@ def main() -> int:
         # A scatter needs no zero on x; from 300 MB the 1 GB cluster spreads.
         tradeoff("wer-rss", "rss", 1100, "Peak memory (RSS), MB", theme,
                  "Accuracy against peak memory", xmin=300)
-    print(f"wrote {len(list(OUT.glob('*.svg')))} figures -> {OUT.relative_to(ROOT)}")
+    print(f"wrote {len(list(OUT.glob('*.svg')))} figures -> {OUT.relative_to(ROOT)}, "
+          f"{len(list(PAPER.glob('*.svg')))} -> {PAPER.relative_to(ROOT)}")
     return 0
 
 

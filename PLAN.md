@@ -236,9 +236,9 @@ audio cannot give.
 Run a **single real-microphone sanity check at the very end** to confirm the simulation
 matches reality. That is validation, not measurement.
 
-> **Corrected 2026-09-25 (Phase 5).** The check found one thing the simulation gets
-> wrong. The feeder releases each 100 ms frame at the *start* of its slot; a microphone
-> delivers it at the *end*. Live text therefore arrives ~0.2 s later than file-fed on this
+> **Corrected 2026-09-25 (Phase 5).** The check measured the one thing the simulation
+> was known to get wrong. The feeder releases each 100 ms frame at the *start* of its slot;
+> a microphone delivers it at the *end*. Live text therefore arrives ~0.2 s later than file-fed on this
 > phone (0.1 s this head start, 0.1 s the capture path), identically for every arm. Text
 > and compute matched exactly. Published numbers are left as measured; a new harness
 > should release frames at slot end. See README finding 33.

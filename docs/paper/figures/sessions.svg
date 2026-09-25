@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="766" height="300" viewBox="0 0 766 300" role="img" font-family='system-ui, -apple-system, "Segoe UI", sans-serif'>
+<title>Six-minute sessions: compute per 30 seconds</title><desc>Share of real time each stack spent computing, per 30 s of audio, across one continuous 6-minute session per language. Above 1.0 a stack falls behind the microphone. No stack came near it.</desc>
+<rect width="766" height="300" fill="#ffffff"/>
+<text x="44.0" y="16.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="bold">English session</text>
+<line x1="44.0" y1="236.0" x2="287.6" y2="236.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="36.0" y="240.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">0.0</text>
+<line x1="44.0" y1="201.0" x2="287.6" y2="201.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="36.0" y="205.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">0.2</text>
+<line x1="44.0" y1="166.0" x2="287.6" y2="166.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="36.0" y="170.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">0.4</text>
+<line x1="44.0" y1="131.0" x2="287.6" y2="131.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="36.0" y="135.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">0.6</text>
+<line x1="44.0" y1="96.0" x2="287.6" y2="96.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="36.0" y="100.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">0.8</text>
+<line x1="44.0" y1="61.0" x2="287.6" y2="61.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="36.0" y="65.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">1.0</text>
+<line x1="44.0" y1="26.0" x2="287.6" y2="26.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="36.0" y="30.0" font-size="11" fill="#6f6e69" text-anchor="end" font-weight="normal" style="font-variant-numeric: tabular-nums">1.2</text>
+<line x1="44.0" y1="236.0" x2="287.6" y2="236.0" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="44.0" y1="61.0" x2="287.6" y2="61.0" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="287.6" y="55.0" font-size="11" fill="#52514e" text-anchor="end" font-weight="normal">real time</text>
+<text x="44.0" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">0</text>
+<text x="83.3" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">1</text>
+<text x="122.6" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">2</text>
+<text x="161.9" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">3</text>
+<text x="201.1" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">4</text>
+<text x="240.4" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">5</text>
+<text x="279.7" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">6</text>
+<text x="165.8" y="274.0" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal">Minutes into the session</text>
+<polyline points="63.6,150.9 83.3,153.5 102.9,126.6 122.6,123.5 142.2,162.6 161.9,132.6 181.5,149.0 201.1,137.6 220.8,121.1 240.4,117.6 260.1,107.5 279.7,127.3" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="63.6,111.7 83.3,115.2 102.9,119.3 122.6,110.7 142.2,126.8 161.9,111.5 181.5,129.4 201.1,120.4 220.8,102.9 240.4,104.0 260.1,101.5 279.7,114.9" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="63.6,103.4 83.3,101.2 102.9,109.0 122.6,91.5 142.2,113.5 161.9,104.9 181.5,107.0 201.1,116.3 220.8,93.3 240.4,76.3 260.1,95.7 279.7,98.5" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="285.7" y="102.5" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine medium</text>
+<text x="285.7" y="118.9" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine small</text>
+<text x="285.7" y="132.9" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Parakeet</text>
+<text x="400.0" y="16.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="bold">Spanish session</text>
+<line x1="400.0" y1="236.0" x2="643.6" y2="236.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="400.0" y1="201.0" x2="643.6" y2="201.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="400.0" y1="166.0" x2="643.6" y2="166.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="400.0" y1="131.0" x2="643.6" y2="131.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="400.0" y1="96.0" x2="643.6" y2="96.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="400.0" y1="61.0" x2="643.6" y2="61.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="400.0" y1="26.0" x2="643.6" y2="26.0" stroke="#e1e0d9" stroke-width="1"/>
+<line x1="400.0" y1="236.0" x2="643.6" y2="236.0" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="400.0" y1="61.0" x2="643.6" y2="61.0" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="643.6" y="55.0" font-size="11" fill="#52514e" text-anchor="end" font-weight="normal">real time</text>
+<text x="400.0" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">0</text>
+<text x="439.3" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">1</text>
+<text x="478.6" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">2</text>
+<text x="517.9" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">3</text>
+<text x="557.1" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">4</text>
+<text x="596.4" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">5</text>
+<text x="635.7" y="254.0" font-size="11" fill="#6f6e69" text-anchor="middle" font-weight="normal" style="font-variant-numeric: tabular-nums">6</text>
+<text x="521.8" y="274.0" font-size="12" fill="#52514e" text-anchor="middle" font-weight="normal">Minutes into the session</text>
+<polyline points="419.6,126.1 439.3,138.8 458.9,129.2 478.6,114.1 498.2,134.2 517.9,136.0 537.5,108.4 557.1,128.0 576.8,138.7 596.4,120.3 616.1,133.0 635.7,135.2" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="419.6,156.1 439.3,175.1 458.9,158.3 478.6,148.6 498.2,163.9 517.9,168.8 537.5,154.1 557.1,157.0 576.8,160.8 596.4,147.0 616.1,159.3 635.7,149.5" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="641.7" y="139.2" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Parakeet</text>
+<text x="641.7" y="153.5" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine small-es</text>
+</svg>

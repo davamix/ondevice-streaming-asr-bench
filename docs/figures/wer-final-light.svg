@@ -117,7 +117,7 @@
 <text x="783.2" y="151.4" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Whisper base</text>
 <text x="955.1" y="217.5" font-size="11" fill="#52514e" text-anchor="middle" font-weight="normal">Whisper small</text>
 <text x="721.7" y="232.5" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine tiny</text>
-<text x="760.3" y="272.8" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine small</text>
+<text x="763.3" y="285.8" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine small</text>
 <text x="793.0" y="304.1" font-size="11" fill="#52514e" text-anchor="start" font-weight="normal">Moonshine medium</text>
 <text x="740.1" y="266.7" font-size="11" fill="#0b0b0b" text-anchor="middle" font-weight="bold">Parakeet</text>
 </svg>

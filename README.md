@@ -30,8 +30,9 @@ Spanish only looked slower to show text
 and the real-microphone check found the file-fed method ~0.2 s optimistic
 on timing, and exact on text
 ([microphone check](#the-real-microphone-check)). Revised figures are marked
-where they occur. See the [Phase 5 summary](summaries/phase-5-sessions-and-verdict.md)
-and the final table in [`results/`](results/README.md).
+where they occur. See the [Phase 5 summary](summaries/phase-5-sessions-and-verdict.md),
+the final table in [`results/`](results/README.md), and the whole study as a
+printable [paper (PDF)](docs/paper/paper.pdf).
 
 ---
 
@@ -53,6 +54,7 @@ and the final table in [`results/`](results/README.md).
 | [A note on the test device](#a-note-on-the-test-device) | The safety policy, and why disabling thermal throttling is refused twice over |
 | [summaries/](summaries/) | One short write-up per phase — [1: Arm A](summaries/phase-1-arm-a.md), [2: Arm B](summaries/phase-2-arm-b.md), [3: Arms D and E](summaries/phase-3-arms-d-e.md), [4: Spanish and the answer](summaries/phase-4-spanish.md) and [5: sessions, microphone, verdict](summaries/phase-5-sessions-and-verdict.md), with later revisions marked |
 | [results/README.md](results/README.md) | The final table, per arm and language, and the recommendation |
+| [**The paper (PDF)**](docs/paper/paper.pdf) | The whole study as a 13-page paper, for printing or reading offline |
 | [HANDOVER.md](HANDOVER.md) | Where things stand, open questions, and how to pick the work up in a fresh session |
 
 ### Findings index
@@ -1215,6 +1217,7 @@ a phone that cannot be replaced (§11.5):
 
 .venv/Scripts/python scripts/summarize.py             # score everything, on the PC
 .venv/Scripts/python scripts/plot_tradeoffs.py        # the figures in docs/figures/
+.venv/Scripts/python scripts/build_paper.py           # docs/paper/paper.pdf, via headless Chrome/Edge
 ```
 
 `run_bench.py` refuses to start unless storage, battery level, temperature and
@@ -2198,9 +2201,12 @@ slot, when the last sample of it has been spoken. So the file feed runs one
 frame, 100 ms, ahead of any live source. The other ~0.1 s is the phone's own
 capture path, which a file feed cannot contain at all.
 
-Finding 17 had already moved "end of speech" to the true end of the audio.
-That fixed the stamp, not the feed: the model still has the last frame
-100 ms before the audio ends. Consequences:
+None of this is news in principle. Finding 17, which moved "end of speech"
+to the true end of the audio, noted the head start and called absolute
+latencies "slightly optimistic". That fixed the stamp, not the feed: the
+model still has the last frame 100 ms before the audio ends. What the
+microphone check adds is the size of the whole effect, with the capture path
+doubling it. Consequences:
 
 - **Every first-text and final-text figure in this README is about 0.2 s
   optimistic for a live microphone on this phone**, 0.1 s of it for any
@@ -2214,8 +2220,8 @@ That fixed the stamp, not the feed: the model still has the last frame
   release each frame at the end of its slot.
 
 This is what the microphone check was for: it is the one step in PLAN.md
-that is validation rather than measurement, and it found the one thing the
-simulation got wrong.
+that is validation rather than measurement, and it put a number on the one
+thing the simulation was known to get wrong.
 
 ### Excluded before testing
 
@@ -2258,9 +2264,11 @@ results/                 # pulled JSON, one dir per device+date
   README.md              # the final table, per arm and language (PLAN.md §13)
   superseded/            # runs kept as evidence, excluded from every aggregate
 docs/figures/            # the trade-off figures, light and dark (plot_tradeoffs.py)
+docs/paper/              # the study as a paper: paper.html -> paper.pdf (build_paper.py)
 summaries/               # one short write-up per phase
 scripts/                 # fetch_corpus / build_corpus / fetch_models / fetch_runtime / run_bench
                          # summarize / score / compare / session_report / mic_report / plot_tradeoffs
+                         # build_paper
 ```
 
 ## A note on the test device

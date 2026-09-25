@@ -36,6 +36,11 @@ left open, and how to pick the work up again in a fresh session.
 
 Repo: https://github.com/davamix/ondevice-streaming-asr-bench (public)
 
+The whole study is also a printable paper, `docs/paper/paper.pdf`, built from
+`docs/paper/paper.html` by `scripts/build_paper.py` (headless Chrome or Edge;
+its figures are print variants from `plot_tradeoffs.py`). Keep it in step
+with the README if a number changes.
+
 **The answer** (PLAN.md §1): one model can serve both languages live on this
 phone, and it is Parakeet, padded with ~0.5 s of leading silence per VAD
 segment. Moonshine small-en + small-es is the smaller, cooler alternative.
